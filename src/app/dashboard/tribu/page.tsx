@@ -1,7 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, Users, CheckCircle, Clock, AlertTriangle, TrendingUp, Target } from 'lucide-react'
@@ -31,12 +29,12 @@ export default function TribusPage() {
     const [expandedTribu, setExpandedTribu] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     useEffect(() => {
+        const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
         async function fetchTribus() {
             setLoading(true)
 
@@ -153,7 +151,7 @@ export default function TribusPage() {
         }
 
         fetchTribus()
-    }, [supabase])
+    }, [])
 
     // KPIs globales
     const totalPuntos = useMemo(() =>

@@ -1,7 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
@@ -24,12 +22,12 @@ export default function ColaboradoresPage() {
     const [loading, setLoading] = useState(true)
     const [filtroEquipo, setFiltroEquipo] = useState('all')
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-
     useEffect(() => {
+        const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
         async function fetchColaboradores() {
             setLoading(true)
 
@@ -105,7 +103,7 @@ export default function ColaboradoresPage() {
         }
 
         fetchColaboradores()
-    }, [supabase])
+    }, [])
 
     // Equipos únicos para filtro
     const equipos = useMemo(() =>

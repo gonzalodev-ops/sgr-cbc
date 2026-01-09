@@ -1,7 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useState, useMemo, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
@@ -14,22 +12,32 @@ import {
 } from '@/lib/data/mockData'
 import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter } from 'lucide-react'
 
+// Helper to create client only on client-side
+function getSupabaseClient() {
+    if (typeof window === 'undefined') return null
+    return createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+}
+
 export default function TMRPage() {
     const [entregables, setEntregables] = useState<Entregable[]>([])
     const [loading, setLoading] = useState(true)
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Lazy initialization - only creates client on client-side
+    const supabase = useMemo(() => getSupabaseClient(), [])
 
     // Cargar datos de Supabase
     useEffect(() => {
+        if (!supabase) return // Skip on server-side
+        const client = supabase // Capture for TypeScript narrowing
+
         async function fetchEntregables() {
             setLoading(true)
 
             // 1. Traer mapeo de usuarios a equipos (para tribu)
-            const { data: teamData } = await supabase
+            const { data: teamData } = await client
                 .from('team_members')
                 .select(`
                     user_id,
@@ -46,7 +54,7 @@ export default function TMRPage() {
             }
 
             // 2. Traer tallas por cliente
-            const { data: tallaData } = await supabase
+            const { data: tallaData } = await client
                 .from('cliente_talla')
                 .select('cliente_id, talla_id, dominio_talla')
                 .eq('activo', true)
@@ -62,7 +70,7 @@ export default function TMRPage() {
             }
 
             // 3. Query principal de tareas
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('tarea')
                 .select(`
                     tarea_id,
@@ -190,6 +198,7 @@ export default function TMRPage() {
 
     // Acciones
     const toggleEstado = async (id: string, currentEstado: EstadoEntregable) => {
+        if (!supabase) return
         const currentIndex = ESTADOS_CICLO.indexOf(currentEstado)
         const nextEstado = ESTADOS_CICLO[(currentIndex + 1) % ESTADOS_CICLO.length]
 
@@ -216,6 +225,7 @@ export default function TMRPage() {
     }
 
     const toggleVobo = async (id: string, currentVobo: boolean) => {
+        if (!supabase) return
         const nextVobo = !currentVobo
 
         // Optimistic update
@@ -233,6 +243,7 @@ export default function TMRPage() {
     }
 
     const cycleAuditoria = async (id: string, currentAuditoria: ResultadoAuditoria) => {
+        if (!supabase) return
         const ciclo: ResultadoAuditoria[] = ['no_auditado', 'pendiente', 'aprobado', 'rechazado']
         const currentIndex = ciclo.indexOf(currentAuditoria)
         const nextAuditoria = ciclo[(currentIndex + 1) % ciclo.length]
