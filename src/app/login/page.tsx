@@ -1,8 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+
+// Helper to create client only on client-side
+function getSupabaseClient() {
+    if (typeof window === 'undefined') return null
+    return createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+}
 
 export default function LoginPage() {
     const [isRegister, setIsRegister] = useState(false)
@@ -13,13 +22,12 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false)
     const router = useRouter()
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Lazy initialization - only creates client on client-side
+    const supabase = useMemo(() => getSupabaseClient(), [])
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!supabase) return
         setError(null)
         setLoading(true)
 
@@ -40,6 +48,7 @@ export default function LoginPage() {
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault()
+        if (!supabase) return
         setError(null)
         setLoading(true)
 
