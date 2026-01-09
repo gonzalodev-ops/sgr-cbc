@@ -145,8 +145,8 @@ export default function TabProcesos() {
                     <div className="flex justify-between"><h3 className="font-semibold text-teal-800">{editing ? 'Editar' : 'Nuevo'} Proceso</h3><button onClick={resetProcesoForm}><X size={20} className="text-slate-400" /></button></div>
                     <div className="grid grid-cols-3 gap-3">
                         <input placeholder="ID Proceso (DECLARACION_IVA) *" value={procesoForm.proceso_id} onChange={e => setProcesoForm({ ...procesoForm, proceso_id: e.target.value.toUpperCase() })} disabled={!!editing} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono" />
-                        <input placeholder="Nombre *" value={procesoForm.nombre} onChange={e => setProcesoForm({ ...procesoForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <select value={procesoForm.categoria_default} onChange={e => setProcesoForm({ ...procesoForm, categoria_default: e.target.value })} className="px-3 py-2 border rounded-lg">
+                        <input placeholder="Nombre *" value={procesoForm.nombre} onChange={e => setProcesoForm({ ...procesoForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <select value={procesoForm.categoria_default} onChange={e => setProcesoForm({ ...procesoForm, categoria_default: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500">
                             <option value="RECURRENTE">Recurrente</option>
                             <option value="EXTRAORDINARIO">Extraordinario</option>
                         </select>

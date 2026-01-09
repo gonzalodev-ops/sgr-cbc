@@ -141,17 +141,17 @@ export default function TabClientes() {
                         <button onClick={resetForm}><X size={20} className="text-slate-400" /></button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                        <input placeholder="Nombre Comercial *" value={form.nombre_comercial} onChange={e => setForm({ ...form, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input placeholder="Razón Social" value={form.razon_social_principal} onChange={e => setForm({ ...form, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <select value={form.segmento} onChange={e => setForm({ ...form, segmento: e.target.value })} className="px-3 py-2 border rounded-lg">
+                        <input placeholder="Nombre Comercial *" value={form.nombre_comercial} onChange={e => setForm({ ...form, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Razón Social" value={form.razon_social_principal} onChange={e => setForm({ ...form, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <select value={form.segmento} onChange={e => setForm({ ...form, segmento: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-500">
                             <option value="">-- Segmento --</option>
                             {SEGMENTOS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <input placeholder="Contacto: Nombre" value={form.contacto_nombre} onChange={e => setForm({ ...form, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input placeholder="Contacto: Email" value={form.contacto_email} onChange={e => setForm({ ...form, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input placeholder="Contacto: Teléfono" value={form.contacto_telefono} onChange={e => setForm({ ...form, contacto_telefono: e.target.value })} className="px-3 py-2 border rounded-lg" />
+                        <input placeholder="Contacto: Nombre" value={form.contacto_nombre} onChange={e => setForm({ ...form, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Contacto: Email" value={form.contacto_email} onChange={e => setForm({ ...form, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Contacto: Teléfono" value={form.contacto_telefono} onChange={e => setForm({ ...form, contacto_telefono: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
                     </div>
-                    <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg" rows={2} />
+                    <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-500" rows={2} />
                     <button onClick={saveCliente} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><Save size={18} /> Guardar</button>
                 </div>
             )}
@@ -196,8 +196,8 @@ export default function TabClientes() {
                                     ))}
                                     {(!contribuyentes[c.cliente_id] || contribuyentes[c.cliente_id].length === 0) && <p className="text-sm text-slate-400 mb-2">Sin RFCs asociados</p>}
                                     <div className="flex gap-2 mt-2">
-                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono" maxLength={13} />
-                                        <input placeholder="Razón Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1" />
+                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono placeholder:text-slate-500" maxLength={13} />
+                                        <input placeholder="Razón Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 placeholder:text-slate-500" />
                                         <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.tipo_persona : 'PM'} onChange={e => setRfcForm({ ...rfcForm, tipo_persona: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm">
                                             <option value="PM">PM</option>
                                             <option value="PF">PF</option>

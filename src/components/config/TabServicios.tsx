@@ -114,8 +114,8 @@ export default function TabServicios() {
                             <div className="flex justify-between"><h4 className="font-semibold text-indigo-800">{editingServicio ? 'Editar' : 'Nuevo'} Servicio</h4><button onClick={resetServicioForm}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
                                 <input placeholder="ID (CONTABILIDAD) *" value={servicioForm.servicio_id} onChange={e => setServicioForm({ ...servicioForm, servicio_id: e.target.value.toUpperCase() })} disabled={!!editingServicio} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono" />
-                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg" />
+                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
                             </div>
                             <button onClick={saveServicio} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"><Save size={18} /> Guardar</button>
                         </div>
@@ -160,10 +160,10 @@ export default function TabServicios() {
                                     <tr key={t.talla_id} className="hover:bg-slate-50">
                                         <td className="p-3 font-medium">
                                             <span className={`px-3 py-1 rounded-full text-sm font-bold ${t.talla_id === 'EXTRA_CHICA' ? 'bg-green-100 text-green-700' :
-                                                    t.talla_id === 'CHICA' ? 'bg-blue-100 text-blue-700' :
-                                                        t.talla_id === 'MEDIANA' ? 'bg-yellow-100 text-yellow-700' :
-                                                            t.talla_id === 'GRANDE' ? 'bg-orange-100 text-orange-700' :
-                                                                'bg-red-100 text-red-700'
+                                                t.talla_id === 'CHICA' ? 'bg-blue-100 text-blue-700' :
+                                                    t.talla_id === 'MEDIANA' ? 'bg-yellow-100 text-yellow-700' :
+                                                        t.talla_id === 'GRANDE' ? 'bg-orange-100 text-orange-700' :
+                                                            'bg-red-100 text-red-700'
                                                 }`}>{t.talla_id.replace('_', ' ')}</span>
                                         </td>
                                         <td className="p-3">
