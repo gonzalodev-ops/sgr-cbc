@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
@@ -212,9 +214,9 @@ export default function ColaboradoresPage() {
                                         <td className="p-4 text-slate-600">{c.equipo}</td>
                                         <td className="p-4 text-center">
                                             <span className={`px-2 py-1 rounded text-xs font-bold ${c.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' :
-                                                    c.rol_global === 'SOCIO' ? 'bg-purple-100 text-purple-700' :
-                                                        c.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' :
-                                                            'bg-slate-100 text-slate-600'
+                                                c.rol_global === 'SOCIO' ? 'bg-purple-100 text-purple-700' :
+                                                    c.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' :
+                                                        'bg-slate-100 text-slate-600'
                                                 }`}>
                                                 {c.rol_global}
                                             </span>
@@ -245,8 +247,8 @@ export default function ColaboradoresPage() {
                                         </td>
                                         <td className="p-4 text-center bg-blue-50/50">
                                             <span className={`font-bold ${c.porcentajeATiempo >= 90 ? 'text-green-600' :
-                                                    c.porcentajeATiempo >= 70 ? 'text-yellow-600' :
-                                                        'text-red-600'
+                                                c.porcentajeATiempo >= 70 ? 'text-yellow-600' :
+                                                    'text-red-600'
                                                 }`}>
                                                 {c.porcentajeATiempo}%
                                             </span>

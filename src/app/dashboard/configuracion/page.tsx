@@ -1,17 +1,19 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState } from 'react'
 import { ExcelImport } from '@/components/import/ExcelImport'
 import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle } from 'lucide-react'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 
 // Importar componentes dinámicamente para evitar problemas de SSR
-const TabClientes = dynamic(() => import('@/components/config/TabClientes'), { ssr: false })
-const TabColaboradores = dynamic(() => import('@/components/config/TabColaboradores'), { ssr: false })
-const TabObligaciones = dynamic(() => import('@/components/config/TabObligaciones'), { ssr: false })
-const TabProcesos = dynamic(() => import('@/components/config/TabProcesos'), { ssr: false })
-const TabServicios = dynamic(() => import('@/components/config/TabServicios'), { ssr: false })
-const TabDatos = dynamic(() => import('@/components/config/TabDatos'), { ssr: false })
+const TabClientes = dynamicImport(() => import('@/components/config/TabClientes'), { ssr: false })
+const TabColaboradores = dynamicImport(() => import('@/components/config/TabColaboradores'), { ssr: false })
+const TabObligaciones = dynamicImport(() => import('@/components/config/TabObligaciones'), { ssr: false })
+const TabProcesos = dynamicImport(() => import('@/components/config/TabProcesos'), { ssr: false })
+const TabServicios = dynamicImport(() => import('@/components/config/TabServicios'), { ssr: false })
+const TabDatos = dynamicImport(() => import('@/components/config/TabDatos'), { ssr: false })
 
 type TabType = 'clientes' | 'colaboradores' | 'obligaciones' | 'procesos' | 'servicios' | 'datos'
 
@@ -43,8 +45,8 @@ export default function ConfiguracionPage() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-5 py-4 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${activeTab === tab.id
-                                    ? `border-${tab.color}-600 text-${tab.color}-600 bg-${tab.color}-50/50`
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                ? `border-${tab.color}-600 text-${tab.color}-600 bg-${tab.color}-50/50`
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                                 }`}
                             style={activeTab === tab.id ? { borderBottomColor: getColor(tab.color), color: getColor(tab.color) } : {}}
                         >

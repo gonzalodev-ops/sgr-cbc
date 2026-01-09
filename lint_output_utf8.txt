@@ -1,0 +1,257 @@
+﻿
+> sgr-cbc@0.1.0 lint
+> eslint
+
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\scripts\generate-templates.js
+  1:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\scripts\verify-templates.js
+  1:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\app\dashboard\cliente\page.tsx
+  69:87  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  82:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\app\dashboard\colaborador\page.tsx
+   5:37  warning  'AlertTriangle' is defined but never used  @typescript-eslint/no-unused-vars
+  60:93  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  62:25  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  65:61  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  66:58  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  69:62  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  74:69  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\app\dashboard\configuracion\page.tsx
+  4:10  warning  'ExcelImport' is defined but never used  @typescript-eslint/no-unused-vars
+  5:10  warning  'Download' is defined but never used     @typescript-eslint/no-unused-vars
+  5:77  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\app\dashboard\page.tsx
+   39:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   54:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\app\dashboard\tribu\page.tsx
+   73:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:70  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  101:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabClientes.tsx
+   5:76  warning  'Users' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  27:11  warning  'ClienteContribuyente' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  53:23  error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabClientes.tsx:53:23
+  51 |     )
+  52 |
+> 53 |     useEffect(() => { loadData() }, [])
+     |                       ^^^^^^^^ `loadData` accessed before it is declared
+  54 |
+  55 |     async function loadData() {
+  56 |         setLoading(true)
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabClientes.tsx:55:5
+  53 |     useEffect(() => { loadData() }, [])
+  54 |
+> 55 |     async function loadData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |         setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |         const { data: clientesData } = await supabase.from('cliente').select('*').eq('estado', 'ACTIVO').order('nombre_comercial')
+     ÔÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |         setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 68 |     }
+     | ^^^^^^ `loadData` is declared here
+  69 |
+  70 |     async function saveCliente() {
+  71 |         if (!form.nombre_comercial) return alert('Nombre comercial requerido')  react-hooks/immutability
+  53:37  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+  62:30  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabColaboradores.tsx
+  43:23  error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabColaboradores.tsx:43:23
+  41 |     )
+  42 |
+> 43 |     useEffect(() => { loadData() }, [])
+     |                       ^^^^^^^^ `loadData` accessed before it is declared
+  44 |
+  45 |     async function loadData() {
+  46 |         setLoading(true)
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabColaboradores.tsx:45:5
+  43 |     useEffect(() => { loadData() }, [])
+  44 |
+> 45 |     async function loadData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 46 |         setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |         const { data: usersData } = await supabase.from('users').select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`).order('nombre')
+     ÔÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |         setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |     }
+     | ^^^^^^ `loadData` is declared here
+  58 |
+  59 |     async function saveUser() {
+  60 |         if (!editingUser) {  react-hooks/immutability
+  43:37  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+  48:47  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabObligaciones.tsx
+  66:23  error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabObligaciones.tsx:66:23
+  64 |     )
+  65 |
+> 66 |     useEffect(() => { loadData() }, [])
+     |                       ^^^^^^^^ `loadData` accessed before it is declared
+  67 |
+  68 |     async function loadData() {
+  69 |         setLoading(true)
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabObligaciones.tsx:68:5
+  66 |     useEffect(() => { loadData() }, [])
+  67 |
+> 68 |     async function loadData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |         setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |         const [{ data: oblig }, { data: reg }, { data: cal }] = await Promise.all([
+     ÔÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 78 |         setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 79 |     }
+     | ^^^^^^ `loadData` is declared here
+  80 |
+  81 |     // OBLIGACIONES
+  82 |     async function saveObligacion() {  react-hooks/immutability
+  66:37  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabProcesos.tsx
+  46:23  error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabProcesos.tsx:46:23
+  44 |     )
+  45 |
+> 46 |     useEffect(() => { loadData() }, [])
+     |                       ^^^^^^^^ `loadData` accessed before it is declared
+  47 |
+  48 |     async function loadData() {
+  49 |         setLoading(true)
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabProcesos.tsx:48:5
+  46 |     useEffect(() => { loadData() }, [])
+  47 |
+> 48 |     async function loadData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |         setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         const { data: procData } = await supabase.from('proceso_operativo').select('*').eq('activo', true).order('nombre')
+     ÔÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 60 |         setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 61 |     }
+     | ^^^^^^ `loadData` is declared here
+  62 |
+  63 |     async function saveProceso() {
+  64 |         if (!procesoForm.proceso_id || !procesoForm.nombre) return alert('ID y Nombre requeridos')  react-hooks/immutability
+  46:37  warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabServicios.tsx
+   42:23   error    Error: Cannot access variable before it is declared
+
+`loadData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabServicios.tsx:42:23
+  40 |     )
+  41 |
+> 42 |     useEffect(() => { loadData() }, [])
+     |                       ^^^^^^^^ `loadData` accessed before it is declared
+  43 |
+  44 |     async function loadData() {
+  45 |         setLoading(true)
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\config\TabServicios.tsx:44:5
+  42 |     useEffect(() => { loadData() }, [])
+  43 |
+> 44 |     async function loadData() {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 45 |         setLoading(true)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 46 |         const [{ data: servData }, { data: tallaData }] = await Promise.all([
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 47 |             supabase.from('servicio').select('*').eq('activo', true).order('nombre'),
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |             supabase.from('talla').select('*').order('ponderacion')
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 49 |         ])
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |         setServicios(servData || [])
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 51 |         setTallas(tallaData || [])
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 52 |         setLoading(false)
+     | ^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |     }
+     | ^^^^^^ `loadData` is declared here
+  54 |
+  55 |     async function saveServicio() {
+  56 |         if (!servicioForm.servicio_id || !servicioForm.nombre) return alert('ID y Nombre requeridos')  react-hooks/immutability
+   42:37   warning  React Hook useEffect has a missing dependency: 'loadData'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+  185:119  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/no-unescaped-entities
+  185:146  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/no-unescaped-entities
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\import\ExcelImport.tsx
+  120:8  warning  React Hook useCallback has a missing dependency: 'HEADER_MAP'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\components\layout\Header.tsx
+  3:24  warning  'User' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\lib\engine\stepAssigner.ts
+   19:11  warning  'TareaStep' is defined but never used     @typescript-eslint/no-unused-vars
+  233:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  233:89  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\gleon\Projects\CBC\sgr-cbc\src\lib\engine\taskGenerator.ts
+   23:11  warning  'ObligacionFiscal' is defined but never used    @typescript-eslint/no-unused-vars
+   40:11  warning  'CalendarioDeadline' is defined but never used  @typescript-eslint/no-unused-vars
+  176:62  warning  'teError' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  189:56  warning  'dlError' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  275:50  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  277:47  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+Ô£û 64 problems (46 errors, 18 warnings)
+
