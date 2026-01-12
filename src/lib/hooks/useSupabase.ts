@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { createBrowserClient, type SupabaseClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { getPublicEnv } from '../env'
 
 // Type para el cliente de Supabase

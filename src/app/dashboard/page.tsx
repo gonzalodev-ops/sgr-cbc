@@ -86,9 +86,11 @@ export default function TMRPage() {
 
             const userTeamMap: Record<string, string> = {}
             if (teamData) {
-                teamData.forEach((tm: TeamMemberData) => {
-                    if (tm.user_id && tm.teams?.nombre) {
-                        userTeamMap[tm.user_id] = tm.teams.nombre
+                teamData.forEach((tm) => {
+                    // Supabase puede devolver teams como objeto o array dependiendo de la query
+                    const teams = tm.teams as unknown as { nombre: string } | null
+                    if (tm.user_id && teams?.nombre) {
+                        userTeamMap[tm.user_id] = teams.nombre
                     }
                 })
             }
@@ -101,7 +103,7 @@ export default function TMRPage() {
 
             const clienteTallaMap: Record<string, string> = {}
             if (tallaData) {
-                tallaData.forEach((ct: ClienteTallaData) => {
+                tallaData.forEach((ct) => {
                     // Usar talla FISCAL como default
                     if (ct.dominio_talla === 'FISCAL') {
                         clienteTallaMap[ct.cliente_id] = ct.talla_id
@@ -148,7 +150,13 @@ export default function TMRPage() {
             }
 
             if (data) {
-                const mappedData: Entregable[] = data.map((t: TareaData) => {
+                const mappedData: Entregable[] = data.map((t) => {
+                    // Type assertions para relaciones de Supabase
+                    const contribuyente = t.contribuyente as unknown as { rfc: string; razon_social: string; nombre_comercial: string | null } | null
+                    const cliente = t.cliente as unknown as { nombre_comercial: string } | null
+                    const obligacion = t.obligacion as unknown as { nombre_corto: string; periodicidad: string } | null
+                    const responsable = t.responsable as unknown as { nombre: string; rol_global: string } | null
+
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -161,13 +169,13 @@ export default function TMRPage() {
 
                     return {
                         id: t.tarea_id,
-                        rfc: t.contribuyente?.rfc || 'N/A',
-                        cliente: t.cliente?.nombre_comercial || t.contribuyente?.nombre_comercial || 'N/A',
-                        entregable: t.obligacion?.nombre_corto || t.id_obligacion,
+                        rfc: contribuyente?.rfc || 'N/A',
+                        cliente: cliente?.nombre_comercial || contribuyente?.nombre_comercial || 'N/A',
+                        entregable: obligacion?.nombre_corto || t.id_obligacion,
                         talla: (tallaMap[dbTalla] || 'M') as 'XS' | 'S' | 'M' | 'L' | 'XL',
                         puntosBase: 50, // TODO: Traer de scoring engine
-                        responsable: t.responsable?.nombre || 'Sin asignar',
-                        rol: t.responsable?.rol_global || 'COLABORADOR',
+                        responsable: responsable?.nombre || 'Sin asignar',
+                        rol: responsable?.rol_global || 'COLABORADOR',
                         tribu: userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         evidencia: false, // TODO: Traer de tarea_documento

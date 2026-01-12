@@ -51,9 +51,10 @@ export default function TabClientes() {
 
         const { data: ccData } = await supabase.from('cliente_contribuyente').select('cliente_id, contribuyente:contribuyente_id(*)')
         const map: Record<string, Contribuyente[]> = {}
-        ccData?.forEach((cc: { cliente_id: string; contribuyente: Contribuyente | null }) => {
+        ccData?.forEach((cc) => {
+            const contribuyente = cc.contribuyente as unknown as Contribuyente | null
             if (!map[cc.cliente_id]) map[cc.cliente_id] = []
-            if (cc.contribuyente) map[cc.cliente_id].push(cc.contribuyente)
+            if (contribuyente) map[cc.cliente_id].push(contribuyente)
         })
         setContribuyentes(map)
         setLoading(false)
