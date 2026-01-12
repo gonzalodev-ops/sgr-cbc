@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useState, useEffect, useMemo } from 'react'
+import { useSupabase } from '@/lib/hooks/useSupabase'
 import {
     ESTADO_CONFIG,
     ESTADOS_CICLO,
@@ -52,32 +52,20 @@ interface TareaData {
     } | null;
 }
 
-// Helper to create client only on client-side
-function getSupabaseClient() {
-    if (typeof window === 'undefined') return null
-    return createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-}
-
 export default function TMRPage() {
     const [entregables, setEntregables] = useState<Entregable[]>([])
     const [loading, setLoading] = useState(true)
 
-    // Lazy initialization - only creates client on client-side
-    const supabase = useMemo(() => getSupabaseClient(), [])
+    const supabase = useSupabase()
 
     // Cargar datos de Supabase
     useEffect(() => {
-        if (!supabase) return // Skip on server-side
-        const client = supabase // Capture for TypeScript narrowing
 
         async function fetchEntregables() {
             setLoading(true)
 
             // 1. Traer mapeo de usuarios a equipos (para tribu)
-            const { data: teamData } = await client
+            const { data: teamData } = await supabase
                 .from('team_members')
                 .select(`
                     user_id,
@@ -96,7 +84,7 @@ export default function TMRPage() {
             }
 
             // 2. Traer tallas por cliente
-            const { data: tallaData } = await client
+            const { data: tallaData } = await supabase
                 .from('cliente_talla')
                 .select('cliente_id, talla_id, dominio_talla')
                 .eq('activo', true)
@@ -112,7 +100,7 @@ export default function TMRPage() {
             }
 
             // 3. Query principal de tareas
-            const { data, error } = await client
+            const { data, error } = await supabase
                 .from('tarea')
                 .select(`
                     tarea_id,

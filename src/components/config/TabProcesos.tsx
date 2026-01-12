@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useSupabase } from '@/lib/hooks/useSupabase'
 import { Plus, Pencil, Trash2, X, Save, Settings, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
 interface Proceso {
@@ -38,10 +38,7 @@ export default function TabProcesos() {
     const [procesoForm, setProcesoForm] = useState({ proceso_id: '', nombre: '', categoria_default: 'RECURRENTE' })
     const [pasoForm, setPasoForm] = useState({ paso_id: '', nombre: '', orden: 1, peso_pct: 0, tipo_colaborador: '', evidencia_requerida: false, tipo_evidencia_sugerida: '' })
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = useSupabase()
 
     const loadData = useCallback(async () => {
         setLoading(true)

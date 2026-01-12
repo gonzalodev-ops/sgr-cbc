@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useSupabase } from '@/lib/hooks/useSupabase'
 import { Plus, Pencil, Trash2, X, Save, Package, Ruler } from 'lucide-react'
 
 interface Servicio {
@@ -34,10 +34,7 @@ export default function TabServicios() {
     const [servicioForm, setServicioForm] = useState({ servicio_id: '', nombre: '', descripcion: '' })
     const [tab, setTab] = useState<'servicios' | 'tallas'>('servicios')
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = useSupabase()
 
     const loadData = useCallback(async () => {
         setLoading(true)

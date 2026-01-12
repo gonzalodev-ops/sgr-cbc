@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useSupabase } from '@/lib/hooks/useSupabase'
 import { Plus, Pencil, Trash2, X, Save, Users, UserPlus } from 'lucide-react'
 
 interface Usuario {
@@ -35,10 +35,7 @@ export default function TabColaboradores() {
     const [userForm, setUserForm] = useState({ nombre: '', email: '', rol_global: 'COLABORADOR', equipo_id: '', rol_en_equipo: '' })
     const [teamForm, setTeamForm] = useState({ nombre: '' })
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = useSupabase()
 
     const loadData = useCallback(async () => {
         setLoading(true)

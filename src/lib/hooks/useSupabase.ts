@@ -29,12 +29,12 @@ export type TypedSupabaseClient = SupabaseClient
  */
 export function useSupabase(): TypedSupabaseClient {
   const supabase = useMemo(() => {
-    const env = getPublicEnv()
+    // Durante build/SSR, las variables pueden no estar disponibles
+    // Usamos valores por defecto para evitar errores en build time
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
 
-    return createBrowserClient(
-      env.NEXT_PUBLIC_SUPABASE_URL,
-      env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    )
+    return createBrowserClient(url, anonKey)
   }, [])
 
   return supabase
