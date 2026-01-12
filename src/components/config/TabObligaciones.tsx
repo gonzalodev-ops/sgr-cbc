@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, FileText, Link2, Calendar } from 'lucide-react'
 
@@ -63,9 +63,7 @@ export default function TabObligaciones() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const [{ data: oblig }, { data: reg }, { data: cal }] = await Promise.all([
             supabase.from('obligacion_fiscal').select('*').eq('activo', true).order('nombre_corto'),
@@ -76,7 +74,9 @@ export default function TabObligaciones() {
         setRegimenes(reg || [])
         setCalendarios(cal || [])
         setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData() }, [loadData])
 
     // OBLIGACIONES
     async function saveObligacion() {

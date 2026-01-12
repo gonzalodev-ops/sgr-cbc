@@ -12,6 +12,46 @@ import {
 } from '@/lib/data/mockData'
 import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter } from 'lucide-react'
 
+// Tipos de Supabase
+interface TeamMemberData {
+    user_id: string;
+    teams: { nombre: string } | null;
+}
+
+interface ClienteTallaData {
+    cliente_id: string;
+    talla_id: string;
+    dominio_talla: string;
+}
+
+interface TareaData {
+    tarea_id: string;
+    cliente_id: string;
+    estado: string;
+    periodo_fiscal: string;
+    fecha_limite_oficial: string;
+    prioridad: string | null;
+    riesgo: string | null;
+    id_obligacion: string;
+    responsable_usuario_id: string | null;
+    contribuyente: {
+        rfc: string;
+        razon_social: string;
+        nombre_comercial: string | null;
+    } | null;
+    cliente: {
+        nombre_comercial: string;
+    } | null;
+    responsable: {
+        nombre: string;
+        rol_global: string;
+    } | null;
+    obligacion: {
+        nombre_corto: string;
+        periodicidad: string;
+    } | null;
+}
+
 // Helper to create client only on client-side
 function getSupabaseClient() {
     if (typeof window === 'undefined') return null
@@ -46,7 +86,7 @@ export default function TMRPage() {
 
             const userTeamMap: Record<string, string> = {}
             if (teamData) {
-                teamData.forEach((tm: any) => {
+                teamData.forEach((tm: TeamMemberData) => {
                     if (tm.user_id && tm.teams?.nombre) {
                         userTeamMap[tm.user_id] = tm.teams.nombre
                     }
@@ -61,7 +101,7 @@ export default function TMRPage() {
 
             const clienteTallaMap: Record<string, string> = {}
             if (tallaData) {
-                tallaData.forEach((ct: any) => {
+                tallaData.forEach((ct: ClienteTallaData) => {
                     // Usar talla FISCAL como default
                     if (ct.dominio_talla === 'FISCAL') {
                         clienteTallaMap[ct.cliente_id] = ct.talla_id
@@ -108,7 +148,7 @@ export default function TMRPage() {
             }
 
             if (data) {
-                const mappedData: Entregable[] = data.map((t: any) => {
+                const mappedData: Entregable[] = data.map((t: TareaData) => {
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -124,7 +164,7 @@ export default function TMRPage() {
                         rfc: t.contribuyente?.rfc || 'N/A',
                         cliente: t.cliente?.nombre_comercial || t.contribuyente?.nombre_comercial || 'N/A',
                         entregable: t.obligacion?.nombre_corto || t.id_obligacion,
-                        talla: (tallaMap[dbTalla] || 'M') as any,
+                        talla: (tallaMap[dbTalla] || 'M') as 'XS' | 'S' | 'M' | 'L' | 'XL',
                         puntosBase: 50, // TODO: Traer de scoring engine
                         responsable: t.responsable?.nombre || 'Sin asignar',
                         rol: t.responsable?.rol_global || 'COLABORADOR',

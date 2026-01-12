@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Package, Ruler } from 'lucide-react'
 
@@ -39,9 +39,7 @@ export default function TabServicios() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const [{ data: servData }, { data: tallaData }] = await Promise.all([
             supabase.from('servicio').select('*').eq('activo', true).order('nombre'),
@@ -50,7 +48,9 @@ export default function TabServicios() {
         setServicios(servData || [])
         setTallas(tallaData || [])
         setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData() }, [loadData])
 
     async function saveServicio() {
         if (!servicioForm.servicio_id || !servicioForm.nombre) return alert('ID y Nombre requeridos')

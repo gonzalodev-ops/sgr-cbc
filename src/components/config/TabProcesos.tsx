@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Settings, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
 
@@ -43,9 +43,7 @@ export default function TabProcesos() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const { data: procData } = await supabase.from('proceso_operativo').select('*').eq('activo', true).order('nombre')
         setProcesos(procData || [])
@@ -58,7 +56,9 @@ export default function TabProcesos() {
         })
         setPasos(map)
         setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData() }, [loadData])
 
     async function saveProceso() {
         if (!procesoForm.proceso_id || !procesoForm.nombre) return alert('ID y Nombre requeridos')

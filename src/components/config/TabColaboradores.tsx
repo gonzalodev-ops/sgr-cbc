@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Users, UserPlus } from 'lucide-react'
 
@@ -40,21 +40,25 @@ export default function TabColaboradores() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const { data: usersData } = await supabase.from('users').select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`).order('nombre')
-        setUsuarios((usersData || []).map((u: any) => ({
+        interface UserWithTeam {
+            team_members?: Array<{ teams: { nombre: string }; rol_en_equipo: string }>;
+            [key: string]: unknown;
+        }
+        setUsuarios((usersData || []).map((u: UserWithTeam) => ({
             ...u,
             equipo: u.team_members?.[0]?.teams?.nombre || '',
             rol_en_equipo: u.team_members?.[0]?.rol_en_equipo || ''
-        })))
+        })) as Usuario[])
 
         const { data: teamsData } = await supabase.from('teams').select('*').eq('activo', true).order('nombre')
         setEquipos(teamsData || [])
         setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData() }, [loadData])
 
     async function saveUser() {
         if (!editingUser) {

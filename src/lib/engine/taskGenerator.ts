@@ -68,7 +68,7 @@ export async function generarTareas(
 
     const supabase = createClient(supabaseUrl, supabaseKey)
     const errores: string[] = []
-    let tareasGeneradas = 0
+    const tareasParaInsertar: TareaGenerada[] = []
 
     try {
         // 1. Obtener contribuyentes (todos o uno específico)
@@ -192,7 +192,7 @@ export async function generarTareas(
                             .eq('periodo', periodo)
                             .single()
 
-                        // 10. Crear la tarea
+                        // 10. Acumular la tarea para insertar en batch
                         const nuevaTarea: TareaGenerada = {
                             contribuyente_id: contribuyente.contribuyente_id,
                             id_obligacion: obligacion.id_obligacion,
@@ -202,15 +202,7 @@ export async function generarTareas(
                             responsable_equipo_id: null // Se asignará después
                         }
 
-                        const { error: insertError } = await supabase
-                            .from('tarea')
-                            .insert(nuevaTarea)
-
-                        if (insertError) {
-                            errores.push(`Error creando tarea para ${contribuyente.rfc} - ${obligacion.id_obligacion}: ${insertError.message}`)
-                        } else {
-                            tareasGeneradas++
-                        }
+                        tareasParaInsertar.push(nuevaTarea)
                     }
                 }
             } catch (error) {
@@ -218,10 +210,28 @@ export async function generarTareas(
             }
         }
 
+        // 11. Insertar todas las tareas en una sola operación (transaccional)
+        if (tareasParaInsertar.length > 0) {
+            const { error: batchInsertError, data: insertedTareas } = await supabase
+                .from('tarea')
+                .insert(tareasParaInsertar)
+                .select()
+
+            if (batchInsertError) {
+                throw new Error(`Error al insertar tareas en batch: ${batchInsertError.message}. No se creó ninguna tarea.`)
+            }
+
+            return {
+                success: true,
+                tareasGeneradas: insertedTareas?.length || 0,
+                errores
+            }
+        }
+
         return {
             success: errores.length === 0,
-            tareasGeneradas,
-            errores
+            tareasGeneradas: 0,
+            errores: errores.length > 0 ? errores : ['No hay tareas para generar en el periodo especificado']
         }
 
     } catch (error) {
