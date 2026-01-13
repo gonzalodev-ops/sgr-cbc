@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { useSupabase } from '@/lib/hooks/useSupabase'
 import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
 
 interface ColaboradorData {
@@ -22,12 +22,9 @@ export default function ColaboradoresPage() {
     const [loading, setLoading] = useState(true)
     const [filtroEquipo, setFiltroEquipo] = useState('all')
 
-    useEffect(() => {
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+    const supabase = useSupabase()
 
+    useEffect(() => {
         async function fetchColaboradores() {
             setLoading(true)
 
@@ -103,7 +100,7 @@ export default function ColaboradoresPage() {
         }
 
         fetchColaboradores()
-    }, [])
+    }, [supabase])
 
     // Equipos únicos para filtro
     const equipos = useMemo(() =>

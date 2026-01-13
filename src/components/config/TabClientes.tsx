@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2, Users } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { useSupabase } from '@/lib/hooks/useSupabase'
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2 } from 'lucide-react'
 
 interface Cliente {
     cliente_id: string
@@ -24,10 +24,6 @@ interface Contribuyente {
     nombre_comercial?: string
 }
 
-interface ClienteContribuyente {
-    cliente_id: string
-    contribuyente: Contribuyente
-}
 
 const SEGMENTOS = ['MICRO', 'PEQUEÑA', 'MEDIANA', 'GRANDE', 'CORPORATIVO']
 
@@ -45,27 +41,26 @@ export default function TabClientes() {
     })
     const [rfcForm, setRfcForm] = useState({ rfc: '', tipo_persona: 'PM', razon_social: '', cliente_id: '' })
 
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    // Usar hook centralizado de Supabase
+    const supabase = useSupabase()
 
-    useEffect(() => { loadData() }, [])
-
-    async function loadData() {
+    const loadData = useCallback(async () => {
         setLoading(true)
         const { data: clientesData } = await supabase.from('cliente').select('*').eq('estado', 'ACTIVO').order('nombre_comercial')
         setClientes(clientesData || [])
 
         const { data: ccData } = await supabase.from('cliente_contribuyente').select('cliente_id, contribuyente:contribuyente_id(*)')
         const map: Record<string, Contribuyente[]> = {}
-        ccData?.forEach((cc: any) => {
+        ccData?.forEach((cc) => {
+            const contribuyente = cc.contribuyente as unknown as Contribuyente | null
             if (!map[cc.cliente_id]) map[cc.cliente_id] = []
-            if (cc.contribuyente) map[cc.cliente_id].push(cc.contribuyente)
+            if (contribuyente) map[cc.cliente_id].push(contribuyente)
         })
         setContribuyentes(map)
         setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData() }, [loadData])
 
     async function saveCliente() {
         if (!form.nombre_comercial) return alert('Nombre comercial requerido')
