@@ -185,8 +185,41 @@ export default function TabClientes() {
         setWizardStep(1)
     }
 
+    // Validación de RFC según tipo de persona
+    function validarRFC(rfc: string, tipoPersona: string): { valid: boolean; error?: string } {
+        const rfcUpper = rfc.toUpperCase().trim()
+
+        // Persona Moral: 12 caracteres (3 letras + 6 dígitos fecha + 3 homoclave)
+        // Persona Física: 13 caracteres (4 letras + 6 dígitos fecha + 3 homoclave)
+        const regexPM = /^[A-ZÑ&]{3}[0-9]{6}[A-Z0-9]{3}$/
+        const regexPF = /^[A-ZÑ&]{4}[0-9]{6}[A-Z0-9]{3}$/
+
+        if (tipoPersona === 'PM') {
+            if (rfcUpper.length !== 12) {
+                return { valid: false, error: 'RFC de Persona Moral debe tener 12 caracteres' }
+            }
+            if (!regexPM.test(rfcUpper)) {
+                return { valid: false, error: 'RFC de Persona Moral inválido. Formato: 3 letras + 6 dígitos + 3 caracteres' }
+            }
+        } else if (tipoPersona === 'PF') {
+            if (rfcUpper.length !== 13) {
+                return { valid: false, error: 'RFC de Persona Física debe tener 13 caracteres' }
+            }
+            if (!regexPF.test(rfcUpper)) {
+                return { valid: false, error: 'RFC de Persona Física inválido. Formato: 4 letras + 6 dígitos + 3 caracteres' }
+            }
+        }
+
+        return { valid: true }
+    }
+
     function addRFCToWizard() {
         if (!tempRFC.rfc || !tempRFC.razon_social) return alert('RFC y Razón Social son requeridos')
+
+        // Validar formato de RFC
+        const validacion = validarRFC(tempRFC.rfc, tempRFC.tipo_persona)
+        if (!validacion.valid) return alert(validacion.error)
+
         if (tempRFC.regimenes.length === 0) return alert('Selecciona al menos un régimen fiscal')
         setWizardRFCs([...wizardRFCs, { ...tempRFC, rfc: tempRFC.rfc.toUpperCase() }])
         setTempRFC({ rfc: '', tipo_persona: 'PM', razon_social: '', team_id: '', regimenes: [] })
@@ -306,6 +339,11 @@ export default function TabClientes() {
 
     async function saveRFC() {
         if (!rfcForm.rfc || !rfcForm.razon_social || !rfcForm.cliente_id) return alert('RFC y Razón Social requeridos')
+
+        // Validar formato de RFC
+        const validacion = validarRFC(rfcForm.rfc, rfcForm.tipo_persona)
+        if (!validacion.valid) return alert(validacion.error)
+
         const { data: contrib, error } = await supabase.from('contribuyente')
             .insert({
                 rfc: rfcForm.rfc.toUpperCase(),
