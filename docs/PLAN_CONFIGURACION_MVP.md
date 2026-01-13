@@ -277,19 +277,25 @@ interface ClienteCompleto {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Fase 2: Relación Cliente-Equipo y SLA
+### Fase 2: Relación RFC-Equipo, Talla por Servicio y SLA
 
-#### 2.1 Agregar team_id a tabla cliente
+#### 2.1 Agregar team_id a contribuyente (RFC) - IMPLEMENTADO
 ```sql
--- Agregar columna team_id a cliente
-ALTER TABLE cliente
+-- El equipo se asigna al RFC, no al cliente
+ALTER TABLE contribuyente
 ADD COLUMN team_id UUID REFERENCES teams(team_id);
 
--- Índice para búsquedas por equipo
-CREATE INDEX idx_cliente_team ON cliente(team_id);
+CREATE INDEX idx_contribuyente_team ON contribuyente(team_id);
 ```
 
-#### 2.2 Crear tabla de configuración SLA
+#### 2.2 Agregar talla_id a cliente_servicio - IMPLEMENTADO
+```sql
+-- La talla es por servicio contratado (XS en IMSS, G en Nomina)
+ALTER TABLE cliente_servicio
+ADD COLUMN talla_id TEXT REFERENCES talla(talla_id);
+```
+
+#### 2.3 Crear tabla de configuración SLA - IMPLEMENTADO
 ```sql
 -- Configuración de SLA por estado
 CREATE TABLE sla_config (
@@ -318,13 +324,15 @@ INSERT INTO sla_config (estado, descripcion, sla_activo, sla_pausado, dias_sla_d
 ('rechazado', 'Rechazado/Error', false, false, NULL, 9, true);
 ```
 
-#### 2.3 UI en TabClientes para asignar equipo
-- [ ] Selector de equipo/tribu en el formulario del cliente
-- [ ] Mostrar equipo asignado en la lista de clientes
+#### 2.4 UI en TabClientes - IMPLEMENTADO
+- [x] Selector de equipo/tribu por RFC
+- [x] Selector de regimenes fiscales por RFC
+- [x] Selector de servicios contratados con talla por servicio
+- [x] Resumen de configuracion del cliente
 
-#### 2.4 Nueva sección en Configuración: SLA
-- [ ] Tab o sub-tab para configurar SLA por estado
-- [ ] Poder modificar días límite, si cuenta tiempo, si pausa
+#### 2.5 Nueva seccion en Configuracion: SLA
+- [ ] Tab o sub-tab para configurar SLA por estado (pendiente)
+- [ ] Poder modificar dias limite, si cuenta tiempo, si pausa
 
 ---
 
