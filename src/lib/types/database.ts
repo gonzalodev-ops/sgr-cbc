@@ -70,6 +70,7 @@ export interface Contribuyente {
     razon_social: string
     nombre_comercial?: string
     estado_fiscal?: string
+    team_id?: string
     activo: boolean
     created_at: string
     updated_at: string
@@ -176,4 +177,58 @@ export interface TeamMember {
     es_suplente: boolean
     suplente_de?: string
     activo: boolean
+}
+
+export interface Servicio {
+    servicio_id: string
+    nombre: string
+    descripcion?: string
+    activo: boolean
+}
+
+export interface ClienteServicio {
+    cliente_id: string
+    servicio_id: string
+    talla_id?: TallaId
+    vigencia_desde?: string
+    vigencia_hasta?: string
+    activo: boolean
+    notas_comerciales?: string
+}
+
+export interface ContribuyenteRegimen {
+    contribuyente_id: string
+    c_regimen: string
+    vigencia_desde?: string
+    vigencia_hasta?: string
+    activo: boolean
+}
+
+export interface SlaConfig {
+    sla_config_id: string
+    estado: EstadoTarea
+    descripcion: string
+    sla_activo: boolean
+    sla_pausado: boolean
+    dias_sla_default?: number
+    orden_flujo: number
+    es_estado_final: boolean
+    color_ui?: string
+    icono_ui?: string
+    activo: boolean
+    created_at: string
+}
+
+export interface ObligacionProceso {
+    id_obligacion: string
+    proceso_id: string
+    activo: boolean
+    created_at: string
+}
+
+export interface ObligacionCalendario {
+    id_obligacion: string
+    calendario_regla_id: string
+    activo: boolean
+    created_at: string
 }
