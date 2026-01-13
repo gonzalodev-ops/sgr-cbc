@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Users, UserPlus } from 'lucide-react'
+import { useAsync } from '@/hooks/useAsync'
+import { useCrudOperations } from '@/hooks/useCrudOperations'
 
 interface Usuario {
     user_id: string
@@ -26,7 +28,6 @@ const ROLES_EQUIPO = ['LIDER', 'AUXILIAR_A', 'AUXILIAR_B', 'AUXILIAR_C']
 export default function TabColaboradores() {
     const [usuarios, setUsuarios] = useState<Usuario[]>([])
     const [equipos, setEquipos] = useState<Team[]>([])
-    const [loading, setLoading] = useState(true)
     const [showUserForm, setShowUserForm] = useState(false)
     const [showTeamForm, setShowTeamForm] = useState(false)
     const [editingUser, setEditingUser] = useState<Usuario | null>(null)
@@ -40,10 +41,16 @@ export default function TabColaboradores() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
+    const { loading, execute: loadData } = useAsync()
 
-    async function loadData() {
-        setLoading(true)
+    const teamCrud = useCrudOperations<Team>({
+        supabase,
+        tableName: 'teams',
+        idField: 'team_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const fetchData = useCallback(async () => {
         const { data: usersData } = await supabase.from('users').select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`).order('nombre')
         setUsuarios((usersData || []).map((u: any) => ({
             ...u,
@@ -53,10 +60,11 @@ export default function TabColaboradores() {
 
         const { data: teamsData } = await supabase.from('teams').select('*').eq('activo', true).order('nombre')
         setEquipos(teamsData || [])
-        setLoading(false)
-    }
+    }, [supabase])
 
-    async function saveUser() {
+    useEffect(() => { loadData(fetchData) }, [loadData, fetchData])
+
+    const saveUser = useCallback(async () => {
         if (!editingUser) {
             // Para crear usuarios nuevos necesitamos API con service role
             const res = await fetch('/api/admin/create-user', {
@@ -75,49 +83,42 @@ export default function TabColaboradores() {
             }
         }
         resetUserForm()
-        loadData()
-    }
+        loadData(fetchData)
+    }, [userForm, editingUser, supabase, loadData, fetchData])
 
-    async function deleteUser(id: string) {
+    const deleteUser = useCallback(async (id: string) => {
         if (!confirm('¿Desactivar usuario?')) return
         await supabase.from('users').update({ activo: false }).eq('user_id', id)
-        loadData()
-    }
+        loadData(fetchData)
+    }, [supabase, loadData, fetchData])
 
-    async function saveTeam() {
+    const saveTeam = useCallback(async () => {
         if (!teamForm.nombre) return alert('Nombre requerido')
         if (editingTeam) {
-            await supabase.from('teams').update({ nombre: teamForm.nombre }).eq('team_id', editingTeam.team_id)
+            await teamCrud.update(editingTeam.team_id, { nombre: teamForm.nombre })
         } else {
-            await supabase.from('teams').insert({ nombre: teamForm.nombre, activo: true })
+            await teamCrud.create({ nombre: teamForm.nombre, activo: true })
         }
         resetTeamForm()
-        loadData()
-    }
+    }, [teamForm, editingTeam, teamCrud])
 
-    async function deleteTeam(id: string) {
-        if (!confirm('¿Eliminar equipo?')) return
-        await supabase.from('teams').update({ activo: false }).eq('team_id', id)
-        loadData()
-    }
-
-    function resetUserForm() {
+    const resetUserForm = useCallback(() => {
         setUserForm({ nombre: '', email: '', rol_global: 'COLABORADOR', equipo_id: '', rol_en_equipo: '' })
         setEditingUser(null)
         setShowUserForm(false)
-    }
+    }, [])
 
-    function resetTeamForm() {
+    const resetTeamForm = useCallback(() => {
         setTeamForm({ nombre: '' })
         setEditingTeam(null)
         setShowTeamForm(false)
-    }
+    }, [])
 
-    function editUser(u: Usuario) {
+    const editUser = useCallback((u: Usuario) => {
         setUserForm({ nombre: u.nombre, email: u.email, rol_global: u.rol_global, equipo_id: '', rol_en_equipo: u.rol_en_equipo || '' })
         setEditingUser(u)
         setShowUserForm(true)
-    }
+    }, [])
 
     if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
 
@@ -149,7 +150,7 @@ export default function TabColaboradores() {
                             <Users size={16} className="text-purple-600" />
                             <span className="font-medium">{t.nombre}</span>
                             <button onClick={() => { setTeamForm({ nombre: t.nombre }); setEditingTeam(t); setShowTeamForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={14} /></button>
-                            <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                            <button onClick={() => teamCrud.softDelete(t.team_id, '¿Eliminar equipo?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
                     {equipos.length === 0 && <p className="text-slate-400 text-sm">No hay equipos. Crea uno.</p>}

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Package, Ruler } from 'lucide-react'
+import { useAsync } from '@/hooks/useAsync'
+import { useCrudOperations } from '@/hooks/useCrudOperations'
 
 interface Servicio {
     servicio_id: string
@@ -28,7 +30,6 @@ const TALLAS_DEFAULT = [
 export default function TabServicios() {
     const [servicios, setServicios] = useState<Servicio[]>([])
     const [tallas, setTallas] = useState<Talla[]>([])
-    const [loading, setLoading] = useState(true)
     const [showServicioForm, setShowServicioForm] = useState(false)
     const [editingServicio, setEditingServicio] = useState<Servicio | null>(null)
     const [servicioForm, setServicioForm] = useState({ servicio_id: '', nombre: '', descripcion: '' })
@@ -39,54 +40,54 @@ export default function TabServicios() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
+    const { loading, execute: loadData } = useAsync()
 
-    async function loadData() {
-        setLoading(true)
+    const servicioCrud = useCrudOperations<Servicio>({
+        supabase,
+        tableName: 'servicio',
+        idField: 'servicio_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const fetchData = useCallback(async () => {
         const [{ data: servData }, { data: tallaData }] = await Promise.all([
             supabase.from('servicio').select('*').eq('activo', true).order('nombre'),
             supabase.from('talla').select('*').order('ponderacion')
         ])
         setServicios(servData || [])
         setTallas(tallaData || [])
-        setLoading(false)
-    }
+    }, [supabase])
 
-    async function saveServicio() {
+    useEffect(() => { loadData(fetchData) }, [loadData, fetchData])
+
+    const saveServicio = useCallback(async () => {
         if (!servicioForm.servicio_id || !servicioForm.nombre) return alert('ID y Nombre requeridos')
         if (editingServicio) {
-            await supabase.from('servicio').update({ nombre: servicioForm.nombre, descripcion: servicioForm.descripcion }).eq('servicio_id', editingServicio.servicio_id)
+            await servicioCrud.update(editingServicio.servicio_id, { nombre: servicioForm.nombre, descripcion: servicioForm.descripcion })
         } else {
-            await supabase.from('servicio').insert({ ...servicioForm, activo: true })
+            await servicioCrud.create({ ...servicioForm, activo: true })
         }
         resetServicioForm()
-        loadData()
-    }
+    }, [servicioForm, editingServicio, servicioCrud])
 
-    async function deleteServicio(id: string) {
-        if (!confirm('¿Eliminar servicio?')) return
-        await supabase.from('servicio').update({ activo: false }).eq('servicio_id', id)
-        loadData()
-    }
-
-    async function updateTallaPonderacion(tallaId: string, ponderacion: number) {
+    const updateTallaPonderacion = useCallback(async (tallaId: string, ponderacion: number) => {
         await supabase.from('talla').update({ ponderacion }).eq('talla_id', tallaId)
-        loadData()
-    }
+        loadData(fetchData)
+    }, [supabase, loadData, fetchData])
 
-    async function initTallas() {
+    const initTallas = useCallback(async () => {
         if (tallas.length > 0) return alert('Ya existen tallas')
         for (const t of TALLAS_DEFAULT) {
             await supabase.from('talla').insert({ ...t, activo: true })
         }
-        loadData()
-    }
+        loadData(fetchData)
+    }, [tallas.length, supabase, loadData, fetchData])
 
-    function resetServicioForm() {
+    const resetServicioForm = useCallback(() => {
         setServicioForm({ servicio_id: '', nombre: '', descripcion: '' })
         setEditingServicio(null)
         setShowServicioForm(false)
-    }
+    }, [])
 
     if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
 
@@ -131,7 +132,7 @@ export default function TabServicios() {
                                 </div>
                                 <div>
                                     <button onClick={() => { setServicioForm({ servicio_id: s.servicio_id, nombre: s.nombre, descripcion: s.descripcion || '' }); setEditingServicio(s); setShowServicioForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                    <button onClick={() => deleteServicio(s.servicio_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button onClick={() => servicioCrud.softDelete(s.servicio_id, '¿Eliminar servicio?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
                                 </div>
                             </div>
                         ))}

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, Settings, ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { useAsync } from '@/hooks/useAsync'
+import { useCrudOperations } from '@/hooks/useCrudOperations'
 
 interface Proceso {
     proceso_id: string
@@ -28,7 +30,6 @@ const TIPOS_COLABORADOR = ['A', 'B', 'C']
 export default function TabProcesos() {
     const [procesos, setProcesos] = useState<Proceso[]>([])
     const [pasos, setPasos] = useState<Record<string, Paso[]>>({})
-    const [loading, setLoading] = useState(true)
     const [expanded, setExpanded] = useState<string | null>(null)
     const [showProcesoForm, setShowProcesoForm] = useState(false)
     const [showPasoForm, setShowPasoForm] = useState<string | null>(null)
@@ -43,10 +44,23 @@ export default function TabProcesos() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
+    const { loading, execute: loadData } = useAsync()
 
-    async function loadData() {
-        setLoading(true)
+    const procesoCrud = useCrudOperations<Proceso>({
+        supabase,
+        tableName: 'proceso_operativo',
+        idField: 'proceso_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const pasoCrud = useCrudOperations<Paso>({
+        supabase,
+        tableName: 'proceso_paso',
+        idField: 'paso_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const fetchData = useCallback(async () => {
         const { data: procData } = await supabase.from('proceso_operativo').select('*').eq('activo', true).order('nombre')
         setProcesos(procData || [])
 
@@ -57,77 +71,71 @@ export default function TabProcesos() {
             map[p.proceso_id].push(p)
         })
         setPasos(map)
-        setLoading(false)
-    }
+    }, [supabase])
 
-    async function saveProceso() {
+    useEffect(() => { loadData(fetchData) }, [loadData, fetchData])
+
+    const saveProceso = useCallback(async () => {
         if (!procesoForm.proceso_id || !procesoForm.nombre) return alert('ID y Nombre requeridos')
         if (editing) {
-            await supabase.from('proceso_operativo').update({ nombre: procesoForm.nombre, categoria_default: procesoForm.categoria_default }).eq('proceso_id', editing.proceso_id)
+            await procesoCrud.update(editing.proceso_id, { nombre: procesoForm.nombre, categoria_default: procesoForm.categoria_default })
         } else {
-            await supabase.from('proceso_operativo').insert({ ...procesoForm, activo: true })
+            await procesoCrud.create({ ...procesoForm, activo: true })
         }
         resetProcesoForm()
-        loadData()
-    }
+    }, [procesoForm, editing, procesoCrud])
 
-    async function deleteProceso(id: string) {
-        if (!confirm('¿Eliminar proceso y todos sus pasos?')) return
-        await supabase.from('proceso_operativo').update({ activo: false }).eq('proceso_id', id)
-        loadData()
-    }
-
-    async function savePaso(procesoId: string) {
+    const savePaso = useCallback(async (procesoId: string) => {
         if (!pasoForm.paso_id || !pasoForm.nombre) return alert('ID y Nombre requeridos')
         if (pasoForm.peso_pct < 0 || pasoForm.peso_pct > 100) return alert('Peso debe ser entre 0 y 100')
 
         const data = { ...pasoForm, proceso_id: procesoId, activo: true }
         if (editingPaso) {
             await supabase.from('proceso_paso').update(data).eq('proceso_id', procesoId).eq('paso_id', editingPaso.paso_id)
+            loadData(fetchData)
         } else {
-            await supabase.from('proceso_paso').insert(data)
+            await pasoCrud.create(data)
         }
         resetPasoForm()
-        loadData()
-    }
+    }, [pasoForm, editingPaso, pasoCrud, supabase, loadData, fetchData])
 
-    async function deletePaso(procesoId: string, pasoId: string) {
+    const deletePaso = useCallback(async (procesoId: string, pasoId: string) => {
         if (!confirm('¿Eliminar paso?')) return
         await supabase.from('proceso_paso').update({ activo: false }).eq('proceso_id', procesoId).eq('paso_id', pasoId)
-        loadData()
-    }
+        loadData(fetchData)
+    }, [supabase, loadData, fetchData])
 
-    function resetProcesoForm() {
+    const resetProcesoForm = useCallback(() => {
         setProcesoForm({ proceso_id: '', nombre: '', categoria_default: 'RECURRENTE' })
         setEditing(null)
         setShowProcesoForm(false)
-    }
+    }, [])
 
-    function resetPasoForm() {
+    const resetPasoForm = useCallback(() => {
         setPasoForm({ paso_id: '', nombre: '', orden: 1, peso_pct: 0, tipo_colaborador: '', evidencia_requerida: false, tipo_evidencia_sugerida: '' })
         setEditingPaso(null)
         setShowPasoForm(null)
-    }
+    }, [])
 
-    function editProceso(p: Proceso) {
+    const editProceso = useCallback((p: Proceso) => {
         setProcesoForm({ proceso_id: p.proceso_id, nombre: p.nombre, categoria_default: p.categoria_default })
         setEditing(p)
         setShowProcesoForm(true)
-    }
+    }, [])
 
-    function editPaso(p: Paso) {
+    const editPaso = useCallback((p: Paso) => {
         setPasoForm({ paso_id: p.paso_id, nombre: p.nombre, orden: p.orden, peso_pct: p.peso_pct, tipo_colaborador: p.tipo_colaborador || '', evidencia_requerida: p.evidencia_requerida, tipo_evidencia_sugerida: p.tipo_evidencia_sugerida || '' })
         setEditingPaso(p)
         setShowPasoForm(p.proceso_id)
-    }
+    }, [])
 
-    function addPaso(procesoId: string) {
+    const addPaso = useCallback((procesoId: string) => {
         const existingPasos = pasos[procesoId] || []
         const nextOrden = existingPasos.length > 0 ? Math.max(...existingPasos.map(p => p.orden)) + 1 : 1
         setPasoForm({ paso_id: '', nombre: '', orden: nextOrden, peso_pct: 0, tipo_colaborador: '', evidencia_requerida: false, tipo_evidencia_sugerida: '' })
         setEditingPaso(null)
         setShowPasoForm(procesoId)
-    }
+    }, [pasos])
 
     if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
 
@@ -170,7 +178,7 @@ export default function TabProcesos() {
                             <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                 <span className="text-xs bg-teal-100 text-teal-700 px-2 py-1 rounded">{pasos[p.proceso_id]?.length || 0} pasos</span>
                                 <button onClick={() => editProceso(p)} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                <button onClick={() => deleteProceso(p.proceso_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                <button onClick={() => procesoCrud.softDelete(p.proceso_id, '¿Eliminar proceso y todos sus pasos?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
                             </div>
                         </div>
 
