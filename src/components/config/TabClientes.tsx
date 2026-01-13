@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2, Users } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2 } from 'lucide-react'
+import { useAsync } from '@/hooks/useAsync'
+import { useCrudOperations } from '@/hooks/useCrudOperations'
 
 interface Cliente {
     cliente_id: string
@@ -24,17 +26,11 @@ interface Contribuyente {
     nombre_comercial?: string
 }
 
-interface ClienteContribuyente {
-    cliente_id: string
-    contribuyente: Contribuyente
-}
-
 const SEGMENTOS = ['MICRO', 'PEQUEÑA', 'MEDIANA', 'GRANDE', 'CORPORATIVO']
 
 export default function TabClientes() {
     const [clientes, setClientes] = useState<Cliente[]>([])
     const [contribuyentes, setContribuyentes] = useState<Record<string, Contribuyente[]>>({})
-    const [loading, setLoading] = useState(true)
     const [expanded, setExpanded] = useState<string | null>(null)
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState<Cliente | null>(null)
@@ -50,10 +46,16 @@ export default function TabClientes() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
+    const { loading, execute: loadData } = useAsync()
 
-    async function loadData() {
-        setLoading(true)
+    const clienteCrud = useCrudOperations<Cliente>({
+        supabase,
+        tableName: 'cliente',
+        idField: 'cliente_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const fetchData = useCallback(async () => {
         const { data: clientesData } = await supabase.from('cliente').select('*').eq('estado', 'ACTIVO').order('nombre_comercial')
         setClientes(clientesData || [])
 
@@ -64,27 +66,25 @@ export default function TabClientes() {
             if (cc.contribuyente) map[cc.cliente_id].push(cc.contribuyente)
         })
         setContribuyentes(map)
-        setLoading(false)
-    }
+    }, [supabase])
 
-    async function saveCliente() {
+    useEffect(() => { loadData(fetchData) }, [loadData, fetchData])
+
+    const saveCliente = useCallback(async () => {
         if (!form.nombre_comercial) return alert('Nombre comercial requerido')
         if (editing) {
-            await supabase.from('cliente').update(form).eq('cliente_id', editing.cliente_id)
+            await clienteCrud.update(editing.cliente_id, form)
         } else {
-            await supabase.from('cliente').insert({ ...form, estado: 'ACTIVO' })
+            await clienteCrud.create({ ...form, estado: 'ACTIVO' })
         }
         resetForm()
-        loadData()
-    }
+    }, [form, editing, clienteCrud])
 
-    async function deleteCliente(id: string) {
-        if (!confirm('¿Eliminar cliente y todos sus RFCs asociados?')) return
-        await supabase.from('cliente').update({ estado: 'INACTIVO' }).eq('cliente_id', id)
-        loadData()
-    }
+    const deleteCliente = useCallback((id: string) => {
+        clienteCrud.softDelete(id, '¿Eliminar cliente y todos sus RFCs asociados?')
+    }, [clienteCrud])
 
-    async function saveRFC() {
+    const saveRFC = useCallback(async () => {
         if (!rfcForm.rfc || !rfcForm.razon_social || !rfcForm.cliente_id) return alert('RFC y Razón Social requeridos')
         const { data: contrib, error } = await supabase.from('contribuyente')
             .insert({ rfc: rfcForm.rfc.toUpperCase(), tipo_persona: rfcForm.tipo_persona, razon_social: rfcForm.razon_social })
@@ -94,22 +94,22 @@ export default function TabClientes() {
             await supabase.from('cliente_contribuyente').insert({ cliente_id: rfcForm.cliente_id, contribuyente_id: contrib.contribuyente_id })
         }
         setRfcForm({ rfc: '', tipo_persona: 'PM', razon_social: '', cliente_id: '' })
-        loadData()
-    }
+        loadData(fetchData)
+    }, [rfcForm, supabase, loadData, fetchData])
 
-    async function deleteRFC(contribuyenteId: string, clienteId: string) {
+    const deleteRFC = useCallback(async (contribuyenteId: string, clienteId: string) => {
         if (!confirm('¿Eliminar RFC?')) return
         await supabase.from('cliente_contribuyente').delete().eq('cliente_id', clienteId).eq('contribuyente_id', contribuyenteId)
-        loadData()
-    }
+        loadData(fetchData)
+    }, [supabase, loadData, fetchData])
 
-    function resetForm() {
+    const resetForm = useCallback(() => {
         setForm({ nombre_comercial: '', razon_social_principal: '', segmento: '', contacto_nombre: '', contacto_email: '', contacto_telefono: '', notas: '' })
         setEditing(null)
         setShowForm(false)
-    }
+    }, [])
 
-    function editCliente(c: Cliente) {
+    const editCliente = useCallback((c: Cliente) => {
         setForm({
             nombre_comercial: c.nombre_comercial,
             razon_social_principal: c.razon_social_principal || '',
@@ -121,7 +121,7 @@ export default function TabClientes() {
         })
         setEditing(c)
         setShowForm(true)
-    }
+    }, [])
 
     if (loading) return <div className="text-center py-8 text-slate-500">Cargando clientes...</div>
 

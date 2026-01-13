@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Plus, Pencil, Trash2, X, Save, FileText, Link2, Calendar } from 'lucide-react'
+import { useAsync } from '@/hooks/useAsync'
+import { useCrudOperations } from '@/hooks/useCrudOperations'
 
 interface Obligacion {
     id_obligacion: string
@@ -31,6 +33,8 @@ interface CalendarioRegla {
     dia_base?: number
     mes_base?: number
     regla_texto: string
+    motor_version?: number
+    activo?: boolean
 }
 
 const NIVELES = ['FEDERAL', 'ESTATAL', 'SEGURIDAD_SOCIAL']
@@ -40,7 +44,6 @@ export default function TabObligaciones() {
     const [obligaciones, setObligaciones] = useState<Obligacion[]>([])
     const [regimenes, setRegimenes] = useState<Regimen[]>([])
     const [calendarios, setCalendarios] = useState<CalendarioRegla[]>([])
-    const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState<Obligacion | null>(null)
     const [tab, setTab] = useState<'obligaciones' | 'regimenes' | 'calendario'>('obligaciones')
@@ -63,10 +66,30 @@ export default function TabObligaciones() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
 
-    useEffect(() => { loadData() }, [])
+    const { loading, execute: loadData } = useAsync()
 
-    async function loadData() {
-        setLoading(true)
+    const obligacionCrud = useCrudOperations<Obligacion>({
+        supabase,
+        tableName: 'obligacion_fiscal',
+        idField: 'id_obligacion',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const regimenCrud = useCrudOperations<Regimen>({
+        supabase,
+        tableName: 'regimen_fiscal',
+        idField: 'c_regimen',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const calendarioCrud = useCrudOperations<CalendarioRegla>({
+        supabase,
+        tableName: 'calendario_regla',
+        idField: 'calendario_regla_id',
+        onSuccess: () => loadData(fetchData)
+    })
+
+    const fetchData = useCallback(async () => {
         const [{ data: oblig }, { data: reg }, { data: cal }] = await Promise.all([
             supabase.from('obligacion_fiscal').select('*').eq('activo', true).order('nombre_corto'),
             supabase.from('regimen_fiscal').select('*').eq('activo', true).order('c_regimen'),
@@ -75,78 +98,58 @@ export default function TabObligaciones() {
         setObligaciones(oblig || [])
         setRegimenes(reg || [])
         setCalendarios(cal || [])
-        setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => { loadData(fetchData) }, [loadData, fetchData])
 
     // OBLIGACIONES
-    async function saveObligacion() {
+    const saveObligacion = useCallback(async () => {
         if (!form.id_obligacion || !form.nombre_corto) return alert('ID y Nombre requeridos')
         if (editing) {
-            await supabase.from('obligacion_fiscal').update(form).eq('id_obligacion', editing.id_obligacion)
+            await obligacionCrud.update(editing.id_obligacion, form)
         } else {
-            await supabase.from('obligacion_fiscal').insert({ ...form, activo: true })
+            await obligacionCrud.create({ ...form, activo: true })
         }
         resetForm()
-        loadData()
-    }
+    }, [form, editing, obligacionCrud])
 
-    async function deleteObligacion(id: string) {
-        if (!confirm('¿Eliminar obligación?')) return
-        await supabase.from('obligacion_fiscal').update({ activo: false }).eq('id_obligacion', id)
-        loadData()
-    }
-
-    function resetForm() {
+    const resetForm = useCallback(() => {
         setForm({ id_obligacion: '', nombre_corto: '', descripcion: '', nivel: 'FEDERAL', impuesto: '', periodicidad: 'MENSUAL', es_informativa: false, fundamento_resumen: '' })
         setEditing(null)
         setShowForm(false)
-    }
+    }, [])
 
-    function editObligacion(o: Obligacion) {
+    const editObligacion = useCallback((o: Obligacion) => {
         setForm({ id_obligacion: o.id_obligacion, nombre_corto: o.nombre_corto, descripcion: o.descripcion || '', nivel: o.nivel, impuesto: o.impuesto, periodicidad: o.periodicidad, es_informativa: o.es_informativa, fundamento_resumen: o.fundamento_resumen || '' })
         setEditing(o)
         setShowForm(true)
-    }
+    }, [])
 
     // REGIMENES
-    async function saveRegimen() {
+    const saveRegimen = useCallback(async () => {
         if (!regimenForm.c_regimen || !regimenForm.descripcion) return alert('Código y Descripción requeridos')
         if (editingRegimen) {
-            await supabase.from('regimen_fiscal').update(regimenForm).eq('c_regimen', editingRegimen.c_regimen)
+            await regimenCrud.update(editingRegimen.c_regimen, regimenForm)
         } else {
-            await supabase.from('regimen_fiscal').insert({ ...regimenForm, activo: true })
+            await regimenCrud.create({ ...regimenForm, activo: true })
         }
         setRegimenForm({ c_regimen: '', descripcion: '', tipo_persona: 'PM' })
         setEditingRegimen(null)
         setShowRegimenForm(false)
-        loadData()
-    }
-
-    async function deleteRegimen(id: string) {
-        if (!confirm('¿Eliminar régimen?')) return
-        await supabase.from('regimen_fiscal').update({ activo: false }).eq('c_regimen', id)
-        loadData()
-    }
+    }, [regimenForm, editingRegimen, regimenCrud])
 
     // CALENDARIO
-    async function saveCalendario() {
+    const saveCalendario = useCallback(async () => {
         if (!calendarioForm.id_evento_calendario || !calendarioForm.nombre || !calendarioForm.regla_texto) return alert('Campos requeridos')
         if (editingCalendario) {
-            await supabase.from('calendario_regla').update(calendarioForm).eq('calendario_regla_id', editingCalendario.calendario_regla_id)
+            await calendarioCrud.update(editingCalendario.calendario_regla_id, calendarioForm)
         } else {
-            await supabase.from('calendario_regla').insert({ ...calendarioForm, motor_version: 1, activo: true })
+            await calendarioCrud.create({ ...calendarioForm, motor_version: 1, activo: true })
         }
         setCalendarioForm({ id_evento_calendario: '', nombre: '', tipo_evento: 'MENSUAL', dia_base: 17, regla_texto: '' })
         setEditingCalendario(null)
         setShowCalendarioForm(false)
-        loadData()
-    }
-
-    async function deleteCalendario(id: string) {
-        if (!confirm('¿Eliminar regla?')) return
-        await supabase.from('calendario_regla').update({ activo: false }).eq('calendario_regla_id', id)
-        loadData()
-    }
+    }, [calendarioForm, editingCalendario, calendarioCrud])
 
     if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
 
@@ -212,7 +215,7 @@ export default function TabObligaciones() {
                                     <td className="p-3">{o.es_informativa ? '✓' : '-'}</td>
                                     <td className="p-3 text-right">
                                         <button onClick={() => editObligacion(o)} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                        <button onClick={() => deleteObligacion(o.id_obligacion)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                        <button onClick={() => obligacionCrud.softDelete(o.id_obligacion, '¿Eliminar obligación?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
                                     </td>
                                 </tr>
                             ))}
@@ -255,7 +258,7 @@ export default function TabObligaciones() {
                                 </div>
                                 <div>
                                     <button onClick={() => { setRegimenForm({ c_regimen: r.c_regimen, descripcion: r.descripcion, tipo_persona: r.tipo_persona }); setEditingRegimen(r); setShowRegimenForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={14} /></button>
-                                    <button onClick={() => deleteRegimen(r.c_regimen)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                                    <button onClick={() => regimenCrud.softDelete(r.c_regimen, '¿Eliminar régimen?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
                                 </div>
                             </div>
                         ))}
@@ -302,7 +305,7 @@ export default function TabObligaciones() {
                                     <td className="p-3 text-slate-500 text-xs">{c.regla_texto}</td>
                                     <td className="p-3 text-right">
                                         <button onClick={() => { setCalendarioForm({ id_evento_calendario: c.id_evento_calendario, nombre: c.nombre, tipo_evento: c.tipo_evento, dia_base: c.dia_base || 17, regla_texto: c.regla_texto }); setEditingCalendario(c); setShowCalendarioForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                        <button onClick={() => deleteCalendario(c.calendario_regla_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                        <button onClick={() => calendarioCrud.softDelete(c.calendario_regla_id, '¿Eliminar regla?')} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
                                     </td>
                                 </tr>
                             ))}
