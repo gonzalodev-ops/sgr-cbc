@@ -277,9 +277,60 @@ interface ClienteCompleto {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Fase 2: Vincular Obligación → Proceso + Calendario
+### Fase 2: Relación Cliente-Equipo y SLA
 
-#### 2.1 Nueva tabla en BD (si no existe)
+#### 2.1 Agregar team_id a tabla cliente
+```sql
+-- Agregar columna team_id a cliente
+ALTER TABLE cliente
+ADD COLUMN team_id UUID REFERENCES teams(team_id);
+
+-- Índice para búsquedas por equipo
+CREATE INDEX idx_cliente_team ON cliente(team_id);
+```
+
+#### 2.2 Crear tabla de configuración SLA
+```sql
+-- Configuración de SLA por estado
+CREATE TABLE sla_config (
+  sla_config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  estado TEXT NOT NULL UNIQUE,
+  descripcion TEXT NOT NULL,
+  sla_activo BOOLEAN NOT NULL DEFAULT true,  -- ✅ cuenta tiempo, ❌ no cuenta
+  sla_pausado BOOLEAN NOT NULL DEFAULT false, -- ⏸️ pausa el conteo
+  dias_sla_default INTEGER,                   -- días límite para este estado
+  orden_flujo INTEGER NOT NULL,               -- orden en el flujo de trabajo
+  es_estado_final BOOLEAN NOT NULL DEFAULT false,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Datos iniciales de SLA
+INSERT INTO sla_config (estado, descripcion, sla_activo, sla_pausado, dias_sla_default, orden_flujo, es_estado_final) VALUES
+('pendiente', 'No iniciado', true, false, NULL, 1, false),
+('en_curso', 'Trabajo activo', true, false, NULL, 2, false),
+('pendiente_evidencia', 'Falta subir comprobantes', true, false, 2, 3, false),
+('en_validacion', 'Revisión líder', true, false, 1, 4, false),
+('bloqueado_cliente', 'Falta info/pago cliente', false, true, NULL, 5, false),
+('presentado', 'Enviado a autoridad', true, false, NULL, 6, false),
+('pagado', 'Pago confirmado', false, false, NULL, 7, true),
+('cerrado', 'Completado', false, false, NULL, 8, true),
+('rechazado', 'Rechazado/Error', false, false, NULL, 9, true);
+```
+
+#### 2.3 UI en TabClientes para asignar equipo
+- [ ] Selector de equipo/tribu en el formulario del cliente
+- [ ] Mostrar equipo asignado en la lista de clientes
+
+#### 2.4 Nueva sección en Configuración: SLA
+- [ ] Tab o sub-tab para configurar SLA por estado
+- [ ] Poder modificar días límite, si cuenta tiempo, si pausa
+
+---
+
+### Fase 3: Vincular Obligación → Proceso + Calendario
+
+#### 3.1 Nueva tabla en BD (si no existe)
 ```sql
 -- Vincular obligación fiscal con proceso operativo
 CREATE TABLE IF NOT EXISTS obligacion_proceso (
@@ -298,7 +349,7 @@ CREATE TABLE IF NOT EXISTS obligacion_calendario (
 );
 ```
 
-#### 2.2 UI en TabObligaciones
+#### 3.2 UI en TabObligaciones
 - [ ] Al editar una obligación, agregar selectores:
   - "Proceso operativo asociado": dropdown con procesos
   - "Regla de calendario": dropdown con reglas
@@ -321,18 +372,20 @@ Crear archivo `supabase/seed_mvp_beta.sql` con:
 ## 5. Orden de Prioridad para Implementación
 
 ### Sprint 1 (Crítico para Beta)
-1. **TabClientes expandido**: Regímenes por RFC, Servicios, Tallas, Equipo
-2. **TabProcesos mejorado**: Validación de pesos, indicador visual
-3. **Seed data completo**: Procesos NOMINA e IMSS con pasos correctos
+1. **Migración BD**: Agregar `team_id` a cliente, crear tabla `sla_config`
+2. **TabClientes expandido**: Regímenes por RFC, Servicios, Tallas, **Equipo**
+3. **TabProcesos mejorado**: Validación de pesos, indicador visual
+4. **Seed data completo**: Procesos NOMINA e IMSS con pasos correctos, SLA config
 
 ### Sprint 2 (Importante)
-4. **Matriz régimen→obligación**: Vista y edición
-5. **Vinculación obligación→proceso→calendario**
+5. **Matriz régimen→obligación**: Vista y edición
+6. **Vinculación obligación→proceso→calendario**
+7. **Tab SLA**: Configuración de SLA por estado
 
 ### Sprint 3 (Nice to have)
-6. Wizard de alta de cliente paso a paso
-7. Importación masiva desde Excel con validaciones
-8. Dashboard de "completitud" de configuración
+8. Wizard de alta de cliente paso a paso
+9. Importación masiva desde Excel con validaciones
+10. Dashboard de "completitud" de configuración
 
 ---
 
@@ -372,11 +425,13 @@ Una obligación está **correctamente configurada** cuando tiene:
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/config/TabClientes.tsx` | Agregar regímenes, servicios, tallas, equipo |
+| `supabase/migrations/xxx_add_team_and_sla.sql` | **NUEVO**: Migración para team_id y sla_config |
+| `src/components/config/TabClientes.tsx` | Agregar regímenes, servicios, tallas, **equipo** |
 | `src/components/config/TabProcesos.tsx` | Validación de pesos, indicador visual |
 | `src/components/config/TabObligaciones.tsx` | Nueva sub-tab matriz, vínculos proceso/calendario |
-| `supabase/schema.sql` | Posible: tablas obligacion_proceso, obligacion_calendario |
-| `supabase/seed_data_fixed.sql` | Datos completos para MVP |
+| `src/components/config/TabSLA.tsx` | **NUEVO**: Configuración de SLA por estado |
+| `supabase/schema.sql` | Agregar tablas: sla_config, obligacion_proceso, obligacion_calendario |
+| `supabase/seed_data_fixed.sql` | Datos completos para MVP + SLA config |
 | `src/lib/types/database.ts` | Tipos actualizados |
 
 ---
