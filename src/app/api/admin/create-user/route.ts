@@ -52,23 +52,28 @@ export async function POST(req: NextRequest) {
         })
 
         if (authError) {
-            return NextResponse.json({ success: false, error: authError.message }, { status: 400 })
+            // Mensajes más amigables para errores comunes
+            let errorMessage = authError.message
+            if (authError.message.includes('already been registered') || authError.message.includes('already exists')) {
+                errorMessage = 'Este email ya está registrado en el sistema'
+            }
+            return NextResponse.json({ success: false, error: errorMessage }, { status: 400 })
         }
 
         if (!authData.user) {
             return NextResponse.json({ success: false, error: 'No se pudo crear el usuario' }, { status: 500 })
         }
 
-        // Insertar en tabla users
+        // Insertar/Actualizar en tabla users (upsert porque el trigger on_auth_user_created puede haber creado el registro)
         const { error: userError } = await supabaseAdmin
             .from('users')
-            .insert({
+            .upsert({
                 user_id: authData.user.id,
                 email,
                 nombre,
                 rol_global: rol_global || 'COLABORADOR',
                 activo: true
-            })
+            }, { onConflict: 'user_id' })
 
         if (userError) {
             // Rollback: eliminar usuario de auth
