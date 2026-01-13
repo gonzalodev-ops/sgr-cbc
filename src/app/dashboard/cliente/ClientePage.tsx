@@ -4,6 +4,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Search } from 'lucide-react'
 
+interface ServicioInfo {
+    servicio_id: string
+    nombre: string
+}
+
 interface ClienteCompleto {
     cliente_id: string
     nombre_comercial: string
@@ -13,7 +18,7 @@ interface ClienteCompleto {
         razon_social: string
         tipo_persona: string
     }[]
-    servicios: string[]
+    servicios: ServicioInfo[]
     obligacionesCubiertas: number
     obligacionesTotales: number
     tareasActivas: number
@@ -50,10 +55,10 @@ export default function ClientesPage() {
                 .eq('estado', 'ACTIVO')
                 .order('nombre_comercial')
 
-            // 2. Servicios por cliente
+            // 2. Servicios por cliente (con nombre del servicio)
             const { data: serviciosData } = await supabase
                 .from('cliente_servicio')
-                .select('cliente_id, servicio_id')
+                .select('cliente_id, servicio_id, servicio:servicio_id(nombre)')
                 .eq('activo', true)
 
             // 3. Tareas por cliente
@@ -74,7 +79,10 @@ export default function ClientesPage() {
 
                 const serviciosCliente = (serviciosData || [])
                     .filter((s: any) => s.cliente_id === c.cliente_id)
-                    .map((s: any) => s.servicio_id)
+                    .map((s: any) => ({
+                        servicio_id: s.servicio_id,
+                        nombre: s.servicio?.nombre || s.servicio_id
+                    }))
 
                 const tareas = (tareasData || []).filter((t: any) => t.cliente_id === c.cliente_id)
                 const tareasActivas = tareas.filter((t: any) =>
@@ -85,8 +93,9 @@ export default function ClientesPage() {
                 ).length
 
                 // Obligaciones cubiertas por los servicios
+                const servicioIds = serviciosCliente.map(s => s.servicio_id)
                 const obligCubiertas = (servicioOblig || [])
-                    .filter((so: any) => serviciosCliente.includes(so.servicio_id)).length
+                    .filter((so: any) => servicioIds.includes(so.servicio_id)).length
 
                 return {
                     cliente_id: c.cliente_id,
@@ -251,7 +260,7 @@ export default function ClientesPage() {
                                                     <div className="flex flex-wrap gap-2">
                                                         {c.servicios.map((s, i) => (
                                                             <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium">
-                                                                {s}
+                                                                {s.nombre}
                                                             </span>
                                                         ))}
                                                     </div>
