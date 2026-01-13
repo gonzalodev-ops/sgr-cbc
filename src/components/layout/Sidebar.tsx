@@ -44,9 +44,19 @@ export function Sidebar() {
 
     async function handleLogout() {
         setLoggingOut(true)
-        await supabase.auth.signOut()
-        router.push('/login')
-        router.refresh()
+        try {
+            await supabase.auth.signOut({ scope: 'global' })
+            // Forzar limpieza de cookies manualmente si es necesario
+            document.cookie.split(";").forEach((c) => {
+                if (c.includes('supabase') || c.includes('sb-')) {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+                }
+            })
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error)
+        }
+        // Redirigir y forzar recarga completa
+        window.location.href = '/login'
     }
 
     return (
