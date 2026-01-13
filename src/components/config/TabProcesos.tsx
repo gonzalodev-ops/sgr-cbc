@@ -23,7 +23,12 @@ interface Paso {
     tipo_evidencia_sugerida?: string
 }
 
-const TIPOS_COLABORADOR = ['A', 'B', 'C']
+const TIPOS_COLABORADOR = [
+    { value: 'LIDER', label: 'Líder' },
+    { value: 'A', label: 'Aux A' },
+    { value: 'B', label: 'Aux B' },
+    { value: 'C', label: 'Aux C' }
+]
 
 export default function TabProcesos() {
     const [procesos, setProcesos] = useState<Proceso[]>([])
@@ -250,7 +255,7 @@ export default function TabProcesos() {
                                                 <input type="number" placeholder="Peso %" value={pasoForm.peso_pct} onChange={e => setPasoForm({ ...pasoForm, peso_pct: parseFloat(e.target.value) || 0 })} className="px-2 py-1 border rounded text-sm text-slate-900 bg-white" min={0} max={100} step={1} />
                                                 <select value={pasoForm.tipo_colaborador} onChange={e => setPasoForm({ ...pasoForm, tipo_colaborador: e.target.value })} className="px-2 py-1 border rounded text-sm text-slate-900 bg-white">
                                                     <option value="">Tipo</option>
-                                                    {TIPOS_COLABORADOR.map(t => <option key={t} value={t}>Aux {t}</option>)}
+                                                    {TIPOS_COLABORADOR.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                                 </select>
                                             </div>
                                             <div className="flex gap-4">
@@ -271,7 +276,7 @@ export default function TabProcesos() {
                                                         <p className="text-sm font-medium">{paso.nombre}</p>
                                                         <p className="text-xs text-slate-400">
                                                             <span className="font-semibold text-teal-600">{paso.peso_pct}%</span>
-                                                            {paso.tipo_colaborador && ` | Aux ${paso.tipo_colaborador}`}
+                                                            {paso.tipo_colaborador && ` | ${paso.tipo_colaborador === 'LIDER' ? 'Líder' : `Aux ${paso.tipo_colaborador}`}`}
                                                             {paso.evidencia_requerida && ' | Evidencia'}
                                                         </p>
                                                     </div>
