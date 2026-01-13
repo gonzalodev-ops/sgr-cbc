@@ -424,35 +424,35 @@ export default function TabClientes() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Comercial *</label>
-                                    <input value={wizardCliente.nombre_comercial} onChange={e => setWizardCliente({ ...wizardCliente, nombre_comercial: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Ej: Mi Empresa" />
+                                    <input value={wizardCliente.nombre_comercial} onChange={e => setWizardCliente({ ...wizardCliente, nombre_comercial: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="Ej: Mi Empresa" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Razón Social</label>
-                                    <input value={wizardCliente.razon_social_principal} onChange={e => setWizardCliente({ ...wizardCliente, razon_social_principal: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Ej: Mi Empresa S.A. de C.V." />
+                                    <input value={wizardCliente.razon_social_principal} onChange={e => setWizardCliente({ ...wizardCliente, razon_social_principal: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="Ej: Mi Empresa S.A. de C.V." />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Segmento</label>
-                                    <select value={wizardCliente.segmento} onChange={e => setWizardCliente({ ...wizardCliente, segmento: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                                    <select value={wizardCliente.segmento} onChange={e => setWizardCliente({ ...wizardCliente, segmento: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                         <option value="">-- Seleccionar --</option>
                                         {SEGMENTOS.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Contacto: Nombre</label>
-                                    <input value={wizardCliente.contacto_nombre} onChange={e => setWizardCliente({ ...wizardCliente, contacto_nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Nombre del contacto" />
+                                    <input value={wizardCliente.contacto_nombre} onChange={e => setWizardCliente({ ...wizardCliente, contacto_nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="Nombre del contacto" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Contacto: Email</label>
-                                    <input type="email" value={wizardCliente.contacto_email} onChange={e => setWizardCliente({ ...wizardCliente, contacto_email: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="email@ejemplo.com" />
+                                    <input type="email" value={wizardCliente.contacto_email} onChange={e => setWizardCliente({ ...wizardCliente, contacto_email: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="email@ejemplo.com" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Contacto: Teléfono</label>
-                                    <input type="tel" value={wizardCliente.contacto_telefono} onChange={e => setWizardCliente({ ...wizardCliente, contacto_telefono: e.target.value.replace(/[^0-9+\-() ]/g, '') })} className="w-full px-3 py-2 border rounded-lg" placeholder="(55) 1234-5678" maxLength={15} />
+                                    <input type="tel" value={wizardCliente.contacto_telefono} onChange={e => setWizardCliente({ ...wizardCliente, contacto_telefono: e.target.value.replace(/[^0-9+\-() ]/g, '') })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="(55) 1234-5678" maxLength={15} />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Notas</label>
-                                <textarea value={wizardCliente.notas} onChange={e => setWizardCliente({ ...wizardCliente, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg" rows={2} placeholder="Notas adicionales..." />
+                                <textarea value={wizardCliente.notas} onChange={e => setWizardCliente({ ...wizardCliente, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" rows={2} placeholder="Notas adicionales..." />
                             </div>
                         </div>
                     )}
@@ -489,18 +489,18 @@ export default function TabClientes() {
                                     </div>
                                     <div>
                                         <label className="block text-xs text-slate-600 mb-1">Tipo</label>
-                                        <select value={tempRFC.tipo_persona} onChange={e => setTempRFC({ ...tempRFC, tipo_persona: e.target.value, regimenes: [] })} className="w-full px-3 py-2 border rounded-lg">
+                                        <select value={tempRFC.tipo_persona} onChange={e => setTempRFC({ ...tempRFC, tipo_persona: e.target.value, regimenes: [] })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                             <option value="PM">Persona Moral</option>
                                             <option value="PF">Persona Física</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block text-xs text-slate-600 mb-1">Razón Social *</label>
-                                        <input value={tempRFC.razon_social} onChange={e => setTempRFC({ ...tempRFC, razon_social: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Nombre o razón social" />
+                                        <input value={tempRFC.razon_social} onChange={e => setTempRFC({ ...tempRFC, razon_social: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" placeholder="Nombre o razón social" />
                                     </div>
                                     <div>
                                         <label className="block text-xs text-slate-600 mb-1">Equipo</label>
-                                        <select value={tempRFC.team_id} onChange={e => setTempRFC({ ...tempRFC, team_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                                        <select value={tempRFC.team_id} onChange={e => setTempRFC({ ...tempRFC, team_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                             <option value="">Sin asignar</option>
                                             {teams.map(t => <option key={t.team_id} value={t.team_id}>{t.nombre}</option>)}
                                         </select>
@@ -642,17 +642,17 @@ export default function TabClientes() {
                         <button onClick={() => setEditing(null)}><X size={20} className="text-slate-400" /></button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                        <input placeholder="Nombre Comercial *" value={wizardCliente.nombre_comercial} onChange={e => setWizardCliente({ ...wizardCliente, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input placeholder="Razón Social" value={wizardCliente.razon_social_principal} onChange={e => setWizardCliente({ ...wizardCliente, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <select value={wizardCliente.segmento} onChange={e => setWizardCliente({ ...wizardCliente, segmento: e.target.value })} className="px-3 py-2 border rounded-lg">
+                        <input placeholder="Nombre Comercial *" value={wizardCliente.nombre_comercial} onChange={e => setWizardCliente({ ...wizardCliente, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white" />
+                        <input placeholder="Razón Social" value={wizardCliente.razon_social_principal} onChange={e => setWizardCliente({ ...wizardCliente, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white" />
+                        <select value={wizardCliente.segmento} onChange={e => setWizardCliente({ ...wizardCliente, segmento: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white">
                             <option value="">-- Segmento --</option>
                             {SEGMENTOS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <input placeholder="Contacto: Nombre" value={wizardCliente.contacto_nombre} onChange={e => setWizardCliente({ ...wizardCliente, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input placeholder="Contacto: Email" value={wizardCliente.contacto_email} onChange={e => setWizardCliente({ ...wizardCliente, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg" />
-                        <input type="tel" placeholder="Contacto: Teléfono" value={wizardCliente.contacto_telefono} onChange={e => setWizardCliente({ ...wizardCliente, contacto_telefono: e.target.value.replace(/[^0-9+\-() ]/g, '') })} className="px-3 py-2 border rounded-lg" maxLength={15} />
+                        <input placeholder="Contacto: Nombre" value={wizardCliente.contacto_nombre} onChange={e => setWizardCliente({ ...wizardCliente, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white" />
+                        <input placeholder="Contacto: Email" value={wizardCliente.contacto_email} onChange={e => setWizardCliente({ ...wizardCliente, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white" />
+                        <input type="tel" placeholder="Contacto: Teléfono" value={wizardCliente.contacto_telefono} onChange={e => setWizardCliente({ ...wizardCliente, contacto_telefono: e.target.value.replace(/[^0-9+\-() ]/g, '') })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white" maxLength={15} />
                     </div>
-                    <textarea placeholder="Notas" value={wizardCliente.notas} onChange={e => setWizardCliente({ ...wizardCliente, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg" rows={2} />
+                    <textarea placeholder="Notas" value={wizardCliente.notas} onChange={e => setWizardCliente({ ...wizardCliente, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white" rows={2} />
                     <button onClick={saveClienteEdit} className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"><Save size={18} /> Guardar Cambios</button>
                 </div>
             )}
@@ -723,8 +723,8 @@ export default function TabClientes() {
                                         <p className="text-sm text-slate-400 mb-2">Sin RFCs asociados</p>
                                     )}
                                     <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200">
-                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono" maxLength={13} />
-                                        <input placeholder="Razón Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1" />
+                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono text-slate-900 bg-white" maxLength={13} />
+                                        <input placeholder="Razón Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 text-slate-900 bg-white" />
                                         <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.tipo_persona : 'PM'} onChange={e => setRfcForm({ ...rfcForm, tipo_persona: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm">
                                             <option value="PM">PM</option>
                                             <option value="PF">PF</option>
