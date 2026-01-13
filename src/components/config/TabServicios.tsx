@@ -113,9 +113,9 @@ export default function TabServicios() {
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between"><h4 className="font-semibold text-indigo-800">{editingServicio ? 'Editar' : 'Nuevo'} Servicio</h4><button onClick={resetServicioForm}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
-                                <input placeholder="ID (CONTABILIDAD) *" value={servicioForm.servicio_id} onChange={e => setServicioForm({ ...servicioForm, servicio_id: e.target.value.toUpperCase() })} disabled={!!editingServicio} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono" />
-                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
-                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                                <input placeholder="ID (CONTABILIDAD) *" value={servicioForm.servicio_id} onChange={e => setServicioForm({ ...servicioForm, servicio_id: e.target.value.toUpperCase() })} disabled={!!editingServicio} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono text-slate-900 bg-white" />
+                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
                             </div>
                             <button onClick={saveServicio} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"><Save size={18} /> Guardar</button>
                         </div>
@@ -171,7 +171,7 @@ export default function TabServicios() {
                                                 type="number"
                                                 value={t.ponderacion}
                                                 onChange={e => updateTallaPonderacion(t.talla_id, parseInt(e.target.value))}
-                                                className="w-20 px-2 py-1 border rounded text-center"
+                                                className="w-20 px-2 py-1 border rounded text-center text-slate-900 bg-white"
                                                 min={10}
                                                 max={500}
                                             />%

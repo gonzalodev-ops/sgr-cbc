@@ -124,7 +124,7 @@ export default function TabSLA() {
                                         type="text"
                                         value={config.descripcion}
                                         onChange={e => updateConfig(config.sla_config_id, 'descripcion', e.target.value)}
-                                        className="w-full px-2 py-1 border rounded text-sm bg-transparent hover:bg-white focus:bg-white"
+                                        className="w-full px-2 py-1 border rounded text-sm text-slate-900 bg-white"
                                     />
                                 </td>
                                 <td className="p-3 text-center">
@@ -153,7 +153,7 @@ export default function TabSLA() {
                                         placeholder="-"
                                         min={1}
                                         max={365}
-                                        className="w-16 px-2 py-1 border rounded text-sm text-center"
+                                        className="w-16 px-2 py-1 border rounded text-sm text-center text-slate-900 bg-white"
                                     />
                                 </td>
                                 <td className="p-3 text-center">

@@ -302,13 +302,13 @@ export default function TabObligaciones() {
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between"><h4 className="font-semibold text-blue-800">{editing ? 'Editar' : 'Nueva'} Obligacion</h4><button onClick={resetForm}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
-                                <input placeholder="ID (ISR_MENSUAL) *" value={form.id_obligacion} onChange={e => setForm({ ...form, id_obligacion: e.target.value.toUpperCase() })} disabled={!!editing} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono placeholder:text-slate-400" />
-                                <input placeholder="Nombre Corto *" value={form.nombre_corto} onChange={e => setForm({ ...form, nombre_corto: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-400" />
-                                <input placeholder="Impuesto (ISR, IVA...)" value={form.impuesto} onChange={e => setForm({ ...form, impuesto: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-400" />
-                                <select value={form.nivel} onChange={e => setForm({ ...form, nivel: e.target.value })} className="px-3 py-2 border rounded-lg">
+                                <input placeholder="ID (ISR_MENSUAL) *" value={form.id_obligacion} onChange={e => setForm({ ...form, id_obligacion: e.target.value.toUpperCase() })} disabled={!!editing} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono text-slate-900 bg-white placeholder:text-slate-500" />
+                                <input placeholder="Nombre Corto *" value={form.nombre_corto} onChange={e => setForm({ ...form, nombre_corto: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                                <input placeholder="Impuesto (ISR, IVA...)" value={form.impuesto} onChange={e => setForm({ ...form, impuesto: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                                <select value={form.nivel} onChange={e => setForm({ ...form, nivel: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                     {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
                                 </select>
-                                <select value={form.periodicidad} onChange={e => setForm({ ...form, periodicidad: e.target.value })} className="px-3 py-2 border rounded-lg">
+                                <select value={form.periodicidad} onChange={e => setForm({ ...form, periodicidad: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                     {PERIODICIDADES.map(p => <option key={p} value={p}>{p}</option>)}
                                 </select>
                                 <label className="flex items-center gap-2 px-3 py-2">
@@ -316,8 +316,8 @@ export default function TabObligaciones() {
                                     Es informativa
                                 </label>
                             </div>
-                            <input placeholder="Descripcion" value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-400" />
-                            <input placeholder="Fundamento Legal" value={form.fundamento_resumen} onChange={e => setForm({ ...form, fundamento_resumen: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-400" />
+                            <input placeholder="Descripcion" value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                            <input placeholder="Fundamento Legal" value={form.fundamento_resumen} onChange={e => setForm({ ...form, fundamento_resumen: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
 
                             {/* Vinculaciones */}
                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-blue-200">
@@ -325,7 +325,7 @@ export default function TabObligaciones() {
                                     <label className="text-xs text-slate-500 font-medium flex items-center gap-1 mb-1">
                                         <Settings size={12} /> Proceso Operativo
                                     </label>
-                                    <select value={form.proceso_id} onChange={e => setForm({ ...form, proceso_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                                    <select value={form.proceso_id} onChange={e => setForm({ ...form, proceso_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                         <option value="">-- Sin proceso --</option>
                                         {procesos.map(p => <option key={p.proceso_id} value={p.proceso_id}>{p.nombre}</option>)}
                                     </select>
@@ -334,7 +334,7 @@ export default function TabObligaciones() {
                                     <label className="text-xs text-slate-500 font-medium flex items-center gap-1 mb-1">
                                         <Calendar size={12} /> Regla de Calendario
                                     </label>
-                                    <select value={form.calendario_regla_id} onChange={e => setForm({ ...form, calendario_regla_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg">
+                                    <select value={form.calendario_regla_id} onChange={e => setForm({ ...form, calendario_regla_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                         <option value="">-- Sin calendario --</option>
                                         {calendarios.map(c => <option key={c.calendario_regla_id} value={c.calendario_regla_id}>{c.nombre}</option>)}
                                     </select>
@@ -395,9 +395,9 @@ export default function TabObligaciones() {
                         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between"><h4 className="font-semibold text-purple-800">{editingRegimen ? 'Editar' : 'Nuevo'} Regimen</h4><button onClick={() => { setShowRegimenForm(false); setEditingRegimen(null) }}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
-                                <input placeholder="Codigo (601) *" value={regimenForm.c_regimen} onChange={e => setRegimenForm({ ...regimenForm, c_regimen: e.target.value })} disabled={!!editingRegimen} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-400" />
-                                <input placeholder="Descripcion *" value={regimenForm.descripcion} onChange={e => setRegimenForm({ ...regimenForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-400" />
-                                <select value={regimenForm.tipo_persona} onChange={e => setRegimenForm({ ...regimenForm, tipo_persona: e.target.value })} className="px-3 py-2 border rounded-lg">
+                                <input placeholder="Codigo (601) *" value={regimenForm.c_regimen} onChange={e => setRegimenForm({ ...regimenForm, c_regimen: e.target.value })} disabled={!!editingRegimen} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 text-slate-900 bg-white placeholder:text-slate-500" />
+                                <input placeholder="Descripcion *" value={regimenForm.descripcion} onChange={e => setRegimenForm({ ...regimenForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                                <select value={regimenForm.tipo_persona} onChange={e => setRegimenForm({ ...regimenForm, tipo_persona: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                     <option value="PF">Persona Fisica</option>
                                     <option value="PM">Persona Moral</option>
                                     <option value="AMBOS">Ambos</option>
@@ -501,15 +501,15 @@ export default function TabObligaciones() {
                         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
                             <div className="flex justify-between"><h4 className="font-semibold text-amber-800">{editingCalendario ? 'Editar' : 'Nueva'} Regla</h4><button onClick={() => { setShowCalendarioForm(false); setEditingCalendario(null) }}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-4 gap-3">
-                                <input placeholder="ID Evento *" value={calendarioForm.id_evento_calendario} onChange={e => setCalendarioForm({ ...calendarioForm, id_evento_calendario: e.target.value.toUpperCase() })} disabled={!!editingCalendario} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-400" />
-                                <input placeholder="Nombre *" value={calendarioForm.nombre} onChange={e => setCalendarioForm({ ...calendarioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-400" />
-                                <select value={calendarioForm.tipo_evento} onChange={e => setCalendarioForm({ ...calendarioForm, tipo_evento: e.target.value })} className="px-3 py-2 border rounded-lg">
+                                <input placeholder="ID Evento *" value={calendarioForm.id_evento_calendario} onChange={e => setCalendarioForm({ ...calendarioForm, id_evento_calendario: e.target.value.toUpperCase() })} disabled={!!editingCalendario} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 text-slate-900 bg-white placeholder:text-slate-500" />
+                                <input placeholder="Nombre *" value={calendarioForm.nombre} onChange={e => setCalendarioForm({ ...calendarioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
+                                <select value={calendarioForm.tipo_evento} onChange={e => setCalendarioForm({ ...calendarioForm, tipo_evento: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white">
                                     <option value="MENSUAL">Mensual</option>
                                     <option value="ANUAL">Anual</option>
                                 </select>
-                                <input type="number" placeholder="Dia base" value={calendarioForm.dia_base} onChange={e => setCalendarioForm({ ...calendarioForm, dia_base: parseInt(e.target.value) })} className="px-3 py-2 border rounded-lg placeholder:text-slate-400" min={1} max={31} />
+                                <input type="number" placeholder="Dia base" value={calendarioForm.dia_base} onChange={e => setCalendarioForm({ ...calendarioForm, dia_base: parseInt(e.target.value) })} className="px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" min={1} max={31} />
                             </div>
-                            <input placeholder="Regla Texto (ej: 'Dia 17 del mes siguiente') *" value={calendarioForm.regla_texto} onChange={e => setCalendarioForm({ ...calendarioForm, regla_texto: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-400" />
+                            <input placeholder="Regla Texto (ej: 'Dia 17 del mes siguiente') *" value={calendarioForm.regla_texto} onChange={e => setCalendarioForm({ ...calendarioForm, regla_texto: e.target.value })} className="w-full px-3 py-2 border rounded-lg text-slate-900 bg-white placeholder:text-slate-500" />
                             <button onClick={saveCalendario} className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg"><Save size={18} /> Guardar</button>
                         </div>
                     )}
