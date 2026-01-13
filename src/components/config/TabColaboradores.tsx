@@ -136,7 +136,7 @@ export default function TabColaboradores() {
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex gap-4 items-end">
                         <div className="flex-1">
                             <label className="text-xs text-purple-700 font-medium">Nombre del Equipo *</label>
-                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-600" placeholder="Ej: Equipo Isidora" />
+                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-700" placeholder="Ej: Equipo Isidora" />
                         </div>
                         <button onClick={saveTeam} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"><Save size={18} /></button>
                         <button onClick={resetTeamForm} className="px-4 py-2 border border-slate-300 rounded-lg"><X size={18} /></button>
@@ -174,8 +174,8 @@ export default function TabColaboradores() {
                             <button onClick={resetUserForm}><X size={20} className="text-slate-400" /></button>
                         </div>
                         <div className="grid grid-cols-4 gap-3">
-                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-600" />
+                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-700" />
+                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-700" />
                             <select value={userForm.rol_global} onChange={e => setUserForm({ ...userForm, rol_global: e.target.value })} className="px-3 py-2 border rounded-lg">
                                 {ROLES_GLOBAL.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
