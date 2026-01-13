@@ -74,10 +74,13 @@ CREATE TABLE contribuyente (
   razon_social TEXT NOT NULL,
   nombre_comercial TEXT,
   estado_fiscal TEXT,
+  team_id UUID REFERENCES teams(team_id),
   activo BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX idx_contribuyente_team ON contribuyente(team_id);
 
 CREATE TABLE cliente_contribuyente (
   cliente_id UUID NOT NULL REFERENCES cliente(cliente_id),
@@ -120,6 +123,7 @@ CREATE TABLE servicio_obligacion (
 CREATE TABLE cliente_servicio (
   cliente_id UUID NOT NULL REFERENCES cliente(cliente_id),
   servicio_id UUID NOT NULL REFERENCES servicio(servicio_id),
+  talla_id TEXT REFERENCES talla(talla_id),
   vigencia_desde DATE,
   vigencia_hasta DATE,
   activo BOOLEAN NOT NULL DEFAULT true,
@@ -328,6 +332,41 @@ CREATE TABLE tarea_documento (
 CREATE INDEX idx_tarea_documento_tarea ON tarea_documento(tarea_id);
 
 -- ============================================
+-- SLA Y CONFIGURACIÓN OPERATIVA
+-- ============================================
+
+CREATE TABLE sla_config (
+  sla_config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  estado TEXT NOT NULL UNIQUE,
+  descripcion TEXT NOT NULL,
+  sla_activo BOOLEAN NOT NULL DEFAULT true,
+  sla_pausado BOOLEAN NOT NULL DEFAULT false,
+  dias_sla_default INTEGER,
+  orden_flujo INTEGER NOT NULL,
+  es_estado_final BOOLEAN NOT NULL DEFAULT false,
+  color_ui TEXT,
+  icono_ui TEXT,
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE obligacion_proceso (
+  id_obligacion TEXT NOT NULL REFERENCES obligacion_fiscal(id_obligacion),
+  proceso_id TEXT NOT NULL REFERENCES proceso_operativo(proceso_id),
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (id_obligacion, proceso_id)
+);
+
+CREATE TABLE obligacion_calendario (
+  id_obligacion TEXT NOT NULL REFERENCES obligacion_fiscal(id_obligacion),
+  calendario_regla_id UUID NOT NULL REFERENCES calendario_regla(calendario_regla_id),
+  activo BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (id_obligacion, calendario_regla_id)
+);
+
+-- ============================================
 -- USUARIOS Y EQUIPOS
 -- ============================================
 
@@ -428,3 +467,20 @@ INSERT INTO regimen_fiscal (c_regimen, descripcion, tipo_persona) VALUES
   ('612', 'Personas Físicas con Actividades Empresariales y Profesionales', 'PF'),
   ('625', 'Régimen de las Actividades Empresariales con ingresos a través de Plataformas Tecnológicas', 'PF'),
   ('626', 'Régimen Simplificado de Confianza', 'AMBOS');
+
+-- Configuración SLA por estado
+INSERT INTO sla_config (estado, descripcion, sla_activo, sla_pausado, dias_sla_default, orden_flujo, es_estado_final, color_ui) VALUES
+  ('pendiente', 'No iniciado', true, false, NULL, 1, false, 'slate'),
+  ('en_curso', 'Trabajo activo', true, false, NULL, 2, false, 'blue'),
+  ('pendiente_evidencia', 'Falta subir comprobantes', true, false, 2, 3, false, 'amber'),
+  ('en_validacion', 'Revisión líder', true, false, 1, 4, false, 'purple'),
+  ('bloqueado_cliente', 'Falta info/pago cliente', false, true, NULL, 5, false, 'red'),
+  ('presentado', 'Enviado a autoridad', true, false, NULL, 6, false, 'teal'),
+  ('pagado', 'Pago confirmado', false, false, NULL, 7, true, 'green'),
+  ('cerrado', 'Completado', false, false, NULL, 8, true, 'green'),
+  ('rechazado', 'Rechazado/Error', false, false, NULL, 9, true, 'red');
+
+-- Vinculación obligación → proceso operativo
+INSERT INTO obligacion_proceso (id_obligacion, proceso_id) VALUES
+  ('OBL-NOMINA-Q', 'NOMINA'),
+  ('OBL-IMSS-M', 'IMSS');

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
     LayoutDashboard,
     Users,
@@ -15,6 +15,7 @@ import {
     Shield
 } from 'lucide-react'
 import { useState } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
 const navigation = [
     { name: 'TMR', href: '/dashboard', icon: LayoutDashboard },
@@ -32,7 +33,31 @@ const bottomNavigation = [
 
 export function Sidebar() {
     const pathname = usePathname()
+    const router = useRouter()
     const [collapsed, setCollapsed] = useState(false)
+    const [loggingOut, setLoggingOut] = useState(false)
+
+    const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    async function handleLogout() {
+        setLoggingOut(true)
+        try {
+            await supabase.auth.signOut({ scope: 'global' })
+            // Forzar limpieza de cookies manualmente si es necesario
+            document.cookie.split(";").forEach((c) => {
+                if (c.includes('supabase') || c.includes('sb-')) {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+                }
+            })
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error)
+        }
+        // Redirigir y forzar recarga completa
+        window.location.href = '/login'
+    }
 
     return (
         <div className={`flex flex-col h-full bg-slate-900 text-white transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
@@ -95,11 +120,13 @@ export function Sidebar() {
                 })}
 
                 <button
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-slate-400 hover:bg-red-600/20 hover:text-red-400 transition-colors"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors ${loggingOut ? 'text-slate-500 cursor-not-allowed' : 'text-slate-400 hover:bg-red-600/20 hover:text-red-400'}`}
                     title={collapsed ? 'Cerrar sesión' : undefined}
                 >
-                    <LogOut size={20} />
-                    {!collapsed && <span>Cerrar sesión</span>}
+                    <LogOut size={20} className={loggingOut ? 'animate-spin' : ''} />
+                    {!collapsed && <span>{loggingOut ? 'Cerrando...' : 'Cerrar sesión'}</span>}
                 </button>
             </div>
         </div>

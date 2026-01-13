@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { ExcelImport } from '@/components/import/ExcelImport'
-import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle } from 'lucide-react'
+import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle, Clock } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 
 // Importar componentes dinámicamente para evitar problemas de SSR
@@ -13,16 +13,18 @@ const TabColaboradores = dynamicImport(() => import('@/components/config/TabCola
 const TabObligaciones = dynamicImport(() => import('@/components/config/TabObligaciones'), { ssr: false })
 const TabProcesos = dynamicImport(() => import('@/components/config/TabProcesos'), { ssr: false })
 const TabServicios = dynamicImport(() => import('@/components/config/TabServicios'), { ssr: false })
+const TabSLA = dynamicImport(() => import('@/components/config/TabSLA'), { ssr: false })
 const TabDatos = dynamicImport(() => import('@/components/config/TabDatos'), { ssr: false })
 
-type TabType = 'clientes' | 'colaboradores' | 'obligaciones' | 'procesos' | 'servicios' | 'datos'
+type TabType = 'clientes' | 'colaboradores' | 'obligaciones' | 'procesos' | 'servicios' | 'sla' | 'datos'
 
 const tabs = [
     { id: 'clientes' as const, label: 'Clientes', icon: Building2, color: 'emerald' },
     { id: 'colaboradores' as const, label: 'Colaboradores', icon: Users, color: 'blue' },
-    { id: 'obligaciones' as const, label: 'Catálogo Fiscal', icon: FileText, color: 'purple' },
+    { id: 'obligaciones' as const, label: 'Catalogo Fiscal', icon: FileText, color: 'purple' },
     { id: 'procesos' as const, label: 'Procesos', icon: Settings, color: 'teal' },
     { id: 'servicios' as const, label: 'Servicios/Tallas', icon: Package, color: 'indigo' },
+    { id: 'sla' as const, label: 'SLA', icon: Clock, color: 'rose' },
     { id: 'datos' as const, label: 'Base de Datos', icon: Database, color: 'amber' },
 ]
 
@@ -62,6 +64,7 @@ export default function ConfiguracionPage() {
                     {activeTab === 'obligaciones' && <TabObligaciones />}
                     {activeTab === 'procesos' && <TabProcesos />}
                     {activeTab === 'servicios' && <TabServicios />}
+                    {activeTab === 'sla' && <TabSLA />}
                     {activeTab === 'datos' && <TabDatos />}
                 </div>
             </div>
@@ -76,6 +79,7 @@ function getColor(name: string): string {
         purple: '#8b5cf6',
         teal: '#14b8a6',
         indigo: '#6366f1',
+        rose: '#f43f5e',
         amber: '#f59e0b'
     }
     return colors[name] || '#6b7280'
