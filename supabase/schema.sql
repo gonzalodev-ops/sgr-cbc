@@ -258,6 +258,10 @@ CREATE TABLE tarea (
   revisor_usuario_id UUID,
   comentarios TEXT,
   origen TEXT NOT NULL DEFAULT 'MANUAL' CHECK (origen IN ('AUTO_CALENDARIO', 'MANUAL', 'IMPORTACION')),
+  -- VoBo Lider fields
+  vobo_lider BOOLEAN NOT NULL DEFAULT false,
+  vobo_lider_at TIMESTAMPTZ,
+  vobo_lider_por UUID REFERENCES users(user_id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (contribuyente_id, id_obligacion, periodo_fiscal)

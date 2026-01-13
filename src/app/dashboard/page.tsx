@@ -69,7 +69,7 @@ export default function TMRPage() {
                 })
             }
 
-            // 3. Query principal de tareas
+            // 3. Query principal de tareas con audits
             const { data, error } = await client
                 .from('tarea')
                 .select(`
@@ -82,6 +82,7 @@ export default function TMRPage() {
                     riesgo,
                     id_obligacion,
                     responsable_usuario_id,
+                    vobo_lider,
                     contribuyente:contribuyente_id (
                         rfc,
                         razon_social,
@@ -97,6 +98,9 @@ export default function TMRPage() {
                     obligacion:id_obligacion (
                         nombre_corto,
                         periodicidad
+                    ),
+                    audits (
+                        estado_auditoria
                     )
                 `)
                 .order('fecha_limite_oficial', { ascending: true })
@@ -119,6 +123,14 @@ export default function TMRPage() {
                         'EXTRA_GRANDE': 'XL'
                     }
 
+                    // Mapear estado de auditoría desde tabla audits
+                    const auditEstado = t.audits?.[0]?.estado_auditoria?.toLowerCase() || 'no_auditado'
+                    const auditoriaMap: Record<string, ResultadoAuditoria> = {
+                        'pendiente': 'pendiente',
+                        'aprobado': 'aprobado',
+                        'rechazado': 'rechazado'
+                    }
+
                     return {
                         id: t.tarea_id,
                         rfc: t.contribuyente?.rfc || 'N/A',
@@ -130,9 +142,9 @@ export default function TMRPage() {
                         rol: t.responsable?.rol_global || 'COLABORADOR',
                         tribu: userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
-                        evidencia: false, // TODO: Traer de tarea_documento
-                        voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
-                        auditoria: 'no_auditado' as ResultadoAuditoria
+                        evidencia: false, // TODO: Traer de tarea_documento (URLs OneDrive)
+                        voboLider: t.vobo_lider || false,
+                        auditoria: auditoriaMap[auditEstado] || 'no_auditado'
                     }
                 })
                 setEntregables(mappedData)
@@ -231,9 +243,15 @@ export default function TMRPage() {
         // Optimistic update
         setEntregables(prev => prev.map(e => e.id === id ? { ...e, voboLider: nextVobo } : e))
 
+        const userId = (await supabase.auth.getUser()).data.user?.id
+
         const { error } = await supabase
             .from('tarea')
-            .update({ vobo_lider: nextVobo })
+            .update({
+                vobo_lider: nextVobo,
+                vobo_lider_at: nextVobo ? new Date().toISOString() : null,
+                vobo_lider_por: nextVobo ? userId : null
+            })
             .eq('tarea_id', id)
 
         if (error) {
@@ -251,18 +269,58 @@ export default function TMRPage() {
         // Optimistic update
         setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: nextAuditoria } : e))
 
-        // La auditoría es una tabla aparte, pero para el TMR rápido podemos upsertar
-        const { error } = await supabase
-            .from('tarea_auditoria')
-            .upsert({
-                tarea_id: id,
-                resultado: nextAuditoria.toUpperCase(),
-                auditor_id: (await supabase.auth.getUser()).data.user?.id // Auditor actual
-            }, { onConflict: 'tarea_id' })
+        const userId = (await supabase.auth.getUser()).data.user?.id
 
-        if (error) {
-            console.error('Error updating auditoria:', error)
-            setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: currentAuditoria } : e))
+        if (nextAuditoria === 'no_auditado') {
+            // Delete audit record when cycling back to no_auditado
+            const { error } = await supabase
+                .from('audits')
+                .delete()
+                .eq('tarea_id', id)
+
+            if (error) {
+                console.error('Error deleting auditoria:', error)
+                setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: currentAuditoria } : e))
+            }
+        } else {
+            // Check if audit exists for this tarea
+            const { data: existingAudit } = await supabase
+                .from('audits')
+                .select('audit_id')
+                .eq('tarea_id', id)
+                .single()
+
+            if (existingAudit) {
+                // Update existing audit
+                const { error } = await supabase
+                    .from('audits')
+                    .update({
+                        estado_auditoria: nextAuditoria.toUpperCase(),
+                        auditor_usuario_id: userId,
+                        fecha_auditoria: new Date().toISOString()
+                    })
+                    .eq('tarea_id', id)
+
+                if (error) {
+                    console.error('Error updating auditoria:', error)
+                    setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: currentAuditoria } : e))
+                }
+            } else {
+                // Insert new audit
+                const { error } = await supabase
+                    .from('audits')
+                    .insert({
+                        tarea_id: id,
+                        estado_auditoria: nextAuditoria.toUpperCase(),
+                        auditor_usuario_id: userId,
+                        fecha_auditoria: new Date().toISOString()
+                    })
+
+                if (error) {
+                    console.error('Error inserting auditoria:', error)
+                    setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: currentAuditoria } : e))
+                }
+            }
         }
     }
 

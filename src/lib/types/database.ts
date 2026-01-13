@@ -109,6 +109,8 @@ export interface ProcesoPaso {
     activo: boolean
 }
 
+export type EstadoAuditoria = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO'
+
 export interface Tarea {
     tarea_id: string
     cliente_id: string
@@ -124,8 +126,22 @@ export interface Tarea {
     responsable_usuario_id?: string
     revisor_usuario_id?: string
     comentarios?: string
+    origen: 'AUTO_CALENDARIO' | 'MANUAL' | 'IMPORTACION'
+    // VoBo Lider fields
+    vobo_lider: boolean
+    vobo_lider_at?: string
+    vobo_lider_por?: string
     created_at: string
     updated_at: string
+}
+
+export interface Audit {
+    audit_id: string
+    tarea_id: string
+    estado_auditoria?: EstadoAuditoria
+    auditor_usuario_id?: string
+    fecha_auditoria?: string
+    comentarios?: string
 }
 
 export interface TareaStep {
