@@ -7,7 +7,7 @@ interface DeadlineCardProps {
     hora?: string
     estado?: string
     tipoEvento?: 'REUNION' | 'RECORDATORIO' | 'OTRO'
-    onClick?: () => void
+    onClick?: (e: React.MouseEvent) => void
 }
 
 const COLORES = {
@@ -45,7 +45,7 @@ export default function DeadlineCard({
 
     return (
         <button
-            onClick={onClick}
+            onClick={(e) => onClick?.(e)}
             className={`w-full text-left px-2 py-1.5 rounded border-l-4 text-xs ${colorClass} hover:shadow transition-all`}
         >
             <div className="flex items-start gap-1.5">

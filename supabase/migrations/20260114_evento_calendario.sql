@@ -1,3 +1,12 @@
+-- Función para actualizar updated_at (crear si no existe)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Tabla de eventos personalizados para el calendario
 CREATE TABLE IF NOT EXISTS evento_calendario (
   evento_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -14,12 +23,13 @@ CREATE TABLE IF NOT EXISTS evento_calendario (
 );
 
 -- Índices para mejorar el performance
-CREATE INDEX idx_evento_fecha ON evento_calendario(fecha);
-CREATE INDEX idx_evento_usuario ON evento_calendario(usuario_id);
-CREATE INDEX idx_evento_equipo ON evento_calendario(equipo_id);
-CREATE INDEX idx_evento_activo ON evento_calendario(activo);
+CREATE INDEX IF NOT EXISTS idx_evento_fecha ON evento_calendario(fecha);
+CREATE INDEX IF NOT EXISTS idx_evento_usuario ON evento_calendario(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_evento_equipo ON evento_calendario(equipo_id);
+CREATE INDEX IF NOT EXISTS idx_evento_activo ON evento_calendario(activo);
 
--- Trigger para actualizar updated_at
+-- Trigger para actualizar updated_at (drop si existe para evitar error)
+DROP TRIGGER IF EXISTS set_updated_at ON evento_calendario;
 CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON evento_calendario
   FOR EACH ROW
