@@ -131,7 +131,14 @@ export default function CalendarioPage() {
                 .select('team_id, nombre')
                 .eq('activo', true)
 
-            setTareas(tareasData || [])
+            // Transformar datos de Supabase (relaciones vienen como arrays)
+            setTareas(tareasData?.map((t: any) => ({
+                ...t,
+                cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+                contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
+                obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+                responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
+            })) || [])
             setEventos(eventosData || [])
             setEquipos(equiposData || [])
             setLoading(false)

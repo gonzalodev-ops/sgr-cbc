@@ -3,9 +3,19 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { Shield, CheckCircle, XCircle, MessageSquare, Eye, ChevronDown, ChevronUp } from 'lucide-react'
+import { Shield, CheckCircle, XCircle, MessageSquare, Eye, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import HallazgoForm from '@/components/auditor/HallazgoForm'
+import HallazgoList from '@/components/auditor/HallazgoList'
 
 // Datos mock para auditorías pendientes
+interface Hallazgo {
+    id: string
+    tipo: string
+    gravedad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA'
+    descripcion: string
+    genera_retrabajo: boolean
+}
+
 interface AuditoriaItem {
     id: number
     rfc: string
@@ -14,8 +24,9 @@ interface AuditoriaItem {
     responsable: string
     tribu: string
     fechaVobo: string
-    estado: 'pendiente' | 'aprobado' | 'rechazado'
+    estado: 'pendiente' | 'aprobado' | 'rechazado' | 'aprobado_con_observaciones'
     comentarios?: string
+    hallazgos?: Hallazgo[]
 }
 
 const MOCK_AUDITORIAS: AuditoriaItem[] = [
@@ -29,6 +40,9 @@ export default function AuditorPage() {
     const [expandedId, setExpandedId] = useState<number | null>(null)
     const [comentarios, setComentarios] = useState<Record<number, string>>({})
     const [comentariosPositivos, setComentariosPositivos] = useState<Record<number, string>>({})
+    const [hallazgos, setHallazgos] = useState<Record<number, Hallazgo[]>>({})
+    const [showHallazgoForm, setShowHallazgoForm] = useState<number | null>(null)
+    const [expandedCompletadaId, setExpandedCompletadaId] = useState<number | null>(null)
 
     const handleAprobar = (id: number) => {
         setAuditorias(prev => prev.map(a =>
@@ -37,15 +51,52 @@ export default function AuditorPage() {
         setExpandedId(null)
     }
 
-    const handleRechazar = (id: number) => {
-        if (!comentarios[id]?.trim()) {
-            alert('Debes agregar un comentario explicando el motivo del rechazo')
+    const handleAprobarConObservaciones = (id: number) => {
+        const hallazgosAuditoria = hallazgos[id] || []
+        if (hallazgosAuditoria.length === 0) {
+            alert('Debes registrar al menos un hallazgo para aprobar con observaciones')
             return
         }
         setAuditorias(prev => prev.map(a =>
-            a.id === id ? { ...a, estado: 'rechazado' as const, comentarios: comentarios[id] } : a
+            a.id === id ? {
+                ...a,
+                estado: 'aprobado_con_observaciones' as const,
+                comentarios: comentarios[id],
+                hallazgos: hallazgosAuditoria
+            } : a
         ))
         setExpandedId(null)
+        setShowHallazgoForm(null)
+    }
+
+    const handleRechazar = (id: number) => {
+        const hallazgosAuditoria = hallazgos[id] || []
+        if (hallazgosAuditoria.length === 0) {
+            alert('Debes registrar al menos un hallazgo para rechazar la auditoría')
+            return
+        }
+        setAuditorias(prev => prev.map(a =>
+            a.id === id ? {
+                ...a,
+                estado: 'rechazado' as const,
+                comentarios: comentarios[id],
+                hallazgos: hallazgosAuditoria
+            } : a
+        ))
+        setExpandedId(null)
+        setShowHallazgoForm(null)
+    }
+
+    const handleSaveHallazgo = (auditoriaId: number, hallazgoData: any) => {
+        const nuevoHallazgo: Hallazgo = {
+            id: `${auditoriaId}-${Date.now()}`,
+            ...hallazgoData
+        }
+        setHallazgos(prev => ({
+            ...prev,
+            [auditoriaId]: [...(prev[auditoriaId] || []), nuevoHallazgo]
+        }))
+        setShowHallazgoForm(null)
     }
 
     const pendientes = auditorias.filter(a => a.estado === 'pendiente')
@@ -78,7 +129,7 @@ export default function AuditorPage() {
                 </div>
 
                 {pendientes.length === 0 ? (
-                    <div className="p-12 text-center text-slate-600">
+                    <div className="p-12 text-center text-slate-400">
                         <CheckCircle size={48} className="mx-auto mb-3 opacity-50" />
                         <p>No hay auditorías pendientes</p>
                     </div>
@@ -94,17 +145,17 @@ export default function AuditorPage() {
                                     <div className="flex-1 grid grid-cols-5 gap-4">
                                         <div>
                                             <p className="font-medium text-slate-800">{item.rfc}</p>
-                                            <p className="text-xs text-slate-700">{item.cliente}</p>
+                                            <p className="text-xs text-slate-500">{item.cliente}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-700">{item.entregable}</p>
                                         </div>
                                         <div>
                                             <p className="text-sm text-slate-600">{item.responsable}</p>
-                                            <p className="text-xs text-slate-600">{item.tribu}</p>
+                                            <p className="text-xs text-slate-400">{item.tribu}</p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-slate-700">VoBo: {item.fechaVobo}</p>
+                                            <p className="text-sm text-slate-500">VoBo: {item.fechaVobo}</p>
                                         </div>
                                         <div className="flex items-center justify-end gap-2">
                                             <button
@@ -129,19 +180,19 @@ export default function AuditorPage() {
                                     </div>
                                 </div>
 
-                                {/* Panel expandido para comentarios */}
+                                {/* Panel expandido para comentarios y hallazgos */}
                                 {expandedId === item.id && (
                                     <div className="px-4 pb-4 bg-slate-50 border-t border-slate-200">
                                         <div className="grid grid-cols-2 gap-4 pt-4">
                                             <div>
                                                 <label className="block text-sm font-medium text-slate-700 mb-2">
                                                     <MessageSquare size={14} className="inline mr-1" />
-                                                    Comentarios (obligatorio si rechaza)
+                                                    Comentarios generales (opcional)
                                                 </label>
                                                 <textarea
                                                     value={comentarios[item.id] || ''}
                                                     onChange={(e) => setComentarios({ ...comentarios, [item.id]: e.target.value })}
-                                                    placeholder="Describe qué hay que corregir..."
+                                                    placeholder="Agrega comentarios generales sobre la auditoría..."
                                                     className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                     rows={3}
                                                 />
@@ -160,19 +211,45 @@ export default function AuditorPage() {
                                                 />
                                             </div>
                                         </div>
+
+                                        {/* Sección de Hallazgos */}
+                                        <div className="mt-4 space-y-3">
+                                            {/* Botón para agregar hallazgo */}
+                                            {showHallazgoForm !== item.id && (
+                                                <button
+                                                    onClick={() => setShowHallazgoForm(item.id)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-amber-100 text-amber-800 rounded-lg hover:bg-amber-200 transition-colors text-sm font-medium"
+                                                >
+                                                    <AlertTriangle size={16} />
+                                                    Registrar Hallazgo
+                                                </button>
+                                            )}
+
+                                            {/* Formulario de hallazgo */}
+                                            {showHallazgoForm === item.id && (
+                                                <HallazgoForm
+                                                    auditoriaId={item.id.toString()}
+                                                    onSave={(hallazgo) => handleSaveHallazgo(item.id, hallazgo)}
+                                                    onCancel={() => setShowHallazgoForm(null)}
+                                                />
+                                            )}
+
+                                            {/* Lista de hallazgos */}
+                                            {hallazgos[item.id] && hallazgos[item.id].length > 0 && (
+                                                <HallazgoList hallazgos={hallazgos[item.id]} />
+                                            )}
+                                        </div>
+
+                                        {/* Botones de acción */}
                                         <div className="flex justify-end gap-3 mt-4">
                                             <button
-                                                onClick={() => setExpandedId(null)}
+                                                onClick={() => {
+                                                    setExpandedId(null)
+                                                    setShowHallazgoForm(null)
+                                                }}
                                                 className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
                                             >
                                                 Cancelar
-                                            </button>
-                                            <button
-                                                onClick={() => handleRechazar(item.id)}
-                                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
-                                            >
-                                                <XCircle size={16} />
-                                                Rechazar
                                             </button>
                                             <button
                                                 onClick={() => handleAprobar(item.id)}
@@ -180,6 +257,22 @@ export default function AuditorPage() {
                                             >
                                                 <CheckCircle size={16} />
                                                 Aprobar
+                                            </button>
+                                            <button
+                                                onClick={() => handleAprobarConObservaciones(item.id)}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                                disabled={!hallazgos[item.id] || hallazgos[item.id].length === 0}
+                                            >
+                                                <AlertTriangle size={16} />
+                                                Aprobar con Observaciones
+                                            </button>
+                                            <button
+                                                onClick={() => handleRechazar(item.id)}
+                                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                                                disabled={!hallazgos[item.id] || hallazgos[item.id].length === 0}
+                                            >
+                                                <XCircle size={16} />
+                                                Rechazar
                                             </button>
                                         </div>
                                     </div>
@@ -200,27 +293,55 @@ export default function AuditorPage() {
                     </div>
                     <div className="divide-y divide-slate-100">
                         {completadas.map(item => (
-                            <div key={item.id} className="p-4 flex items-center justify-between">
-                                <div className="flex-1 grid grid-cols-4 gap-4">
-                                    <div>
-                                        <p className="font-medium text-slate-700">{item.rfc}</p>
-                                        <p className="text-xs text-slate-700">{item.cliente}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-600">{item.entregable}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-slate-700">{item.responsable}</p>
-                                    </div>
-                                    <div className="flex items-center justify-end">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.estado === 'aprobado'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700'
-                                            }`}>
-                                            {item.estado === 'aprobado' ? '✓ Aprobado' : '✗ Rechazado'}
-                                        </span>
+                            <div key={item.id}>
+                                <div className="p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1 grid grid-cols-4 gap-4">
+                                            <div>
+                                                <p className="font-medium text-slate-700">{item.rfc}</p>
+                                                <p className="text-xs text-slate-500">{item.cliente}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-slate-600">{item.entregable}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-slate-500">{item.responsable}</p>
+                                            </div>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                                    item.estado === 'aprobado'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : item.estado === 'aprobado_con_observaciones'
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {item.estado === 'aprobado'
+                                                        ? '✓ Aprobado'
+                                                        : item.estado === 'aprobado_con_observaciones'
+                                                        ? '✓ Aprobado con Observaciones'
+                                                        : '✗ Rechazado'}
+                                                </span>
+                                                {item.hallazgos && item.hallazgos.length > 0 && (
+                                                    <button
+                                                        onClick={() => setExpandedCompletadaId(
+                                                            expandedCompletadaId === item.id ? null : item.id
+                                                        )}
+                                                        className="p-1 text-slate-600 hover:text-slate-800"
+                                                    >
+                                                        {expandedCompletadaId === item.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Detalles expandidos */}
+                                {expandedCompletadaId === item.id && item.hallazgos && item.hallazgos.length > 0 && (
+                                    <div className="px-4 pb-4 bg-slate-50">
+                                        <HallazgoList hallazgos={item.hallazgos} />
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
