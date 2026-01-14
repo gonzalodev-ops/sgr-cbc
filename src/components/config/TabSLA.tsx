@@ -96,7 +96,7 @@ export default function TabSLA() {
 
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <table className="w-full">
-                    <thead className="bg-slate-100 text-xs uppercase text-slate-500">
+                    <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                         <tr>
                             <th className="p-3 text-left w-8">#</th>
                             <th className="p-3 text-left">Estado</th>

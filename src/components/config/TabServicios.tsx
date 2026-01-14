@@ -150,8 +150,8 @@ export default function TabServicios() {
                             <div className="flex justify-between"><h4 className="font-semibold text-indigo-800">{editingServicio ? 'Editar' : 'Nuevo'} Servicio</h4><button onClick={resetServicioForm}><X size={20} className="text-slate-400" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
                                 <input placeholder="ID (CONTABILIDAD) *" value={servicioForm.servicio_id} onChange={e => setServicioForm({ ...servicioForm, servicio_id: e.target.value.toUpperCase() })} disabled={!!editingServicio} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono" />
-                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
-                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
+                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
                             </div>
                             <button onClick={saveServicio} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"><Save size={18} /> Guardar</button>
                         </div>
@@ -188,7 +188,7 @@ export default function TabServicios() {
 
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-100 text-xs uppercase text-slate-500">
+                            <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                                 <tr><th className="p-3">Talla</th><th className="p-3">Ponderación (%)</th><th className="p-3">Ejemplo (Base 100pts)</th></tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
