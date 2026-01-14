@@ -119,7 +119,7 @@ export default function TabColaboradores() {
         setShowUserForm(true)
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-6">
@@ -152,7 +152,7 @@ export default function TabColaboradores() {
                             <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
-                    {equipos.length === 0 && <p className="text-slate-400 text-sm">No hay equipos. Crea uno.</p>}
+                    {equipos.length === 0 && <p className="text-slate-600 text-sm">No hay equipos. Crea uno.</p>}
                 </div>
             </div>
 
@@ -210,7 +210,7 @@ export default function TabColaboradores() {
                         {usuarios.filter(u => u.activo).map(u => (
                             <tr key={u.user_id} className="hover:bg-slate-50">
                                 <td className="p-3 font-medium">{u.nombre}</td>
-                                <td className="p-3 text-slate-500">{u.email}</td>
+                                <td className="p-3 text-slate-700">{u.email}</td>
                                 <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${u.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' : u.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{u.rol_global}</span></td>
                                 <td className="p-3">{u.equipo || '-'}</td>
                                 <td className="p-3">{u.rol_en_equipo || '-'}</td>

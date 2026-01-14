@@ -146,7 +146,7 @@ export default function TabProcesos() {
         }
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-4">
@@ -186,7 +186,7 @@ export default function TabProcesos() {
                                     <Settings size={18} className="text-teal-600" />
                                     <div>
                                         <p className="font-medium text-slate-800">{p.nombre}</p>
-                                        <p className="text-xs text-slate-400 font-mono">{p.proceso_id} | {p.categoria_default}</p>
+                                        <p className="text-xs text-slate-600 font-mono">{p.proceso_id} | {p.categoria_default}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -212,7 +212,7 @@ export default function TabProcesos() {
                                     {hasPasos && (
                                         <div className="bg-white p-3 rounded border border-slate-200">
                                             <div className="flex justify-between items-center mb-2">
-                                                <span className="text-xs font-bold text-slate-500 uppercase">Distribucion de Peso</span>
+                                                <span className="text-xs font-bold text-slate-700 uppercase">Distribucion de Peso</span>
                                                 <span className={`text-xs font-medium ${status.color}`}>
                                                     {status.icon === 'check' ? <CheckCircle size={14} className="inline mr-1" /> : <AlertTriangle size={14} className="inline mr-1" />}
                                                     {totalPeso}% - {status.message}
@@ -236,7 +236,7 @@ export default function TabProcesos() {
                                     )}
 
                                     <div className="flex justify-between items-center">
-                                        <p className="text-xs font-bold text-slate-500 uppercase">Pasos del Proceso</p>
+                                        <p className="text-xs font-bold text-slate-700 uppercase">Pasos del Proceso</p>
                                         <button onClick={() => addPaso(p.proceso_id)} className="flex items-center gap-1 px-2 py-1 bg-teal-600 text-white rounded text-xs"><Plus size={14} /> Agregar Paso</button>
                                     </div>
 
@@ -269,7 +269,7 @@ export default function TabProcesos() {
                                                     <span className="w-6 h-6 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold">{paso.orden}</span>
                                                     <div className="flex-1">
                                                         <p className="text-sm font-medium">{paso.nombre}</p>
-                                                        <p className="text-xs text-slate-400">
+                                                        <p className="text-xs text-slate-600">
                                                             <span className="font-semibold text-teal-600">{paso.peso_pct}%</span>
                                                             {paso.tipo_colaborador && ` | Aux ${paso.tipo_colaborador}`}
                                                             {paso.evidencia_requerida && ' | Evidencia'}
@@ -289,14 +289,14 @@ export default function TabProcesos() {
                                                 </div>
                                             </div>
                                         ))}
-                                        {(!pasos[p.proceso_id] || pasos[p.proceso_id].length === 0) && <p className="text-sm text-slate-400">Sin pasos definidos. Agrega el primer paso.</p>}
+                                        {(!pasos[p.proceso_id] || pasos[p.proceso_id].length === 0) && <p className="text-sm text-slate-600">Sin pasos definidos. Agrega el primer paso.</p>}
                                     </div>
                                 </div>
                             )}
                         </div>
                     )
                 })}
-                {procesos.length === 0 && <p className="text-center text-slate-400 py-8">No hay procesos. Crea uno nuevo.</p>}
+                {procesos.length === 0 && <p className="text-center text-slate-600 py-8">No hay procesos. Crea uno nuevo.</p>}
             </div>
         </div>
     )
