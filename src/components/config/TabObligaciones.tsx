@@ -359,9 +359,9 @@ export default function TabObligaciones() {
                         <tbody className="divide-y divide-slate-100 text-sm">
                             {obligaciones.map(o => (
                                 <tr key={o.id_obligacion} className="hover:bg-slate-50">
-                                    <td className="p-3 font-mono text-xs">{o.id_obligacion}</td>
-                                    <td className="p-3 font-medium">{o.nombre_corto}</td>
-                                    <td className="p-3">{o.impuesto}</td>
+                                    <td className="p-3 font-mono text-xs text-slate-600">{o.id_obligacion}</td>
+                                    <td className="p-3 font-medium text-slate-800">{o.nombre_corto}</td>
+                                    <td className="p-3 text-slate-700">{o.impuesto}</td>
                                     <td className="p-3">
                                         <span className={`text-xs px-2 py-1 rounded ${getProcesoNombre(o.id_obligacion) !== '-' ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}`}>
                                             {getProcesoNombre(o.id_obligacion)}
