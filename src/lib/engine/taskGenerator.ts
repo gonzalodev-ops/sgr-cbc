@@ -203,7 +203,7 @@ export async function generarTareas(
                             ejercicio,
                             periodo_fiscal: periodo,
                             fecha_limite_oficial: fechaLimiteDefault,
-                            estado: 'pendiente'
+                            estado: 'no_iniciado'
                         }
 
                         const { error: insertError } = await supabase
