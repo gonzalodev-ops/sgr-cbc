@@ -78,7 +78,21 @@ export default function RetrabajoList() {
       if (error) {
         console.error('Error cargando retrabajos:', error)
       } else {
-        setRetrabajos(data || [])
+        // Transformar datos de Supabase (relaciones vienen como arrays)
+        setRetrabajos((data || []).map((r: any) => {
+          const finding = Array.isArray(r.finding) ? r.finding[0] : r.finding
+          const tarea = Array.isArray(r.tarea) ? r.tarea[0] : r.tarea
+          return {
+            ...r,
+            finding,
+            tarea: tarea ? {
+              ...tarea,
+              cliente: Array.isArray(tarea.cliente) ? tarea.cliente[0] : tarea.cliente,
+              contribuyente: Array.isArray(tarea.contribuyente) ? tarea.contribuyente[0] : tarea.contribuyente,
+              obligacion: Array.isArray(tarea.obligacion) ? tarea.obligacion[0] : tarea.obligacion,
+            } : null
+          }
+        }))
       }
     } catch (err) {
       console.error('Error:', err)

@@ -76,11 +76,14 @@ export default function AgendaColaboradorPage() {
         .single()
 
       if (userData) {
+        // teams puede venir como array de Supabase
+        const teamsData = userData.team_members?.[0]?.teams as any
+        const equipoNombre = Array.isArray(teamsData) ? teamsData[0]?.nombre : teamsData?.nombre
         setColaboradorInfo({
           nombre: userData.nombre,
           email: userData.email,
           rol_global: userData.rol_global,
-          equipo: userData.team_members?.[0]?.teams?.nombre || 'Sin equipo'
+          equipo: equipoNombre || 'Sin equipo'
         })
       }
 
@@ -104,7 +107,14 @@ export default function AgendaColaboradorPage() {
       if (tareasError) {
         console.error('Error cargando tareas:', tareasError)
       } else {
-        setTareas(tareasData || [])
+        // Transformar datos de Supabase (relaciones vienen como arrays)
+        setTareas(tareasData?.map((t: any) => ({
+          ...t,
+          cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+          contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
+          obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+          periodicidad: Array.isArray(t.periodicidad) ? t.periodicidad[0] : t.periodicidad,
+        })) || [])
       }
 
       // 4. Cargar cantidad de retrabajos pendientes

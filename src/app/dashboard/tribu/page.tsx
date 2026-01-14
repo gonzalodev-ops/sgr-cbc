@@ -240,9 +240,17 @@ export default function TribusPage() {
                 .in('responsable_usuario_id', miembroIds)
                 .not('estado', 'in', '("cerrado","pagado")')
 
+            // Transformar datos de Supabase (relaciones vienen como arrays)
+            const tareasTransformadas = (tareas || []).map((t: any) => ({
+                ...t,
+                responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
+                cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+                obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+            }))
+
             // Construir datos de carga por miembro
             const miembrosCarga: MiembroCarga[] = members.map((m: any) => {
-                const tareasMiembro = (tareas || []).filter(
+                const tareasMiembro = tareasTransformadas.filter(
                     (t: any) => t.responsable?.user_id === m.users.user_id
                 )
                 return {
@@ -257,7 +265,7 @@ export default function TribusPage() {
             })
 
             setMiembrosEquipo(miembrosCarga)
-            setTareasEquipo(tareas || [])
+            setTareasEquipo(tareasTransformadas)
         }
 
         fetchData()
@@ -338,8 +346,16 @@ export default function TribusPage() {
                     .in('responsable_usuario_id', miembroIds)
                     .not('estado', 'in', '("cerrado","pagado")')
 
+                // Transformar datos de Supabase (relaciones vienen como arrays)
+                const tareasTransformadas = (tareas || []).map((t: any) => ({
+                    ...t,
+                    responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
+                    cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+                    obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+                }))
+
                 const miembrosCarga: MiembroCarga[] = members.map((m: any) => {
-                    const tareasMiembro = (tareas || []).filter(
+                    const tareasMiembro = tareasTransformadas.filter(
                         (t: any) => t.responsable?.user_id === m.users.user_id
                     )
                     return {
@@ -354,7 +370,7 @@ export default function TribusPage() {
                 })
 
                 setMiembrosEquipo(miembrosCarga)
-                setTareasEquipo(tareas || [])
+                setTareasEquipo(tareasTransformadas)
             }
         }
     }

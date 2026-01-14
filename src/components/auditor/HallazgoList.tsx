@@ -89,7 +89,7 @@ export default function HallazgoList({ hallazgos }: HallazgoListProps) {
               <option value="CRITICA">Crítica</option>
             </select>
 
-            {tienesFiltrosActivos && (
+            {tieneFiltrosActivos && (
               <button
                 onClick={resetFiltros}
                 className="text-xs text-slate-600 hover:text-slate-800 underline flex items-center gap-1"
