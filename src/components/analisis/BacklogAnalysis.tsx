@@ -61,7 +61,13 @@ export default function BacklogAnalysis() {
 
             if (backlogError) throw backlogError
 
-            setBacklogTareas(data || [])
+            // Transformar arrays de Supabase a objetos
+            const transformedData = (data || []).map((t: any) => ({
+                ...t,
+                cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+                obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion
+            }))
+            setBacklogTareas(transformedData)
         } catch (err) {
             console.error('Error al cargar backlog:', err)
             setError('Error al cargar los datos de backlog')
