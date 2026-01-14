@@ -5,6 +5,14 @@ import { createBrowserClient } from '@supabase/ssr'
 import { Building2, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import MatrizObligaciones from '@/components/cliente/MatrizObligaciones'
 
+interface TareaPresentada {
+    tarea_id: string
+    periodo_fiscal: string
+    fecha_limite_oficial: string
+    nombre_corto: string
+    periodicidad: string
+}
+
 interface ClienteCompleto {
     cliente_id: string
     nombre_comercial: string
@@ -19,6 +27,7 @@ interface ClienteCompleto {
     obligacionesTotales: number
     tareasActivas: number
     tareasCompletadas: number
+    tareasPresentadas: TareaPresentada[]
 }
 
 export default function ClientesPage() {
@@ -57,10 +66,20 @@ export default function ClientesPage() {
                 .select('cliente_id, servicio_id')
                 .eq('activo', true)
 
-            // 3. Tareas por cliente
+            // 3. Tareas por cliente (con detalles para presentadas sin pago)
             const { data: tareasData } = await supabase
                 .from('tarea')
-                .select('cliente_id, estado')
+                .select(`
+                    tarea_id,
+                    cliente_id,
+                    estado,
+                    periodo_fiscal,
+                    fecha_limite_oficial,
+                    obligacion:id_obligacion (
+                        nombre_corto,
+                        periodicidad
+                    )
+                `)
 
             // 4. Obligaciones por servicio (para calcular cobertura)
             const { data: servicioOblig } = await supabase
@@ -85,6 +104,17 @@ export default function ClientesPage() {
                     ['presentado', 'pagado', 'cerrado'].includes(t.estado)
                 ).length
 
+                // Tareas presentadas sin pago
+                const tareasPresentadas: TareaPresentada[] = tareas
+                    .filter((t: any) => t.estado === 'presentado')
+                    .map((t: any) => ({
+                        tarea_id: t.tarea_id,
+                        periodo_fiscal: t.periodo_fiscal || 'N/A',
+                        fecha_limite_oficial: t.fecha_limite_oficial || '',
+                        nombre_corto: t.obligacion?.nombre_corto || 'N/A',
+                        periodicidad: t.obligacion?.periodicidad || 'N/A'
+                    }))
+
                 // Obligaciones cubiertas por los servicios
                 const obligCubiertas = (servicioOblig || [])
                     .filter((so: any) => serviciosCliente.includes(so.servicio_id)).length
@@ -98,7 +128,8 @@ export default function ClientesPage() {
                     obligacionesCubiertas: obligCubiertas,
                     obligacionesTotales: rfcs.length * 5, // Estimado por régimen
                     tareasActivas,
-                    tareasCompletadas
+                    tareasCompletadas,
+                    tareasPresentadas
                 }
             })
 
@@ -215,6 +246,12 @@ export default function ClientesPage() {
                                                 <span className="text-blue-600 font-medium">{c.tareasActivas} activas</span>
                                             </div>
                                         )}
+                                        {c.tareasPresentadas.length > 0 && (
+                                            <div className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-200 rounded">
+                                                <AlertCircle size={16} className="text-red-500" />
+                                                <span className="text-red-700 font-bold">{c.tareasPresentadas.length} sin pago</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {expanded === c.cliente_id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -287,6 +324,43 @@ export default function ClientesPage() {
                                         <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Matriz de Obligaciones Fiscales</h4>
                                         <MatrizObligaciones clienteId={c.cliente_id} />
                                     </div>
+
+                                    {/* Tareas Presentadas Sin Pago */}
+                                    {c.tareasPresentadas.length > 0 && (
+                                        <div>
+                                            <h4 className="text-xs font-bold text-red-700 uppercase mb-3 flex items-center gap-2">
+                                                <AlertCircle size={16} className="text-red-500" />
+                                                Impuestos Pendientes de Pago ({c.tareasPresentadas.length})
+                                            </h4>
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                <p className="text-sm text-red-700 mb-3">
+                                                    Los siguientes impuestos fueron presentados ante el SAT pero el cliente aún no ha realizado el pago:
+                                                </p>
+                                                <div className="space-y-2">
+                                                    {c.tareasPresentadas.map((t, i) => (
+                                                        <div key={i} className="bg-white p-3 rounded-lg border border-red-200 flex justify-between items-center">
+                                                            <div>
+                                                                <p className="font-semibold text-slate-800">{t.nombre_corto}</p>
+                                                                <p className="text-xs text-slate-600">
+                                                                    Periodo: {t.periodo_fiscal} | {t.periodicidad}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className="px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded text-[10px] font-bold uppercase">
+                                                                    SIN PAGO
+                                                                </span>
+                                                                {t.fecha_limite_oficial && (
+                                                                    <p className="text-xs text-slate-600 mt-1">
+                                                                        Límite: {new Date(t.fecha_limite_oficial).toLocaleDateString('es-MX')}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
