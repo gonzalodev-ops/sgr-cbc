@@ -10,7 +10,8 @@ import {
     type EstadoEntregable,
     type ResultadoAuditoria
 } from '@/lib/data/mockData'
-import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter } from 'lucide-react'
+import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar } from 'lucide-react'
+import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
 
 // Helper to create client only on client-side
 function getSupabaseClient() {
@@ -24,6 +25,7 @@ function getSupabaseClient() {
 export default function TMRPage() {
     const [entregables, setEntregables] = useState<Entregable[]>([])
     const [loading, setLoading] = useState(true)
+    const [modalAjusteFecha, setModalAjusteFecha] = useState<{ tareaId: string; fechaActual: string } | null>(null)
 
     // Lazy initialization - only creates client on client-side
     const supabase = useMemo(() => getSupabaseClient(), [])
@@ -131,6 +133,7 @@ export default function TMRPage() {
                         tribu: userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         estadoOriginal: t.estado,
+                        fechaLimite: t.fecha_limite_oficial,
                         evidencia: false, // TODO: Traer de tarea_documento
                         voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
                         auditoria: 'no_auditado' as ResultadoAuditoria
@@ -398,7 +401,7 @@ export default function TMRPage() {
                             <p className="text-slate-500 font-medium">Cargando datos reales...</p>
                         </div>
                     ) : (
-                        <table className="w-full text-left border-collapse min-w-[1100px]">
+                        <table className="w-full text-left border-collapse min-w-[1200px]">
                             <thead className="bg-slate-800 text-slate-200 text-xs uppercase tracking-wider">
                                 <tr>
                                     <th className="p-4 w-2/12">RFC / Cliente</th>
@@ -406,6 +409,9 @@ export default function TMRPage() {
                                     <th className="p-4 w-1/12 text-center">Talla</th>
                                     <th className="p-4 w-2/12 text-center">Responsable</th>
                                     <th className="p-4 w-2/12 text-center">Estado</th>
+                                    <th className="p-4 w-1/12 text-center bg-purple-900/40 border-l border-slate-600" title="Ajustar Fecha">
+                                        <Calendar size={14} className="inline" />
+                                    </th>
                                     <th className="p-4 w-1/12 text-center bg-blue-900/40 border-l border-slate-600" title="Evidencia">
                                         <Link size={14} className="inline" />
                                     </th>
@@ -421,7 +427,7 @@ export default function TMRPage() {
                             <tbody className="divide-y divide-slate-100 text-sm">
                                 {entregablesFiltrados.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="p-12 text-center text-slate-400">
+                                        <td colSpan={10} className="p-12 text-center text-slate-400">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Filter size={32} className="opacity-50" />
                                                 <p>No hay entregables con estos filtros.</p>
@@ -476,6 +482,12 @@ export default function TMRPage() {
                                                     </div>
                                                 </td>
                                                 <td
+                                                    className="p-4 text-center bg-purple-50/20 border-l border-slate-100 cursor-pointer hover:bg-purple-100/50 transition-colors"
+                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: (e as any).fechaLimite })}
+                                                >
+                                                    <Calendar className="text-purple-600 mx-auto" size={16} />
+                                                </td>
+                                                <td
                                                     className="p-4 text-center bg-blue-50/20 border-l border-slate-100 cursor-pointer hover:bg-blue-100/50 transition-colors"
                                                     onClick={() => toggleEvidencia(e.id)}
                                                 >
@@ -507,6 +519,25 @@ export default function TMRPage() {
                     )}
                 </div>
             </div>
+
+            {/* Modal de Ajuste de Fecha */}
+            {modalAjusteFecha && (
+                <AjusteFechaModal
+                    tareaId={modalAjusteFecha.tareaId}
+                    fechaActual={modalAjusteFecha.fechaActual}
+                    onClose={() => setModalAjusteFecha(null)}
+                    onSave={() => {
+                        // Recargar datos después de guardar
+                        setModalAjusteFecha(null)
+                        // Forzar recarga de entregables
+                        if (supabase) {
+                            setLoading(true)
+                            // Trigger reload by updating state
+                            setTimeout(() => window.location.reload(), 100)
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 }

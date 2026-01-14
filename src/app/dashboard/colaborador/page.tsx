@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'
+import DistribucionTrabajo from '@/components/colaborador/DistribucionTrabajo'
+import PuntosChart from '@/components/colaborador/PuntosChart'
 
 interface ColaboradorData {
     user_id: string
@@ -21,6 +23,7 @@ export default function ColaboradoresPage() {
     const [colaboradores, setColaboradores] = useState<ColaboradorData[]>([])
     const [loading, setLoading] = useState(true)
     const [filtroEquipo, setFiltroEquipo] = useState('all')
+    const [expandedColaborador, setExpandedColaborador] = useState<string | null>(null)
 
     useEffect(() => {
         const supabase = createBrowserClient(
@@ -204,54 +207,76 @@ export default function ColaboradoresPage() {
                                 </tr>
                             ) : (
                                 colaboradoresFiltrados.map(c => (
-                                    <tr key={c.user_id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="p-4">
-                                            <p className="font-semibold text-slate-700">{c.nombre}</p>
-                                            <p className="text-xs text-slate-400">{c.email}</p>
-                                        </td>
-                                        <td className="p-4 text-slate-600">{c.equipo}</td>
-                                        <td className="p-4 text-center">
-                                            <span className={`px-2 py-1 rounded text-xs font-bold ${c.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' :
-                                                c.rol_global === 'SOCIO' ? 'bg-purple-100 text-purple-700' :
-                                                    c.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' :
-                                                        'bg-slate-100 text-slate-600'
-                                                }`}>
-                                                {c.rol_global}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {c.tareasPendientes > 0 ? (
-                                                <span className="text-slate-600 font-medium">{c.tareasPendientes}</span>
-                                            ) : (
-                                                <span className="text-slate-300">-</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {c.tareasEnCurso > 0 ? (
-                                                <span className="text-blue-600 font-medium">{c.tareasEnCurso}</span>
-                                            ) : (
-                                                <span className="text-slate-300">-</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            {c.tareasCompletadas > 0 ? (
-                                                <span className="text-green-600 font-medium">{c.tareasCompletadas}</span>
-                                            ) : (
-                                                <span className="text-slate-300">-</span>
-                                            )}
-                                        </td>
-                                        <td className="p-4 text-center font-bold text-green-600 bg-green-50/50">
-                                            {c.puntosCompletados}
-                                        </td>
-                                        <td className="p-4 text-center bg-blue-50/50">
-                                            <span className={`font-bold ${c.porcentajeATiempo >= 90 ? 'text-green-600' :
-                                                c.porcentajeATiempo >= 70 ? 'text-yellow-600' :
-                                                    'text-red-600'
-                                                }`}>
-                                                {c.porcentajeATiempo}%
-                                            </span>
-                                        </td>
-                                    </tr>
+                                    <>
+                                        <tr
+                                            key={c.user_id}
+                                            className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                            onClick={() => setExpandedColaborador(expandedColaborador === c.user_id ? null : c.user_id)}
+                                        >
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    {expandedColaborador === c.user_id ? (
+                                                        <ChevronDown size={16} className="text-slate-400" />
+                                                    ) : (
+                                                        <ChevronRight size={16} className="text-slate-400" />
+                                                    )}
+                                                    <div>
+                                                        <p className="font-semibold text-slate-700">{c.nombre}</p>
+                                                        <p className="text-xs text-slate-400">{c.email}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-slate-600">{c.equipo}</td>
+                                            <td className="p-4 text-center">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${c.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' :
+                                                    c.rol_global === 'SOCIO' ? 'bg-purple-100 text-purple-700' :
+                                                        c.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' :
+                                                            'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                    {c.rol_global}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                {c.tareasPendientes > 0 ? (
+                                                    <span className="text-slate-600 font-medium">{c.tareasPendientes}</span>
+                                                ) : (
+                                                    <span className="text-slate-300">-</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                {c.tareasEnCurso > 0 ? (
+                                                    <span className="text-blue-600 font-medium">{c.tareasEnCurso}</span>
+                                                ) : (
+                                                    <span className="text-slate-300">-</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                {c.tareasCompletadas > 0 ? (
+                                                    <span className="text-green-600 font-medium">{c.tareasCompletadas}</span>
+                                                ) : (
+                                                    <span className="text-slate-300">-</span>
+                                                )}
+                                            </td>
+                                            <td className="p-4 text-center font-bold text-green-600 bg-green-50/50">
+                                                {c.puntosCompletados}
+                                            </td>
+                                            <td className="p-4 text-center bg-blue-50/50">
+                                                <span className={`font-bold ${c.porcentajeATiempo >= 90 ? 'text-green-600' :
+                                                    c.porcentajeATiempo >= 70 ? 'text-yellow-600' :
+                                                        'text-red-600'
+                                                    }`}>
+                                                    {c.porcentajeATiempo}%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {expandedColaborador === c.user_id && (
+                                            <tr>
+                                                <td colSpan={8} className="p-4 bg-slate-50">
+                                                    <DistribucionTrabajo userId={c.user_id} />
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 ))
                             )}
                         </tbody>
