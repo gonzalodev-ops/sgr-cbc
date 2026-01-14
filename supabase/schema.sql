@@ -427,6 +427,30 @@ CREATE TABLE retrabajo (
 );
 
 -- ============================================
+-- CONFIGURACIÓN DEL SISTEMA
+-- ============================================
+
+CREATE TABLE config_sistema (
+  config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  clave TEXT NOT NULL UNIQUE,
+  valor JSONB NOT NULL DEFAULT '{}',
+  descripcion TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE system_log (
+  log_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tipo TEXT NOT NULL,
+  mensaje TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_system_log_tipo ON system_log(tipo, created_at DESC);
+CREATE INDEX idx_config_sistema_clave ON config_sistema(clave);
+
+-- ============================================
 -- DATOS INICIALES (SEED)
 -- ============================================
 
