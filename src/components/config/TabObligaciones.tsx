@@ -412,8 +412,8 @@ export default function TabObligaciones() {
                             <div key={r.c_regimen} className="flex justify-between items-center bg-white border border-slate-200 rounded-lg p-3">
                                 <div>
                                     <span className="font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-sm mr-2">{r.c_regimen}</span>
-                                    <span className="text-sm">{r.descripcion}</span>
-                                    <span className={`ml-2 text-xs px-1 rounded ${r.tipo_persona === 'PF' ? 'bg-blue-100 text-blue-700' : r.tipo_persona === 'PM' ? 'bg-green-100 text-green-700' : 'bg-gray-100'}`}>{r.tipo_persona}</span>
+                                    <span className="text-sm text-slate-800">{r.descripcion}</span>
+                                    <span className={`ml-2 text-xs px-1 rounded ${r.tipo_persona === 'PF' ? 'bg-blue-100 text-blue-700' : r.tipo_persona === 'PM' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{r.tipo_persona}</span>
                                 </div>
                                 <div>
                                     <button onClick={() => { setRegimenForm({ c_regimen: r.c_regimen, descripcion: r.descripcion, tipo_persona: r.tipo_persona }); setEditingRegimen(r); setShowRegimenForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={14} /></button>
