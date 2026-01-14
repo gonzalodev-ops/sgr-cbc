@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Search } from 'lucide-react'
+import MatrizObligaciones from '@/components/cliente/MatrizObligaciones'
 
 interface ClienteCompleto {
     cliente_id: string
@@ -222,7 +223,7 @@ export default function ClientesPage() {
 
                             {/* Detalles expandidos */}
                             {expanded === c.cliente_id && (
-                                <div className="border-t border-slate-100 bg-slate-50 p-5">
+                                <div className="border-t border-slate-100 bg-slate-50 p-5 space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* RFCs */}
                                         <div>
@@ -279,6 +280,12 @@ export default function ClientesPage() {
                                                 </div>
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* Matriz de Obligaciones */}
+                                    <div>
+                                        <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Matriz de Obligaciones Fiscales</h4>
+                                        <MatrizObligaciones clienteId={c.cliente_id} />
                                     </div>
                                 </div>
                             )}
