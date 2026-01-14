@@ -241,7 +241,7 @@ export async function reasignarTareasDeColaborador(
     return {
       success: errores.length === 0,
       reasignadas,
-      errores: errores.length > 0 ? errores : undefined,
+      errores: errores.length > 0 ? errores : [],
       detalles
     }
 

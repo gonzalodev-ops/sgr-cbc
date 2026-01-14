@@ -15,13 +15,21 @@ interface AusenciaFormData {
   fecha_inicio: string
   fecha_fin: string
   tipo: 'VACACIONES' | 'INCAPACIDAD' | 'PERMISO' | 'OTRO'
-  suplente_id: string
-  motivo: string
+  suplente_id: string | null
+  motivo: string | null
 }
 
 interface AusenciaFormProps {
   colaboradores: Colaborador[]
-  ausenciaInicial?: AusenciaFormData & { ausencia_id: string }
+  ausenciaInicial?: {
+    ausencia_id: string
+    colaborador_id: string
+    fecha_inicio: string
+    fecha_fin: string
+    tipo: 'VACACIONES' | 'INCAPACIDAD' | 'PERMISO' | 'OTRO'
+    suplente_id: string | null
+    motivo: string | null
+  }
   onGuardar: (data: AusenciaFormData) => Promise<void>
   onCancelar: () => void
 }
@@ -238,7 +246,7 @@ export default function AusenciaForm({
               <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <select
                 id="suplente"
-                value={formData.suplente_id}
+                value={formData.suplente_id || ''}
                 onChange={(e) => handleChange('suplente_id', e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
                 disabled={loading}
@@ -265,7 +273,7 @@ export default function AusenciaForm({
             </label>
             <textarea
               id="motivo"
-              value={formData.motivo}
+              value={formData.motivo || ''}
               onChange={(e) => handleChange('motivo', e.target.value)}
               className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-none"
               rows={3}
