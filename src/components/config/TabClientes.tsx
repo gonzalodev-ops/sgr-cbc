@@ -275,7 +275,7 @@ export default function TabClientes() {
         return allRegimenes.size
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando clientes...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando clientes...</div>
 
     return (
         <div className="space-y-4">
@@ -317,7 +317,7 @@ export default function TabClientes() {
                                 <Building2 size={18} className="text-emerald-600" />
                                 <div>
                                     <p className="font-medium text-slate-800">{c.nombre_comercial}</p>
-                                    <p className="text-xs text-slate-400">{c.razon_social_principal || 'Sin razon social'} {c.segmento && `| ${c.segmento}`}</p>
+                                    <p className="text-xs text-slate-600">{c.razon_social_principal || 'Sin razon social'} {c.segmento && `| ${c.segmento}`}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -333,14 +333,14 @@ export default function TabClientes() {
                                 {/* Contacto */}
                                 {c.contacto_nombre && (
                                     <div className="bg-white p-3 rounded border border-slate-200">
-                                        <p className="text-xs text-slate-400 font-bold uppercase mb-1">Contacto</p>
+                                        <p className="text-xs text-slate-600 font-bold uppercase mb-1">Contacto</p>
                                         <p className="text-sm">{c.contacto_nombre} {c.contacto_email && `| ${c.contacto_email}`} {c.contacto_telefono && `| ${c.contacto_telefono}`}</p>
                                     </div>
                                 )}
 
                                 {/* RFCs y Regimenes */}
                                 <div className="bg-white p-3 rounded border border-slate-200">
-                                    <p className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center gap-2">
                                         <FileCheck size={14} /> RFCs y Regimenes Fiscales
                                     </p>
                                     {contribuyentes[c.cliente_id]?.map(rfc => (
@@ -348,10 +348,10 @@ export default function TabClientes() {
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <p className="font-mono text-sm font-medium">{rfc.rfc}</p>
-                                                    <p className="text-xs text-slate-400">{rfc.razon_social} ({rfc.tipo_persona})</p>
+                                                    <p className="text-xs text-slate-600">{rfc.razon_social} ({rfc.tipo_persona})</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-500 font-medium">Tribu:</span>
+                                                    <span className="text-xs text-slate-700 font-medium">Tribu:</span>
                                                     <select
                                                         value={rfc.team_id || ''}
                                                         onChange={e => updateRFCTeam(rfc.contribuyente_id, e.target.value)}
@@ -373,7 +373,7 @@ export default function TabClientes() {
                                                             className={`text-xs px-2 py-1 rounded border transition-colors ${
                                                                 isActive
                                                                     ? 'bg-purple-100 border-purple-300 text-purple-700'
-                                                                    : 'bg-white border-slate-200 text-slate-500 hover:border-purple-300'
+                                                                    : 'bg-white border-slate-200 text-slate-700 hover:border-purple-300'
                                                             }`}
                                                         >
                                                             {reg.c_regimen}
@@ -384,7 +384,7 @@ export default function TabClientes() {
                                         </div>
                                     ))}
                                     {(!contribuyentes[c.cliente_id] || contribuyentes[c.cliente_id].length === 0) && (
-                                        <p className="text-sm text-slate-400 mb-2">Sin RFCs asociados</p>
+                                        <p className="text-sm text-slate-600 mb-2">Sin RFCs asociados</p>
                                     )}
                                     <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200">
                                         <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono placeholder:text-slate-500" maxLength={13} />
@@ -394,7 +394,7 @@ export default function TabClientes() {
                                             <option value="PF">PF</option>
                                         </select>
                                         <div className="flex items-center gap-1">
-                                            <span className="text-xs text-slate-500 font-medium">Tribu:</span>
+                                            <span className="text-xs text-slate-700 font-medium">Tribu:</span>
                                             <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.team_id : ''} onChange={e => setRfcForm({ ...rfcForm, team_id: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm text-slate-900 font-medium">
                                                 <option value="" className="text-slate-900">Sin asignar</option>
                                                 {teams.map(t => <option key={t.team_id} value={t.team_id} className="text-slate-900">{t.nombre}</option>)}
@@ -406,7 +406,7 @@ export default function TabClientes() {
 
                                 {/* Servicios Contratados con Talla */}
                                 <div className="bg-white p-3 rounded border border-slate-200">
-                                    <p className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
+                                    <p className="text-xs font-bold text-slate-700 uppercase mb-2 flex items-center gap-2">
                                         <Tag size={14} /> Servicios Contratados y Tallas
                                     </p>
                                     <div className="space-y-2">
@@ -422,7 +422,7 @@ export default function TabClientes() {
                                                             onChange={() => toggleServicio(c.cliente_id, serv.servicio_id, isActive)}
                                                             className="w-4 h-4 rounded"
                                                         />
-                                                        <span className={`text-sm ${isActive ? 'font-medium text-slate-800' : 'text-slate-500'}`}>
+                                                        <span className={`text-sm ${isActive ? 'font-medium text-slate-800' : 'text-slate-700'}`}>
                                                             {serv.nombre}
                                                         </span>
                                                     </div>
@@ -441,7 +441,7 @@ export default function TabClientes() {
                                             )
                                         })}
                                         {servicios.length === 0 && (
-                                            <p className="text-sm text-slate-400">No hay servicios configurados. Ve a la pestana Servicios.</p>
+                                            <p className="text-sm text-slate-600">No hay servicios configurados. Ve a la pestana Servicios.</p>
                                         )}
                                     </div>
                                 </div>
@@ -456,7 +456,7 @@ export default function TabClientes() {
                         )}
                     </div>
                 ))}
-                {clientes.length === 0 && <p className="text-center text-slate-400 py-8">No hay clientes. Agrega uno nuevo.</p>}
+                {clientes.length === 0 && <p className="text-center text-slate-600 py-8">No hay clientes. Agrega uno nuevo.</p>}
             </div>
         </div>
     )

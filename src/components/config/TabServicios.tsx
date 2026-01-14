@@ -121,18 +121,18 @@ export default function TabServicios() {
         setShowServicioForm(false)
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-4">
             <div className="flex gap-2 border-b border-slate-200 pb-2">
-                <button onClick={() => setTab('servicios')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'servicios' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-500'}`}>
+                <button onClick={() => setTab('servicios')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'servicios' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-700'}`}>
                     <Package size={16} className="inline mr-1" /> Servicios CBC
                 </button>
-                <button onClick={() => setTab('tallas')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'tallas' ? 'bg-pink-100 text-pink-700' : 'text-slate-500'}`}>
+                <button onClick={() => setTab('tallas')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'tallas' ? 'bg-pink-100 text-pink-700' : 'text-slate-700'}`}>
                     <Ruler size={16} className="inline mr-1" /> Tallas
                 </button>
-                <button onClick={() => setTab('cobertura')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'cobertura' ? 'bg-green-100 text-green-700' : 'text-slate-500'}`}>
+                <button onClick={() => setTab('cobertura')} className={`px-4 py-2 rounded-t-lg font-medium ${tab === 'cobertura' ? 'bg-green-100 text-green-700' : 'text-slate-700'}`}>
                     <Link2 size={16} className="inline mr-1" /> Cobertura
                 </button>
             </div>
@@ -162,8 +162,8 @@ export default function TabServicios() {
                             <div key={s.servicio_id} className="flex justify-between items-center bg-white border border-slate-200 rounded-lg p-4">
                                 <div>
                                     <p className="font-medium">{s.nombre}</p>
-                                    <p className="text-xs text-slate-400 font-mono">{s.servicio_id}</p>
-                                    {s.descripcion && <p className="text-xs text-slate-500 mt-1">{s.descripcion}</p>}
+                                    <p className="text-xs text-slate-600 font-mono">{s.servicio_id}</p>
+                                    {s.descripcion && <p className="text-xs text-slate-700 mt-1">{s.descripcion}</p>}
                                 </div>
                                 <div>
                                     <button onClick={() => { setServicioForm({ servicio_id: s.servicio_id, nombre: s.nombre, descripcion: s.descripcion || '' }); setEditingServicio(s); setShowServicioForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
@@ -172,7 +172,7 @@ export default function TabServicios() {
                             </div>
                         ))}
                     </div>
-                    {servicios.length === 0 && <p className="text-center text-slate-400 py-8">No hay servicios. Crea uno.</p>}
+                    {servicios.length === 0 && <p className="text-center text-slate-600 py-8">No hay servicios. Crea uno.</p>}
                 </div>
             )}
 
@@ -184,7 +184,7 @@ export default function TabServicios() {
                         {tallas.length === 0 && <button onClick={initTallas} className="px-3 py-1.5 bg-pink-600 text-white rounded-lg text-sm">Inicializar Tallas Default</button>}
                     </div>
 
-                    <p className="text-sm text-slate-500">Las tallas determinan el multiplicador de puntos base para cada cliente.</p>
+                    <p className="text-sm text-slate-700">Las tallas determinan el multiplicador de puntos base para cada cliente.</p>
 
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                         <table className="w-full text-left">
@@ -218,7 +218,7 @@ export default function TabServicios() {
                             </tbody>
                         </table>
                     </div>
-                    {tallas.length === 0 && <p className="text-center text-slate-400 py-8">No hay tallas. Haz clic en "Inicializar Tallas Default".</p>}
+                    {tallas.length === 0 && <p className="text-center text-slate-600 py-8">No hay tallas. Haz clic en "Inicializar Tallas Default".</p>}
                 </div>
             )}
 
@@ -227,14 +227,14 @@ export default function TabServicios() {
                 <div className="space-y-4">
                     <div>
                         <h3 className="font-semibold text-slate-800">Cobertura de Obligaciones por Servicio</h3>
-                        <p className="text-sm text-slate-500 mt-1">
+                        <p className="text-sm text-slate-700 mt-1">
                             Define qué obligaciones fiscales cubre cada servicio.
                             Esto determina qué tareas se generan para los clientes que contraten cada servicio.
                         </p>
                     </div>
 
                     {servicios.length === 0 || obligaciones.length === 0 ? (
-                        <div className="text-center py-8 text-slate-400">
+                        <div className="text-center py-8 text-slate-600">
                             {servicios.length === 0 && <p>No hay servicios. Crea uno en la pestaña "Servicios CBC".</p>}
                             {obligaciones.length === 0 && <p>No hay obligaciones fiscales. Créalas en "Catálogo Fiscal".</p>}
                         </div>
@@ -263,7 +263,7 @@ export default function TabServicios() {
                                                 <td className="p-3 font-medium sticky left-0 bg-white border-r border-slate-200">
                                                     <div>
                                                         <span>{s.nombre}</span>
-                                                        <span className="ml-2 text-xs text-slate-400">
+                                                        <span className="ml-2 text-xs text-slate-600">
                                                             ({obligacionesDelServicio.length})
                                                         </span>
                                                     </div>
