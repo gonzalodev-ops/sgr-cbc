@@ -393,6 +393,7 @@ export default function TMRPage() {
                                     <th className="p-4 w-2/12">RFC / Cliente</th>
                                     <th className="p-4 w-2/12">Entregable</th>
                                     <th className="p-4 w-1/12 text-center">Talla</th>
+                                    <th className="p-4 w-1/12 text-center">Tribu</th>
                                     <th className="p-4 w-2/12 text-center">Responsable</th>
                                     <th className="p-4 w-2/12 text-center">Estado</th>
                                     <th className="p-4 w-1/12 text-center bg-blue-900/40 border-l border-slate-600" title="Evidencia">
@@ -410,7 +411,7 @@ export default function TMRPage() {
                             <tbody className="divide-y divide-slate-100 text-sm">
                                 {entregablesFiltrados.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="p-12 text-center text-slate-400">
+                                        <td colSpan={10} className="p-12 text-center text-slate-400">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Filter size={32} className="opacity-50" />
                                                 <p>No hay entregables con estos filtros.</p>
@@ -437,6 +438,11 @@ export default function TMRPage() {
                                                 <td className="p-4 text-center">
                                                     <span className={`px-2 py-1 rounded text-[10px] font-bold ${['L', 'XL'].includes(e.talla) ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
                                                         {e.talla}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <span className="text-xs text-slate-500 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+                                                        {e.tribu}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-center">
