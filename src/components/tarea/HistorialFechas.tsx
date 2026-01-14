@@ -54,7 +54,12 @@ export default function HistorialFechas({ tareaId }: HistorialFechasProps) {
 
         if (fetchError) throw fetchError
 
-        setHistorial(data || [])
+        // Transformar arrays de Supabase a objetos
+        const transformedData = (data || []).map((h: any) => ({
+          ...h,
+          usuario: Array.isArray(h.usuario) ? h.usuario[0] : h.usuario
+        }))
+        setHistorial(transformedData)
       } catch (err) {
         console.error('Error al cargar historial:', err)
         setError(err instanceof Error ? err.message : 'Error al cargar el historial')

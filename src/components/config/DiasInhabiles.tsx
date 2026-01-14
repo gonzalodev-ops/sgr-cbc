@@ -36,7 +36,7 @@ export default function DiasInhabiles() {
     const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
     const [editing, setEditing] = useState<DiaInhabil | null>(null)
-    const [form, setForm] = useState({ fecha: '', descripcion: '', tipo: 'FERIADO' as const })
+    const [form, setForm] = useState<{ fecha: string; descripcion: string; tipo: 'FERIADO' | 'PUENTE' | 'ESPECIAL' }>({ fecha: '', descripcion: '', tipo: 'FERIADO' })
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
