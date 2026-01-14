@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Search } from 'lucide-react'
 import MatrizObligaciones from '@/components/cliente/MatrizObligaciones'
+import TallaRfcProceso from '@/components/config/TallaRfcProceso'
 
 interface TareaPresentada {
     tarea_id: string
@@ -18,6 +19,7 @@ interface ClienteCompleto {
     nombre_comercial: string
     estado: string
     rfcs: {
+        contribuyente_id: string
         rfc: string
         razon_social: string
         tipo_persona: string
@@ -91,6 +93,12 @@ export default function ClientesPage() {
                 const rfcs = (c.cliente_contribuyente || [])
                     .map((cc: any) => cc.contribuyente)
                     .filter(Boolean)
+                    .map((contrib: any) => ({
+                        contribuyente_id: contrib.contribuyente_id,
+                        rfc: contrib.rfc,
+                        razon_social: contrib.razon_social,
+                        tipo_persona: contrib.tipo_persona
+                    }))
 
                 const serviciosCliente = (serviciosData || [])
                     .filter((s: any) => s.cliente_id === c.cliente_id)
@@ -324,6 +332,22 @@ export default function ClientesPage() {
                                         <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Matriz de Obligaciones Fiscales</h4>
                                         <MatrizObligaciones clienteId={c.cliente_id} />
                                     </div>
+
+                                    {/* Configuración de Talla por Proceso */}
+                                    {c.rfcs.length > 0 && (
+                                        <div>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Configuración de Talla por Proceso</h4>
+                                            <div className="space-y-4">
+                                                {c.rfcs.map((rfc) => (
+                                                    <TallaRfcProceso
+                                                        key={rfc.contribuyente_id}
+                                                        contribuyenteId={rfc.contribuyente_id}
+                                                        rfcNombre={`${rfc.rfc} - ${rfc.razon_social}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Tareas Presentadas Sin Pago */}
                                     {c.tareasPresentadas.length > 0 && (

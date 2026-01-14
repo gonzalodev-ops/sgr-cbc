@@ -12,7 +12,8 @@ import {
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Shield
+    Shield,
+    BarChart3
 } from 'lucide-react'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
@@ -24,6 +25,7 @@ const navigation = [
     { name: 'Clientes', href: '/dashboard/cliente', icon: Building2 },
     { name: 'Entregables', href: '/dashboard/entregables', icon: FileCheck },
     { name: 'Calendario', href: '/dashboard/calendario', icon: Calendar },
+    { name: 'Análisis', href: '/dashboard/analisis', icon: BarChart3 },
     { name: 'Auditor', href: '/dashboard/auditor', icon: Shield },
 ]
 
