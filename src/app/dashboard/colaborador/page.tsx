@@ -137,16 +137,16 @@ export default function ColaboradoresPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Colaboradores</h1>
-                            <p className="text-slate-500">Rendimiento y carga de trabajo por persona</p>
+                            <p className="text-slate-700">Rendimiento y carga de trabajo por persona</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Puntos Totales</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Puntos Totales</p>
                             <p className="text-2xl font-bold text-blue-600">{totalPuntos}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">% A Tiempo</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">% A Tiempo</p>
                             <p className={`text-2xl font-bold ${promedioATiempo >= 90 ? 'text-green-600' : promedioATiempo >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
                                 {promedioATiempo}%
                             </p>
@@ -172,7 +172,7 @@ export default function ColaboradoresPage() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center p-20 gap-4">
                         <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-slate-500 font-medium">Cargando colaboradores...</p>
+                        <p className="text-slate-700 font-medium">Cargando colaboradores...</p>
                     </div>
                 ) : (
                     <table className="w-full text-left">
@@ -197,7 +197,7 @@ export default function ColaboradoresPage() {
                         <tbody className="divide-y divide-slate-100 text-sm">
                             {colaboradoresFiltrados.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="p-12 text-center text-slate-400">
+                                    <td colSpan={8} className="p-12 text-center text-slate-600">
                                         <Users className="mx-auto mb-2 opacity-50" size={32} />
                                         <p>No hay colaboradores con este filtro.</p>
                                     </td>
@@ -207,7 +207,7 @@ export default function ColaboradoresPage() {
                                     <tr key={c.user_id} className="hover:bg-slate-50 transition-colors">
                                         <td className="p-4">
                                             <p className="font-semibold text-slate-700">{c.nombre}</p>
-                                            <p className="text-xs text-slate-400">{c.email}</p>
+                                            <p className="text-xs text-slate-600">{c.email}</p>
                                         </td>
                                         <td className="p-4 text-slate-600">{c.equipo}</td>
                                         <td className="p-4 text-center">

@@ -337,7 +337,7 @@ export default function CalendarioPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Calendario</h1>
-                            <p className="text-slate-500">Agenda fiscal y fechas límite</p>
+                            <p className="text-slate-700">Agenda fiscal y fechas límite</p>
                         </div>
                     </div>
                     <button
@@ -442,7 +442,7 @@ export default function CalendarioPage() {
             {loading ? (
                 <div className="bg-white rounded-xl p-20 text-center border border-slate-200">
                     <div className="w-10 h-10 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-slate-500 font-medium">Cargando calendario...</p>
+                    <p className="text-slate-700 font-medium">Cargando calendario...</p>
                 </div>
             ) : vista === 'mensual' ? (
                 <CalendarioMensual

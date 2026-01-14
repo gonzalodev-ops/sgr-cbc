@@ -156,20 +156,20 @@ export default function ClientesPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Clientes</h1>
-                            <p className="text-slate-500">Gestión de clientes, RFCs y servicios</p>
+                            <p className="text-slate-700">Gestión de clientes, RFCs y servicios</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Clientes</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Clientes</p>
                             <p className="text-2xl font-bold text-emerald-600">{totalClientes}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">RFCs</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">RFCs</p>
                             <p className="text-2xl font-bold text-slate-600">{totalRFCs}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Tareas Activas</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Tareas Activas</p>
                             <p className="text-2xl font-bold text-blue-600">{totalTareasActivas}</p>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ export default function ClientesPage() {
 
             {/* Búsqueda */}
             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={20} />
                 <input
                     type="text"
                     placeholder="Buscar por nombre o RFC..."
@@ -192,13 +192,13 @@ export default function ClientesPage() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center p-20 gap-4 bg-white rounded-xl border border-slate-200">
                     <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 font-medium">Cargando clientes...</p>
+                    <p className="text-slate-700 font-medium">Cargando clientes...</p>
                 </div>
             ) : clientesFiltrados.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 text-center border border-slate-200 border-dashed">
-                    <Building2 className="mx-auto mb-4 text-slate-400" size={48} />
+                    <Building2 className="mx-auto mb-4 text-slate-600" size={48} />
                     <h3 className="text-lg font-medium text-slate-900">No hay clientes</h3>
-                    <p className="text-slate-500 mt-2">Agrega clientes desde Configuración.</p>
+                    <p className="text-slate-700 mt-2">Agrega clientes desde Configuración.</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -215,7 +215,7 @@ export default function ClientesPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-slate-800">{c.nombre_comercial}</h3>
-                                        <p className="text-sm text-slate-400">{c.rfcs.length} RFC{c.rfcs.length !== 1 ? 's' : ''}</p>
+                                        <p className="text-sm text-slate-600">{c.rfcs.length} RFC{c.rfcs.length !== 1 ? 's' : ''}</p>
                                     </div>
                                 </div>
 
@@ -223,7 +223,7 @@ export default function ClientesPage() {
                                     {/* Indicadores */}
                                     <div className="flex items-center gap-4 text-sm">
                                         <div className="flex items-center gap-1">
-                                            <FileText size={16} className="text-slate-400" />
+                                            <FileText size={16} className="text-slate-600" />
                                             <span className="text-slate-600">{c.servicios.length} servicios</span>
                                         </div>
                                         <div className="flex items-center gap-1">
@@ -248,26 +248,26 @@ export default function ClientesPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* RFCs */}
                                         <div>
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">RFCs Registrados</h4>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">RFCs Registrados</h4>
                                             <div className="space-y-2">
                                                 {c.rfcs.map((r, i) => (
                                                     <div key={i} className="bg-white p-3 rounded-lg border border-slate-200">
                                                         <p className="font-mono font-semibold text-slate-800">{r.rfc}</p>
-                                                        <p className="text-sm text-slate-500">{r.razon_social}</p>
+                                                        <p className="text-sm text-slate-700">{r.razon_social}</p>
                                                         <span className={`text-xs px-2 py-0.5 rounded ${r.tipo_persona === 'PM' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                                                             {r.tipo_persona === 'PM' ? 'Persona Moral' : 'Persona Física'}
                                                         </span>
                                                     </div>
                                                 ))}
                                                 {c.rfcs.length === 0 && (
-                                                    <p className="text-sm text-slate-400">Sin RFCs registrados</p>
+                                                    <p className="text-sm text-slate-600">Sin RFCs registrados</p>
                                                 )}
                                             </div>
                                         </div>
 
                                         {/* Servicios y Cobertura */}
                                         <div>
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Servicios Contratados</h4>
+                                            <h4 className="text-xs font-bold text-slate-700 uppercase mb-3">Servicios Contratados</h4>
                                             {c.servicios.length > 0 ? (
                                                 <div className="bg-white p-4 rounded-lg border border-slate-200 space-y-3">
                                                     <div className="flex flex-wrap gap-2">
@@ -279,7 +279,7 @@ export default function ClientesPage() {
                                                     </div>
                                                     <div className="pt-3 border-t border-slate-100">
                                                         <div className="flex justify-between items-center text-sm">
-                                                            <span className="text-slate-500">Cobertura de obligaciones:</span>
+                                                            <span className="text-slate-700">Cobertura de obligaciones:</span>
                                                             <span className="font-bold text-emerald-600">
                                                                 {c.obligacionesCubiertas} / {c.obligacionesTotales}
                                                             </span>

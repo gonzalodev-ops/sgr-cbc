@@ -129,11 +129,11 @@ export default function EntregablesPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Entregables</h1>
-                            <p className="text-slate-500">Catálogo de servicios y documentos</p>
+                            <p className="text-slate-700">Catálogo de servicios y documentos</p>
                         </div>
                     </div>
                 </div>
-                <div className="text-center py-8 text-slate-500">Cargando...</div>
+                <div className="text-center py-8 text-slate-700">Cargando...</div>
             </div>
         )
     }
@@ -149,7 +149,7 @@ export default function EntregablesPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Entregables</h1>
-                            <p className="text-slate-500">Catálogo de servicios y documentos</p>
+                            <p className="text-slate-700">Catálogo de servicios y documentos</p>
                         </div>
                     </div>
                     <button
@@ -164,7 +164,7 @@ export default function EntregablesPage() {
             {/* Search Bar */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-600" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar por nombre o ID..."

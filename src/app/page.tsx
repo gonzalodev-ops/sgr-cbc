@@ -11,7 +11,7 @@ export default function HomePage() {
         <p className="text-xl text-blue-200 mb-2">
           Sistema de Gestión de Resultados
         </p>
-        <p className="text-slate-400 mb-8">
+        <p className="text-slate-300 mb-8">
           Transformando la gestión de tiempo en gestión de resultados
         </p>
 
@@ -37,22 +37,22 @@ export default function HomePage() {
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
           <div className="text-3xl mb-3">📊</div>
           <h3 className="font-semibold mb-2">Tablero Maestro</h3>
-          <p className="text-sm text-slate-400">Vista unificada de resultados por colaborador, tribu, cliente y proceso</p>
+          <p className="text-sm text-slate-300">Vista unificada de resultados por colaborador, tribu, cliente y proceso</p>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
           <div className="text-3xl mb-3">⚡</div>
           <h3 className="font-semibold mb-2">Flujos Optimizados</h3>
-          <p className="text-sm text-slate-400">Nómina e IMSS con pasos ponderados y seguimiento en tiempo real</p>
+          <p className="text-sm text-slate-300">Nómina e IMSS con pasos ponderados y seguimiento en tiempo real</p>
         </div>
         <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10">
           <div className="text-3xl mb-3">🎯</div>
           <h3 className="font-semibold mb-2">Scoring por RFC</h3>
-          <p className="text-sm text-slate-400">Medición de carga y resultados basada en régimen y tallas</p>
+          <p className="text-sm text-slate-300">Medición de carga y resultados basada en régimen y tallas</p>
         </div>
       </div>
 
       {/* Footer */}
-      <p className="mt-12 text-sm text-slate-500">
+      <p className="mt-12 text-sm text-slate-400">
         CBC © 2026 - Sistema de Gestión de Resultados
       </p>
     </div>
