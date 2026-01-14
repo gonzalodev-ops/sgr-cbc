@@ -85,7 +85,9 @@ export default function TMRPage() {
                     contribuyente:contribuyente_id (
                         rfc,
                         razon_social,
-                        nombre_comercial
+                        nombre_comercial,
+                        team_id,
+                        equipo:team_id (nombre)
                     ),
                     cliente:cliente_id (
                         nombre_comercial
@@ -128,7 +130,7 @@ export default function TMRPage() {
                         puntosBase: 50, // TODO: Traer de scoring engine
                         responsable: t.responsable?.nombre || 'Sin asignar',
                         rol: t.responsable?.rol_global || 'COLABORADOR',
-                        tribu: userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
+                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         evidencia: false, // TODO: Traer de tarea_documento
                         voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
