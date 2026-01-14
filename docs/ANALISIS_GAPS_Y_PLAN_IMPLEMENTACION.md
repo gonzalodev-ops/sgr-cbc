@@ -22,7 +22,7 @@ Este documento compara los requerimientos acordados con el cliente (Propuesta V0
 | Vistas analíticas | 60% | 25% | 15% |
 | Calendario de compromisos | 70% | 20% | 10% |
 | Módulo de calidad/auditoría | 50% | 30% | 20% |
-| Integración M365 | - | - | 100% |
+| Integración M365 | N/A | N/A | N/A (Descartado) |
 
 ---
 
@@ -355,31 +355,30 @@ Este documento compara los requerimientos acordados con el cliente (Propuesta V0
 
 ### 8. INTEGRACIÓN MICROSOFT 365 (Sección 7 de la Propuesta)
 
-#### Requerimientos del Cliente:
+#### Requerimientos Originales de la Propuesta:
 - SharePoint / Lists para datos
 - Planner / Teams / To Do para tareas
 - Power Automate para automatizaciones
 
-#### Estado Actual:
-| Elemento | Estado | Detalles |
-|----------|--------|----------|
-| Integración SharePoint | ❌ No implementado | Usa Supabase |
-| Integración Planner | ❌ No implementado | - |
-| Integración Teams | ❌ No implementado | - |
-| Integración To Do | ❌ No implementado | - |
-| Power Automate | ❌ No implementado | - |
+#### ✅ DECISIÓN TOMADA (Enero 2026):
 
-#### GAPS IDENTIFICADOS:
+**Se descarta la integración con Microsoft 365.** El sistema continuará desarrollándose completamente sobre la plataforma actual:
 
-**GAP-M365-01: Decisión Arquitectónica**
-- **Descripción:** El sistema actual usa Supabase como backend en lugar de Microsoft 365. Esta es una **decisión de arquitectura** que debe discutirse con el cliente.
-- **Impacto:** Crítico - Define la plataforma base
-- **Prioridad:** DECISIÓN REQUERIDA
+| Componente | Tecnología Definitiva |
+|------------|----------------------|
+| Base de datos | PostgreSQL (Supabase) |
+| Autenticación | Supabase Auth |
+| Backend/API | Next.js API Routes |
+| Frontend | Next.js + React + Tailwind |
+| Almacenamiento | Supabase Storage |
 
-**Opciones:**
-1. **Mantener Supabase** - Sistema actual funcional, menor dependencia de licencias M365
-2. **Migrar a M365** - Cumple literalmente con propuesta, mayor integración con herramientas existentes del despacho
-3. **Híbrido** - Supabase para backend, sincronización con Planner/Teams para tareas diarias
+**Justificación:**
+- Sistema actual funcional y en desarrollo avanzado (~70%)
+- Menor dependencia de licencias adicionales
+- Mayor control sobre la arquitectura y personalización
+- Stack moderno con mejor experiencia de desarrollo
+
+**No hay gaps pendientes en este módulo.**
 
 ---
 
@@ -476,12 +475,6 @@ Este documento compara los requerimientos acordados con el cliente (Propuesta V0
 
 **Subtotal P3:** ~9-13 días de desarrollo
 
-### Decisión Pendiente
-
-| ID | Gap | Descripción |
-|----|-----|-------------|
-| GAP-M365-01 | Integración Microsoft 365 | Requiere decisión del cliente sobre arquitectura |
-
 ---
 
 ## PARTE 3: PLAN DE IMPLEMENTACIÓN
@@ -551,9 +544,9 @@ Este documento compara los requerimientos acordados con el cliente (Propuesta V0
 
 - [ ] GAP-VIS-07: Portal de Cliente (Solo Lectura)
 - [ ] GAP-FLU-01: Dependencias Explícitas entre Pasos
-- [ ] GAP-M365-01: Integración con Microsoft 365 (si se decide)
 - [ ] Sistema de bonificación basado en puntos
 - [ ] Encuesta de satisfacción del cliente
+- [ ] Notificaciones por email/push
 
 ---
 
@@ -562,14 +555,14 @@ Este documento compara los requerimientos acordados con el cliente (Propuesta V0
 ### 1. Prioridad Inmediata
 Completar los gaps P1 antes de iniciar piloto. El calendario visual (GAP-CAL-01) y la reasignación de tareas (GAP-ROL-01/02) son los más críticos para la operación diaria.
 
-### 2. Decisión sobre Microsoft 365
-Recomiendo discutir con el cliente si la integración con M365 es un requisito mandatorio o si la arquitectura actual (Supabase + Next.js) cumple con los objetivos. La migración completa requeriría reescribir gran parte del sistema.
-
-### 3. Piloto Controlado
+### 2. Piloto Controlado
 Antes de implementar todos los P2, realizar un piloto de 2-4 semanas con una tribu para validar que los P1 funcionan correctamente en producción.
 
-### 4. Documentación de Procesos
+### 3. Documentación de Procesos
 Aprovechar la implementación para documentar los procesos actuales del despacho, ya que el sistema los formaliza.
+
+### 4. Arquitectura Confirmada
+Con la decisión de mantener la plataforma actual (Supabase + Next.js), el equipo puede enfocarse 100% en completar las funcionalidades pendientes sin dividir esfuerzos en migración o integración con sistemas externos.
 
 ---
 
@@ -588,8 +581,10 @@ Aprovechar la implementación para documentar los procesos actuales del despacho
 | 5.3 Vista cliente | GAP-VIS-04 al GAP-VIS-07 |
 | 5.4 Vista proceso | GAP-VIS-08 al GAP-VIS-10 |
 | 6 Experiencia día a día | GAP-EXE-01, GAP-EXE-02 |
-| 7 Microsoft 365 | GAP-M365-01 |
+| 7 Microsoft 365 | ~~Descartado~~ - Se mantiene plataforma actual |
 
 ---
 
 **Documento preparado para revisión con el cliente.**
+
+**Última actualización:** Enero 2026 - Decisión confirmada de mantener arquitectura Supabase + Next.js
