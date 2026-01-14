@@ -650,5 +650,20 @@ Para problemas durante la configuración:
 
 ---
 
+## Anexo: Configuración de Fase de Pruebas
+
+Para la configuración específica de la fase de pruebas beta, consultar:
+
+- **Documento:** [CONFIGURACION_FASE_PRUEBAS.md](CONFIGURACION_FASE_PRUEBAS.md)
+- **Seed Data:** `supabase/seed_fase_pruebas.sql`
+
+Este seed incluye:
+- 5 Regímenes fiscales (601, 612, 625, 626-PF, 626-PM)
+- 14 Entregables con pesos específicos por régimen
+- Procesos NOMINA (5 pasos) e IMSS (7 pasos) completos
+- Proceso GENÉRICO para obligaciones en fase 2
+
+---
+
 *Guía de Configuración v1.0 - Enero 2026*
 *SGR CBC - Sistema de Gestión de Resultados*
