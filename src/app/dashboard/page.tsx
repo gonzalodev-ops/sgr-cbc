@@ -87,7 +87,9 @@ export default function TMRPage() {
                     contribuyente:contribuyente_id (
                         rfc,
                         razon_social,
-                        nombre_comercial
+                        nombre_comercial,
+                        team_id,
+                        equipo:team_id (nombre)
                     ),
                     cliente:cliente_id (
                         nombre_comercial
@@ -130,7 +132,7 @@ export default function TMRPage() {
                         puntosBase: 50, // TODO: Traer de scoring engine
                         responsable: t.responsable?.nombre || 'Sin asignar',
                         rol: t.responsable?.rol_global || 'COLABORADOR',
-                        tribu: userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
+                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         estadoOriginal: t.estado,
                         fechaLimite: t.fecha_limite_oficial,
@@ -301,7 +303,7 @@ export default function TMRPage() {
                         </div>
                         Tablero Maestro de Resultados
                     </h1>
-                    <p className="text-slate-400 text-xs mt-1 ml-10">Vista de Tribu: {filtroTribu === 'all' ? 'Todas' : filtroTribu}</p>
+                    <p className="text-slate-600 text-xs mt-1 ml-10">Vista de Tribu: {filtroTribu === 'all' ? 'Todas' : filtroTribu}</p>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -314,9 +316,9 @@ export default function TMRPage() {
                         </div>
                     )}
                     <div className="text-right">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Meta Grupal (Bono)</p>
+                        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Meta Grupal (Bono)</p>
                         <div className="text-2xl font-bold text-slate-800">
-                            {puntosGlobales} <span className="text-sm text-slate-400 font-normal">/ 1000</span>
+                            {puntosGlobales} <span className="text-sm text-slate-600 font-normal">/ 1000</span>
                         </div>
                     </div>
                     <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -331,7 +333,7 @@ export default function TMRPage() {
             {/* Barra de Filtros */}
             <div className="bg-slate-100 rounded-xl px-4 py-3 flex justify-between items-center flex-wrap gap-2">
                 <div className="flex gap-3 items-center flex-wrap">
-                    <span className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
+                    <span className="text-xs font-bold text-slate-700 uppercase flex items-center gap-1">
                         <Filter size={12} /> Filtrar:
                     </span>
 
@@ -386,7 +388,7 @@ export default function TMRPage() {
                 {/* KPI Filtrado */}
                 {hayFiltrosActivos && (
                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-md border border-slate-200 shadow-sm">
-                        <span className="text-xs text-slate-500 font-bold">Puntos en Pantalla:</span>
+                        <span className="text-xs text-slate-700 font-bold">Puntos en Pantalla:</span>
                         <span className="text-sm font-bold text-blue-700">{puntosFiltrados}</span>
                     </div>
                 )}
@@ -398,7 +400,7 @@ export default function TMRPage() {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center p-20 gap-4">
                             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-slate-500 font-medium">Cargando datos reales...</p>
+                            <p className="text-slate-700 font-medium">Cargando datos reales...</p>
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse min-w-[1200px]">
@@ -407,6 +409,7 @@ export default function TMRPage() {
                                     <th className="p-4 w-2/12">RFC / Cliente</th>
                                     <th className="p-4 w-2/12">Entregable</th>
                                     <th className="p-4 w-1/12 text-center">Talla</th>
+                                    <th className="p-4 w-1/12 text-center">Tribu</th>
                                     <th className="p-4 w-2/12 text-center">Responsable</th>
                                     <th className="p-4 w-2/12 text-center">Estado</th>
                                     <th className="p-4 w-1/12 text-center bg-purple-900/40 border-l border-slate-600" title="Ajustar Fecha">
@@ -427,7 +430,7 @@ export default function TMRPage() {
                             <tbody className="divide-y divide-slate-100 text-sm">
                                 {entregablesFiltrados.length === 0 ? (
                                     <tr>
-                                        <td colSpan={10} className="p-12 text-center text-slate-400">
+                                        <td colSpan={10} className="p-12 text-center text-slate-600">
                                             <div className="flex flex-col items-center gap-2">
                                                 <Filter size={32} className="opacity-50" />
                                                 <p>No hay entregables con estos filtros.</p>
@@ -443,7 +446,7 @@ export default function TMRPage() {
                                             <tr key={e.id} className="hover:bg-slate-50 transition-colors group">
                                                 <td className="p-4">
                                                     <p className="font-semibold text-slate-700">{e.rfc}</p>
-                                                    <p className="text-xs text-slate-400">{e.cliente}</p>
+                                                    <p className="text-xs text-slate-600">{e.cliente}</p>
                                                 </td>
                                                 <td className="p-4 text-slate-600">
                                                     {e.entregable}
@@ -452,13 +455,18 @@ export default function TMRPage() {
                                                     )}
                                                 </td>
                                                 <td className="p-4 text-center">
-                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${['L', 'XL'].includes(e.talla) ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}>
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${['L', 'XL'].includes(e.talla) ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
                                                         {e.talla}
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-center">
+                                                    <span className="text-xs text-slate-700 bg-purple-50 px-2 py-1 rounded border border-purple-100">
+                                                        {e.tribu}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-center">
                                                     <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-1 rounded-full text-[10px] border border-slate-200 font-medium">
-                                                        {e.responsable} <span className="text-slate-400">({e.rol})</span>
+                                                        {e.responsable} <span className="text-slate-600">({e.rol})</span>
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-center">

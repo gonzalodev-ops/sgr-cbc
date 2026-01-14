@@ -78,14 +78,14 @@ export default function TabSLA() {
         return 'Sin SLA'
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-800">Configuracion de SLA por Estado</h2>
-                    <p className="text-sm text-slate-500">Define como se comporta el SLA en cada estado de tarea</p>
+                    <p className="text-sm text-slate-700">Define como se comporta el SLA en cada estado de tarea</p>
                 </div>
                 <div className="flex gap-4 text-xs">
                     <div className="flex items-center gap-1"><Clock size={14} className="text-blue-600" /> Cuenta tiempo</div>
@@ -96,7 +96,7 @@ export default function TabSLA() {
 
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <table className="w-full">
-                    <thead className="bg-slate-100 text-xs uppercase text-slate-500">
+                    <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                         <tr>
                             <th className="p-3 text-left w-8">#</th>
                             <th className="p-3 text-left">Estado</th>
@@ -112,7 +112,7 @@ export default function TabSLA() {
                     <tbody className="divide-y divide-slate-100">
                         {configs.map((config, index) => (
                             <tr key={config.sla_config_id} className={`hover:bg-slate-50 ${saving === config.sla_config_id ? 'opacity-50' : ''}`}>
-                                <td className="p-3 text-slate-400 text-sm">{config.orden_flujo}</td>
+                                <td className="p-3 text-slate-600 text-sm">{config.orden_flujo}</td>
                                 <td className="p-3">
                                     <div className="flex items-center gap-2">
                                         <div className={`w-3 h-3 rounded-full ${getColorClass(config.color_ui)}`} />
@@ -178,7 +178,7 @@ export default function TabSLA() {
                                 <td className="p-3 text-center">
                                     <div className="flex items-center justify-center gap-1">
                                         {getStatusIcon(config)}
-                                        <span className="text-xs text-slate-500">{getStatusLabel(config)}</span>
+                                        <span className="text-xs text-slate-700">{getStatusLabel(config)}</span>
                                     </div>
                                 </td>
                             </tr>
@@ -196,7 +196,7 @@ export default function TabSLA() {
                                 {config.estado}
                             </div>
                             {index < configs.length - 1 && (
-                                <span className="text-slate-400">→</span>
+                                <span className="text-slate-600">→</span>
                             )}
                         </div>
                     ))}
@@ -209,7 +209,7 @@ export default function TabSLA() {
                         <Clock size={18} className="text-blue-600" />
                         <span className="font-medium">SLA Activo</span>
                     </div>
-                    <p className="text-slate-500 text-xs">
+                    <p className="text-slate-700 text-xs">
                         El tiempo cuenta para el calculo del SLA. Si la tarea permanece demasiado tiempo en este estado, se considera retrasada.
                     </p>
                 </div>
@@ -218,7 +218,7 @@ export default function TabSLA() {
                         <Pause size={18} className="text-amber-600" />
                         <span className="font-medium">Pausa SLA</span>
                     </div>
-                    <p className="text-slate-500 text-xs">
+                    <p className="text-slate-700 text-xs">
                         El tiempo NO cuenta. Util para estados como "bloqueado_cliente" donde la demora no es responsabilidad del equipo.
                     </p>
                 </div>
@@ -227,7 +227,7 @@ export default function TabSLA() {
                         <CheckCircle size={18} className="text-green-600" />
                         <span className="font-medium">Estado Final</span>
                     </div>
-                    <p className="text-slate-500 text-xs">
+                    <p className="text-slate-700 text-xs">
                         La tarea esta completada. Ya no cuenta tiempo y no puede cambiar a otro estado (excepto rechazado).
                     </p>
                 </div>

@@ -218,7 +218,7 @@ export default function TabDatos() {
                     Generar Tareas para Período
                 </h3>
 
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-slate-700 mb-4">
                     Genera las tareas mensuales para todos los RFCs activos según sus regímenes,
                     servicios contratados y obligaciones fiscales correspondientes.
                 </p>
@@ -262,7 +262,7 @@ export default function TabDatos() {
                     Eliminar Tareas de Período
                 </h3>
 
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-slate-700 mb-4">
                     Elimina todas las tareas generadas para un período específico. Esto también eliminará
                     los pasos, eventos y documentos asociados.
                 </p>
@@ -356,7 +356,7 @@ export default function TabDatos() {
             {log.length > 0 && (
                 <div className="bg-slate-900 rounded-lg p-4 max-h-64 overflow-y-auto">
                     <div className="flex justify-between items-center mb-2">
-                        <p className="text-xs text-slate-400">Log de operaciones:</p>
+                        <p className="text-xs text-slate-300">Log de operaciones:</p>
                         <button
                             onClick={() => setLog([])}
                             className="text-xs text-slate-500 hover:text-slate-300"
@@ -382,7 +382,7 @@ export default function TabDatos() {
                     Generación Automática de Tareas
                 </h3>
 
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-slate-700 mb-4">
                     Configura la generación automática de tareas al inicio de cada período fiscal.
                     El sistema generará las tareas automáticamente según la programación configurada.
                 </p>
@@ -437,7 +437,7 @@ export default function TabDatos() {
                             </div>
 
                             {autoGenConfig.ultimo_periodo_generado && (
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-700">
                                     Último período generado automáticamente: <strong>{autoGenConfig.ultimo_periodo_generado}</strong>
                                 </p>
                             )}
@@ -463,7 +463,7 @@ export default function TabDatos() {
                     </button>
 
                     {autoGenConfig.updated_at && (
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-600">
                             Última actualización: {new Date(autoGenConfig.updated_at).toLocaleString()}
                         </p>
                     )}
@@ -474,7 +474,7 @@ export default function TabDatos() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white border border-slate-200 rounded-xl p-4">
                     <h4 className="font-medium text-slate-700 mb-2">Verificar Integridad</h4>
-                    <p className="text-sm text-slate-500 mb-3">
+                    <p className="text-sm text-slate-700 mb-3">
                         Revisa que todos los datos estén correctamente enlazados.
                     </p>
                     <button className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
@@ -484,7 +484,7 @@ export default function TabDatos() {
 
                 <div className="bg-white border border-slate-200 rounded-xl p-4">
                     <h4 className="font-medium text-slate-700 mb-2">Recalcular Scoring</h4>
-                    <p className="text-sm text-slate-500 mb-3">
+                    <p className="text-sm text-slate-700 mb-3">
                         Actualiza los puntos de todas las tareas según las nuevas reglas.
                     </p>
                     <button className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">

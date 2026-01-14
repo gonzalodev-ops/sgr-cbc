@@ -119,7 +119,7 @@ export default function TabColaboradores() {
         setShowUserForm(true)
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-6">
@@ -136,7 +136,7 @@ export default function TabColaboradores() {
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex gap-4 items-end">
                         <div className="flex-1">
                             <label className="text-xs text-purple-700 font-medium">Nombre del Equipo *</label>
-                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-500" placeholder="Ej: Equipo Isidora" />
+                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-600" placeholder="Ej: Equipo Isidora" />
                         </div>
                         <button onClick={saveTeam} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"><Save size={18} /></button>
                         <button onClick={resetTeamForm} className="px-4 py-2 border border-slate-300 rounded-lg"><X size={18} /></button>
@@ -152,7 +152,7 @@ export default function TabColaboradores() {
                             <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
-                    {equipos.length === 0 && <p className="text-slate-400 text-sm">No hay equipos. Crea uno.</p>}
+                    {equipos.length === 0 && <p className="text-slate-600 text-sm">No hay equipos. Crea uno.</p>}
                 </div>
             </div>
 
@@ -174,8 +174,8 @@ export default function TabColaboradores() {
                             <button onClick={resetUserForm}><X size={20} className="text-slate-400" /></button>
                         </div>
                         <div className="grid grid-cols-4 gap-3">
-                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
-                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-500" />
+                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
+                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-600" />
                             <select value={userForm.rol_global} onChange={e => setUserForm({ ...userForm, rol_global: e.target.value })} className="px-3 py-2 border rounded-lg">
                                 {ROLES_GLOBAL.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
@@ -196,7 +196,7 @@ export default function TabColaboradores() {
                 )}
 
                 <table className="w-full text-left bg-white rounded-lg overflow-hidden border border-slate-200">
-                    <thead className="bg-slate-100 text-xs uppercase text-slate-500">
+                    <thead className="bg-slate-100 text-xs uppercase text-slate-600">
                         <tr>
                             <th className="p-3">Nombre</th>
                             <th className="p-3">Email</th>
@@ -210,7 +210,7 @@ export default function TabColaboradores() {
                         {usuarios.filter(u => u.activo).map(u => (
                             <tr key={u.user_id} className="hover:bg-slate-50">
                                 <td className="p-3 font-medium">{u.nombre}</td>
-                                <td className="p-3 text-slate-500">{u.email}</td>
+                                <td className="p-3 text-slate-700">{u.email}</td>
                                 <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${u.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' : u.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{u.rol_global}</span></td>
                                 <td className="p-3">{u.equipo || '-'}</td>
                                 <td className="p-3">{u.rol_en_equipo || '-'}</td>

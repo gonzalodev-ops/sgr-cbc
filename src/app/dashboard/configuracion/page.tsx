@@ -38,7 +38,7 @@ export default function ConfiguracionPage() {
             {/* Header */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                 <h1 className="text-2xl font-bold text-slate-800">Configuración</h1>
-                <p className="text-slate-500 mt-1">Gestión completa de datos maestros del sistema</p>
+                <p className="text-slate-700 mt-1">Gestión completa de datos maestros del sistema</p>
             </div>
 
             {/* Tabs */}
@@ -50,7 +50,7 @@ export default function ConfiguracionPage() {
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-5 py-4 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap ${activeTab === tab.id
                                 ? `border-${tab.color}-600 text-${tab.color}-600 bg-${tab.color}-50/50`
-                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                                : 'border-transparent text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                                 }`}
                             style={activeTab === tab.id ? { borderBottomColor: getColor(tab.color), color: getColor(tab.color) } : {}}
                         >

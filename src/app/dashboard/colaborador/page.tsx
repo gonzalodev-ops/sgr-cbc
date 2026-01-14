@@ -1,291 +1,352 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Users, CheckCircle, Clock, AlertTriangle, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react'
-import DistribucionTrabajo from '@/components/colaborador/DistribucionTrabajo'
-import PuntosChart from '@/components/colaborador/PuntosChart'
+import { User, CheckCircle, Clock, AlertTriangle, ListTodo, RefreshCw } from 'lucide-react'
+import RetrabajoList from '@/components/colaborador/RetrabajoList'
 
-interface ColaboradorData {
-    user_id: string
+interface TareaData {
+  tarea_id: string
+  estado: string
+  fecha_limite_oficial: string
+  fecha_presentacion_estimada: string
+  prioridad: string
+  cliente: {
+    nombre_comercial: string
+  }
+  contribuyente: {
+    rfc: string
+  }
+  obligacion: {
+    nombre_corto: string
+  }
+  periodicidad: {
     nombre: string
-    email: string
-    rol_global: string
-    equipo: string
-    tareasPendientes: number
-    tareasEnCurso: number
-    tareasCompletadas: number
-    puntosCompletados: number
-    porcentajeATiempo: number
+  }
 }
 
-export default function ColaboradoresPage() {
-    const [colaboradores, setColaboradores] = useState<ColaboradorData[]>([])
-    const [loading, setLoading] = useState(true)
-    const [filtroEquipo, setFiltroEquipo] = useState('all')
-    const [expandedColaborador, setExpandedColaborador] = useState<string | null>(null)
+interface ColaboradorInfo {
+  nombre: string
+  email: string
+  rol_global: string
+  equipo: string
+}
 
-    useEffect(() => {
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+export default function AgendaColaboradorPage() {
+  const [tareas, setTareas] = useState<TareaData[]>([])
+  const [colaboradorInfo, setColaboradorInfo] = useState<ColaboradorInfo | null>(null)
+  const [cantidadRetrabajos, setCantidadRetrabajos] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [filtroEstado, setFiltroEstado] = useState('all')
 
-        async function fetchColaboradores() {
-            setLoading(true)
+  useEffect(() => {
+    loadDatos()
+  }, [])
 
-            // 1. Traer usuarios con sus equipos
-            const { data: userData, error: userError } = await supabase
-                .from('users')
-                .select(`
-                    user_id,
-                    nombre,
-                    email,
-                    rol_global,
-                    team_members (
-                        teams:team_id (nombre)
-                    )
-                `)
-                .eq('activo', true)
+  async function loadDatos() {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
 
-            if (userError) {
-                console.error('Error fetching users:', userError)
-                setLoading(false)
-                return
-            }
+    try {
+      setLoading(true)
 
-            // 2. Traer todas las tareas con responsable
-            const { data: tareaData } = await supabase
-                .from('tarea')
-                .select('tarea_id, estado, responsable_usuario_id, fecha_limite_oficial, updated_at')
+      // 1. Obtener usuario actual
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-            // 3. Calcular métricas por colaborador
-            const colaboradoresConMetricas: ColaboradorData[] = (userData || []).map((user: any) => {
-                const tareasUsuario = (tareaData || []).filter(
-                    (t: any) => t.responsable_usuario_id === user.user_id
-                )
+      if (userError || !user) {
+        console.error('Error obteniendo usuario:', userError)
+        setLoading(false)
+        return
+      }
 
-                const pendientes = tareasUsuario.filter((t: any) => t.estado === 'pendiente').length
-                const enCurso = tareasUsuario.filter((t: any) =>
-                    ['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)
-                ).length
-                const completadas = tareasUsuario.filter((t: any) =>
-                    ['presentado', 'pagado', 'cerrado'].includes(t.estado)
-                ).length
+      // 2. Obtener información del usuario
+      const { data: userData } = await supabase
+        .from('users')
+        .select(`
+          nombre,
+          email,
+          rol_global,
+          team_members (
+            teams:team_id (nombre)
+          )
+        `)
+        .eq('user_id', user.id)
+        .single()
 
-                // Calcular % a tiempo (simplificado)
-                const completadasATiempo = tareasUsuario.filter((t: any) => {
-                    if (!['presentado', 'pagado', 'cerrado'].includes(t.estado)) return false
-                    const fechaLimite = new Date(t.fecha_limite_oficial)
-                    const fechaCompletado = new Date(t.updated_at)
-                    return fechaCompletado <= fechaLimite
-                }).length
-                const porcentajeATiempo = completadas > 0
-                    ? Math.round((completadasATiempo / completadas) * 100)
-                    : 100
+      if (userData) {
+        // teams puede venir como array de Supabase
+        const teamsData = userData.team_members?.[0]?.teams as any
+        const equipoNombre = Array.isArray(teamsData) ? teamsData[0]?.nombre : teamsData?.nombre
+        setColaboradorInfo({
+          nombre: userData.nombre,
+          email: userData.email,
+          rol_global: userData.rol_global,
+          equipo: equipoNombre || 'Sin equipo'
+        })
+      }
 
-                // Puntos (simplificado: 50 pts por tarea completada)
-                const puntosCompletados = completadas * 50
+      // 3. Cargar tareas del usuario
+      const { data: tareasData, error: tareasError } = await supabase
+        .from('tarea')
+        .select(`
+          tarea_id,
+          estado,
+          fecha_limite_oficial,
+          fecha_presentacion_estimada,
+          prioridad,
+          cliente:cliente_id(nombre_comercial),
+          contribuyente:contribuyente_id(rfc),
+          obligacion:id_obligacion(nombre_corto),
+          periodicidad:periodicidad_id(nombre)
+        `)
+        .eq('responsable_usuario_id', user.id)
+        .order('fecha_limite_oficial', { ascending: true })
 
-                return {
-                    user_id: user.user_id,
-                    nombre: user.nombre,
-                    email: user.email,
-                    rol_global: user.rol_global,
-                    equipo: user.team_members?.[0]?.teams?.nombre || 'Sin equipo',
-                    tareasPendientes: pendientes,
-                    tareasEnCurso: enCurso,
-                    tareasCompletadas: completadas,
-                    puntosCompletados,
-                    porcentajeATiempo
-                }
-            })
+      if (tareasError) {
+        console.error('Error cargando tareas:', tareasError)
+      } else {
+        // Transformar datos de Supabase (relaciones vienen como arrays)
+        setTareas(tareasData?.map((t: any) => ({
+          ...t,
+          cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
+          contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
+          obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+          periodicidad: Array.isArray(t.periodicidad) ? t.periodicidad[0] : t.periodicidad,
+        })) || [])
+      }
 
-            setColaboradores(colaboradoresConMetricas)
-            setLoading(false)
-        }
+      // 4. Cargar cantidad de retrabajos pendientes
+      const { count } = await supabase
+        .from('retrabajo')
+        .select('*', { count: 'exact', head: true })
+        .eq('responsable_id', user.id)
+        .neq('estado', 'COMPLETADO')
 
-        fetchColaboradores()
-    }, [])
+      setCantidadRetrabajos(count || 0)
 
-    // Equipos únicos para filtro
-    const equipos = useMemo(() =>
-        [...new Set(colaboradores.map(c => c.equipo))].filter(e => e !== 'Sin equipo').sort()
-        , [colaboradores])
+    } catch (err) {
+      console.error('Error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-    // Colaboradores filtrados
-    const colaboradoresFiltrados = useMemo(() =>
-        colaboradores.filter(c => filtroEquipo === 'all' || c.equipo === filtroEquipo)
-        , [colaboradores, filtroEquipo])
+  const tareasFiltradas = filtroEstado === 'all'
+    ? tareas
+    : tareas.filter(t => {
+      if (filtroEstado === 'pendientes') return t.estado === 'pendiente'
+      if (filtroEstado === 'en_curso') return ['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)
+      if (filtroEstado === 'completadas') return ['presentado', 'pagado', 'cerrado'].includes(t.estado)
+      return true
+    })
 
-    // KPIs globales
-    const totalPuntos = useMemo(() =>
-        colaboradoresFiltrados.reduce((sum, c) => sum + c.puntosCompletados, 0)
-        , [colaboradoresFiltrados])
+  function getEstadoBadge(estado: string) {
+    const config: Record<string, { label: string; className: string }> = {
+      pendiente: { label: 'Pendiente', className: 'bg-slate-100 text-slate-700' },
+      en_curso: { label: 'En Curso', className: 'bg-blue-100 text-blue-700' },
+      pendiente_evidencia: { label: 'Pend. Evidencia', className: 'bg-purple-100 text-purple-700' },
+      en_validacion: { label: 'En Validación', className: 'bg-yellow-100 text-yellow-700' },
+      presentado: { label: 'Presentado', className: 'bg-green-100 text-green-700' },
+      pagado: { label: 'Pagado', className: 'bg-green-100 text-green-700' },
+      cerrado: { label: 'Cerrado', className: 'bg-slate-100 text-slate-500' }
+    }
 
-    const promedioATiempo = useMemo(() => {
-        const conTareas = colaboradoresFiltrados.filter(c => c.tareasCompletadas > 0)
-        if (conTareas.length === 0) return 100
-        return Math.round(conTareas.reduce((sum, c) => sum + c.porcentajeATiempo, 0) / conTareas.length)
-    }, [colaboradoresFiltrados])
+    const { label, className } = config[estado] || { label: estado, className: 'bg-slate-100 text-slate-700' }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
-                            <Users size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-slate-800">Colaboradores</h1>
-                            <p className="text-slate-500">Rendimiento y carga de trabajo por persona</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Puntos Totales</p>
-                            <p className="text-2xl font-bold text-blue-600">{totalPuntos}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">% A Tiempo</p>
-                            <p className={`text-2xl font-bold ${promedioATiempo >= 90 ? 'text-green-600' : promedioATiempo >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                {promedioATiempo}%
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filtro */}
-            <div className="flex gap-4">
-                <select
-                    value={filtroEquipo}
-                    onChange={(e) => setFiltroEquipo(e.target.value)}
-                    className="bg-white border border-slate-300 text-slate-700 py-2 px-4 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                >
-                    <option value="all">👥 Todos los Equipos</option>
-                    {equipos.map(e => <option key={e} value={e}>{e}</option>)}
-                </select>
-            </div>
-
-            {/* Tabla de Colaboradores */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center p-20 gap-4">
-                        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-slate-500 font-medium">Cargando colaboradores...</p>
-                    </div>
-                ) : (
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-800 text-slate-200 text-xs uppercase tracking-wider">
-                            <tr>
-                                <th className="p-4">Colaborador</th>
-                                <th className="p-4">Equipo</th>
-                                <th className="p-4 text-center">Rol</th>
-                                <th className="p-4 text-center">
-                                    <Clock className="inline" size={14} /> Pendientes
-                                </th>
-                                <th className="p-4 text-center">
-                                    <TrendingUp className="inline" size={14} /> En Curso
-                                </th>
-                                <th className="p-4 text-center">
-                                    <CheckCircle className="inline" size={14} /> Completadas
-                                </th>
-                                <th className="p-4 text-center bg-green-900/40">Puntos</th>
-                                <th className="p-4 text-center bg-blue-900/40">% A Tiempo</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
-                            {colaboradoresFiltrados.length === 0 ? (
-                                <tr>
-                                    <td colSpan={8} className="p-12 text-center text-slate-400">
-                                        <Users className="mx-auto mb-2 opacity-50" size={32} />
-                                        <p>No hay colaboradores con este filtro.</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                colaboradoresFiltrados.map(c => (
-                                    <>
-                                        <tr
-                                            key={c.user_id}
-                                            className="hover:bg-slate-50 transition-colors cursor-pointer"
-                                            onClick={() => setExpandedColaborador(expandedColaborador === c.user_id ? null : c.user_id)}
-                                        >
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    {expandedColaborador === c.user_id ? (
-                                                        <ChevronDown size={16} className="text-slate-400" />
-                                                    ) : (
-                                                        <ChevronRight size={16} className="text-slate-400" />
-                                                    )}
-                                                    <div>
-                                                        <p className="font-semibold text-slate-700">{c.nombre}</p>
-                                                        <p className="text-xs text-slate-400">{c.email}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-slate-600">{c.equipo}</td>
-                                            <td className="p-4 text-center">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${c.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' :
-                                                    c.rol_global === 'SOCIO' ? 'bg-purple-100 text-purple-700' :
-                                                        c.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' :
-                                                            'bg-slate-100 text-slate-600'
-                                                    }`}>
-                                                    {c.rol_global}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                {c.tareasPendientes > 0 ? (
-                                                    <span className="text-slate-600 font-medium">{c.tareasPendientes}</span>
-                                                ) : (
-                                                    <span className="text-slate-300">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                {c.tareasEnCurso > 0 ? (
-                                                    <span className="text-blue-600 font-medium">{c.tareasEnCurso}</span>
-                                                ) : (
-                                                    <span className="text-slate-300">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                {c.tareasCompletadas > 0 ? (
-                                                    <span className="text-green-600 font-medium">{c.tareasCompletadas}</span>
-                                                ) : (
-                                                    <span className="text-slate-300">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-center font-bold text-green-600 bg-green-50/50">
-                                                {c.puntosCompletados}
-                                            </td>
-                                            <td className="p-4 text-center bg-blue-50/50">
-                                                <span className={`font-bold ${c.porcentajeATiempo >= 90 ? 'text-green-600' :
-                                                    c.porcentajeATiempo >= 70 ? 'text-yellow-600' :
-                                                        'text-red-600'
-                                                    }`}>
-                                                    {c.porcentajeATiempo}%
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        {expandedColaborador === c.user_id && (
-                                            <tr>
-                                                <td colSpan={8} className="p-6 bg-slate-50">
-                                                    <div className="space-y-6">
-                                                        <PuntosChart usuarioId={c.user_id} />
-                                                        <DistribucionTrabajo userId={c.user_id} />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </div>
+      <span className={`px-2 py-1 rounded-full text-xs font-bold ${className}`}>
+        {label}
+      </span>
     )
+  }
+
+  function getPrioridadIcon(prioridad: string) {
+    if (prioridad === 'ALTA') {
+      return <AlertTriangle size={16} className="text-red-500" />
+    }
+    if (prioridad === 'MEDIA') {
+      return <Clock size={16} className="text-yellow-500" />
+    }
+    return <Clock size={16} className="text-slate-400" />
+  }
+
+  function getDiasRestantes(fechaLimite: string) {
+    const hoy = new Date()
+    const limite = new Date(fechaLimite)
+    const diffDias = Math.ceil((limite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+
+    if (diffDias < 0) {
+      return <span className="text-red-600 font-bold">Vencido ({Math.abs(diffDias)}d)</span>
+    } else if (diffDias === 0) {
+      return <span className="text-orange-600 font-bold">Hoy</span>
+    } else if (diffDias <= 3) {
+      return <span className="text-yellow-600 font-bold">{diffDias} días</span>
+    } else {
+      return <span className="text-slate-600">{diffDias} días</span>
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Cargando tu agenda...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
+              <User size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-800">Mi Agenda</h1>
+              <p className="text-slate-500">
+                {colaboradorInfo?.nombre || 'Colaborador'} • {colaboradorInfo?.equipo || 'Sin equipo'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {cantidadRetrabajos > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-red-100 border-2 border-red-300 rounded-lg">
+                <RefreshCw size={18} className="text-red-600" />
+                <span className="text-sm font-bold text-red-700">
+                  {cantidadRetrabajos} Retrabajo{cantidadRetrabajos > 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+            <div className="text-right">
+              <p className="text-xs text-slate-400 uppercase font-bold">Tareas Activas</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {tareas.filter(t => !['presentado', 'pagado', 'cerrado'].includes(t.estado)).length}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sección de Retrabajos */}
+      <RetrabajoList />
+
+      {/* Filtros */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setFiltroEstado('all')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroEstado === 'all'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+        >
+          Todas ({tareas.length})
+        </button>
+        <button
+          onClick={() => setFiltroEstado('pendientes')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroEstado === 'pendientes'
+            ? 'bg-slate-600 text-white'
+            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+        >
+          Pendientes ({tareas.filter(t => t.estado === 'pendiente').length})
+        </button>
+        <button
+          onClick={() => setFiltroEstado('en_curso')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroEstado === 'en_curso'
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+        >
+          En Curso ({tareas.filter(t => ['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)).length})
+        </button>
+        <button
+          onClick={() => setFiltroEstado('completadas')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filtroEstado === 'completadas'
+            ? 'bg-green-600 text-white'
+            : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
+            }`}
+        >
+          Completadas ({tareas.filter(t => ['presentado', 'pagado', 'cerrado'].includes(t.estado)).length})
+        </button>
+      </div>
+
+      {/* Tabla de Tareas */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <ListTodo size={20} className="text-slate-600" />
+            <h2 className="text-lg font-bold text-slate-800">Mis Tareas</h2>
+          </div>
+        </div>
+
+        {tareasFiltradas.length === 0 ? (
+          <div className="p-12 text-center text-slate-400">
+            <ListTodo className="mx-auto mb-3 opacity-50" size={40} />
+            <p className="font-medium">No tienes tareas con este filtro</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-800 text-slate-200 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="p-4">Cliente / RFC</th>
+                  <th className="p-4">Obligación</th>
+                  <th className="p-4 text-center">Periodicidad</th>
+                  <th className="p-4 text-center">Estado</th>
+                  <th className="p-4 text-center">Prioridad</th>
+                  <th className="p-4 text-center">Fecha Límite</th>
+                  <th className="p-4 text-center">Días Restantes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-sm">
+                {tareasFiltradas.map(tarea => (
+                  <tr key={tarea.tarea_id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4">
+                      <p className="font-semibold text-slate-700">
+                        {tarea.cliente?.nombre_comercial || 'Sin cliente'}
+                      </p>
+                      <p className="text-xs text-slate-500 font-mono">
+                        {tarea.contribuyente?.rfc || 'Sin RFC'}
+                      </p>
+                    </td>
+                    <td className="p-4 text-slate-600">
+                      {tarea.obligacion?.nombre_corto || 'Sin obligación'}
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium">
+                        {tarea.periodicidad?.nombre || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      {getEstadoBadge(tarea.estado)}
+                    </td>
+                    <td className="p-4 text-center">
+                      {getPrioridadIcon(tarea.prioridad)}
+                    </td>
+                    <td className="p-4 text-center text-slate-600 font-medium">
+                      {new Date(tarea.fecha_limite_oficial).toLocaleDateString('es-MX', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </td>
+                    <td className="p-4 text-center text-sm">
+                      {getDiasRestantes(tarea.fecha_limite_oficial)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
