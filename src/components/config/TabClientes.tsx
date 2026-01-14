@@ -351,12 +351,13 @@ export default function TabClientes() {
                                                     <p className="text-xs text-slate-400">{rfc.razon_social} ({rfc.tipo_persona})</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-slate-500 font-medium">Tribu:</span>
                                                     <select
                                                         value={rfc.team_id || ''}
                                                         onChange={e => updateRFCTeam(rfc.contribuyente_id, e.target.value)}
                                                         className="text-xs px-2 py-1 border rounded bg-white text-slate-900 font-medium"
                                                     >
-                                                        <option value="" className="text-slate-900">Sin equipo</option>
+                                                        <option value="" className="text-slate-900">Sin asignar</option>
                                                         {teams.map(t => <option key={t.team_id} value={t.team_id} className="text-slate-900">{t.nombre}</option>)}
                                                     </select>
                                                     <button onClick={() => deleteRFC(rfc.contribuyente_id, c.cliente_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
@@ -392,10 +393,13 @@ export default function TabClientes() {
                                             <option value="PM">PM</option>
                                             <option value="PF">PF</option>
                                         </select>
-                                        <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.team_id : ''} onChange={e => setRfcForm({ ...rfcForm, team_id: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm text-slate-900 font-medium">
-                                            <option value="" className="text-slate-900">Equipo...</option>
-                                            {teams.map(t => <option key={t.team_id} value={t.team_id} className="text-slate-900">{t.nombre}</option>)}
-                                        </select>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-xs text-slate-500 font-medium">Tribu:</span>
+                                            <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.team_id : ''} onChange={e => setRfcForm({ ...rfcForm, team_id: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm text-slate-900 font-medium">
+                                                <option value="" className="text-slate-900">Sin asignar</option>
+                                                {teams.map(t => <option key={t.team_id} value={t.team_id} className="text-slate-900">{t.nombre}</option>)}
+                                            </select>
+                                        </div>
                                         <button onClick={saveRFC} disabled={rfcForm.cliente_id !== c.cliente_id || !rfcForm.rfc || !rfcForm.razon_social} className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 disabled:opacity-50"><Plus size={16} /></button>
                                     </div>
                                 </div>
