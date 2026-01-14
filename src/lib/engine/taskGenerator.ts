@@ -10,8 +10,8 @@ interface Contribuyente {
 interface ContribuyenteRegimen {
     contribuyente_id: string
     c_regimen: string
-    vigencia_inicio: string | null
-    vigencia_fin: string | null
+    vigencia_desde: string | null
+    vigencia_hasta: string | null
 }
 
 interface RegimenObligacion {
@@ -96,7 +96,7 @@ export async function generarTareas(
                 // 2. Obtener regímenes vigentes del contribuyente
                 const { data: regimenes, error: regError } = await supabase
                     .from('contribuyente_regimen')
-                    .select('c_regimen, vigencia_inicio, vigencia_fin')
+                    .select('c_regimen, vigencia_desde, vigencia_hasta')
                     .eq('contribuyente_id', contribuyente.contribuyente_id)
 
                 if (regError) {

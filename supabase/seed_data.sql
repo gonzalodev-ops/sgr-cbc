@@ -125,7 +125,7 @@ ON CONFLICT DO NOTHING;
 -- ==========================================
 -- 7. CONTRIBUYENTE-RÉGIMEN
 -- ==========================================
-INSERT INTO contribuyente_regimen (contribuyente_id, c_regimen, vigencia_inicio) VALUES
+INSERT INTO contribuyente_regimen (contribuyente_id, c_regimen, vigencia_desde) VALUES
   -- Todos en régimen 601 (General de Ley PM)
   ('r1111111-1111-1111-1111-111111111111', '601', '2023-01-01'),
   ('r1111111-1111-1111-1111-111111111112', '601', '2023-01-01'),
