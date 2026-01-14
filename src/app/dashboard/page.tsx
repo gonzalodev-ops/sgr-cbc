@@ -10,7 +10,8 @@ import {
     type EstadoEntregable,
     type ResultadoAuditoria
 } from '@/lib/data/mockData'
-import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter } from 'lucide-react'
+import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar } from 'lucide-react'
+import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
 
 // Helper to create client only on client-side
 function getSupabaseClient() {
@@ -24,6 +25,7 @@ function getSupabaseClient() {
 export default function TMRPage() {
     const [entregables, setEntregables] = useState<Entregable[]>([])
     const [loading, setLoading] = useState(true)
+    const [modalAjusteFecha, setModalAjusteFecha] = useState<{ tareaId: string; fechaActual: string } | null>(null)
 
     // Lazy initialization - only creates client on client-side
     const supabase = useMemo(() => getSupabaseClient(), [])
@@ -132,6 +134,8 @@ export default function TMRPage() {
                         rol: t.responsable?.rol_global || 'COLABORADOR',
                         tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
                         estado: mapEstado(t.estado),
+                        estadoOriginal: t.estado,
+                        fechaLimite: t.fecha_limite_oficial,
                         evidencia: false, // TODO: Traer de tarea_documento
                         voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
                         auditoria: 'no_auditado' as ResultadoAuditoria
@@ -195,6 +199,10 @@ export default function TMRPage() {
     const puntosFiltrados = useMemo(() =>
         entregablesFiltrados.reduce((sum, e) => sum + calcularPuntos(e), 0)
         , [entregablesFiltrados])
+
+    const tareasEsperandoPago = useMemo(() =>
+        entregables.filter(e => (e as any).estadoOriginal === 'presentado').length
+        , [entregables])
 
     const hayFiltrosActivos = filtroRFC !== 'all' || filtroTribu !== 'all' || filtroEntregable !== 'all' || filtroResponsable !== 'all'
 
@@ -299,6 +307,14 @@ export default function TMRPage() {
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {tareasEsperandoPago > 0 && (
+                        <div className="text-right px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-[10px] text-red-700 font-bold uppercase tracking-wider">Esperando Pago</p>
+                            <div className="text-2xl font-bold text-red-600">
+                                {tareasEsperandoPago} <span className="text-sm text-red-600 font-normal">tarea{tareasEsperandoPago !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                    )}
                     <div className="text-right">
                         <p className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">Meta Grupal (Bono)</p>
                         <div className="text-2xl font-bold text-slate-800">
@@ -387,7 +403,7 @@ export default function TMRPage() {
                             <p className="text-slate-700 font-medium">Cargando datos reales...</p>
                         </div>
                     ) : (
-                        <table className="w-full text-left border-collapse min-w-[1100px]">
+                        <table className="w-full text-left border-collapse min-w-[1200px]">
                             <thead className="bg-slate-800 text-slate-200 text-xs uppercase tracking-wider">
                                 <tr>
                                     <th className="p-4 w-2/12">RFC / Cliente</th>
@@ -396,6 +412,9 @@ export default function TMRPage() {
                                     <th className="p-4 w-1/12 text-center">Tribu</th>
                                     <th className="p-4 w-2/12 text-center">Responsable</th>
                                     <th className="p-4 w-2/12 text-center">Estado</th>
+                                    <th className="p-4 w-1/12 text-center bg-purple-900/40 border-l border-slate-600" title="Ajustar Fecha">
+                                        <Calendar size={14} className="inline" />
+                                    </th>
                                     <th className="p-4 w-1/12 text-center bg-blue-900/40 border-l border-slate-600" title="Evidencia">
                                         <Link size={14} className="inline" />
                                     </th>
@@ -451,12 +470,30 @@ export default function TMRPage() {
                                                     </span>
                                                 </td>
                                                 <td className="p-4 text-center">
-                                                    <button
-                                                        onClick={() => toggleEstado(e.id, e.estado)}
-                                                        className={`px-3 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${estadoConfig.bgColor} ${estadoConfig.color} shadow-sm hover:shadow transition-all transform hover:scale-105`}
-                                                    >
-                                                        {estadoConfig.label}
-                                                    </button>
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <button
+                                                            onClick={() => toggleEstado(e.id, e.estado)}
+                                                            className={`px-3 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wide ${estadoConfig.bgColor} ${estadoConfig.color} shadow-sm hover:shadow transition-all transform hover:scale-105`}
+                                                        >
+                                                            {estadoConfig.label}
+                                                        </button>
+                                                        {(e as any).estadoOriginal === 'presentado' && (
+                                                            <div className="relative group">
+                                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded text-[9px] font-bold uppercase tracking-wide">
+                                                                    SIN PAGO
+                                                                </span>
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                                                    El impuesto fue presentado ante el SAT pero el cliente aún no ha realizado el pago
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    className="p-4 text-center bg-purple-50/20 border-l border-slate-100 cursor-pointer hover:bg-purple-100/50 transition-colors"
+                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: (e as any).fechaLimite })}
+                                                >
+                                                    <Calendar className="text-purple-600 mx-auto" size={16} />
                                                 </td>
                                                 <td
                                                     className="p-4 text-center bg-blue-50/20 border-l border-slate-100 cursor-pointer hover:bg-blue-100/50 transition-colors"
@@ -490,6 +527,25 @@ export default function TMRPage() {
                     )}
                 </div>
             </div>
+
+            {/* Modal de Ajuste de Fecha */}
+            {modalAjusteFecha && (
+                <AjusteFechaModal
+                    tareaId={modalAjusteFecha.tareaId}
+                    fechaActual={modalAjusteFecha.fechaActual}
+                    onClose={() => setModalAjusteFecha(null)}
+                    onSave={() => {
+                        // Recargar datos después de guardar
+                        setModalAjusteFecha(null)
+                        // Forzar recarga de entregables
+                        if (supabase) {
+                            setLoading(true)
+                            // Trigger reload by updating state
+                            setTimeout(() => window.location.reload(), 100)
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 }
