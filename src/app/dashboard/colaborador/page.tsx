@@ -271,8 +271,11 @@ export default function ColaboradoresPage() {
                                         </tr>
                                         {expandedColaborador === c.user_id && (
                                             <tr>
-                                                <td colSpan={8} className="p-4 bg-slate-50">
-                                                    <DistribucionTrabajo userId={c.user_id} />
+                                                <td colSpan={8} className="p-6 bg-slate-50">
+                                                    <div className="space-y-6">
+                                                        <PuntosChart usuarioId={c.user_id} />
+                                                        <DistribucionTrabajo userId={c.user_id} />
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )}

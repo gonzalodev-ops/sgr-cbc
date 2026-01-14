@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, Users, CheckCircle, Clock, AlertTriangle, TrendingUp, Target } from 'lucide-react'
 import BalanceCarga from '@/components/tribu/BalanceCarga'
+import PuntosTribu from '@/components/tribu/PuntosTribu'
 
 interface TribuData {
     team_id: string
@@ -268,26 +269,11 @@ export default function TribusPage() {
                                 </div>
                             )}
 
-                            {/* Miembros (expandible) */}
-                            {expandedTribu === t.team_id && miembrosPorTribu[t.team_id] && (
-                                <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-4">
-                                    <div>
-                                        <p className="text-xs text-slate-500 uppercase font-bold mb-3">Miembros del Equipo</p>
-                                        <div className="space-y-2">
-                                            {miembrosPorTribu[t.team_id].map((m, idx) => (
-                                                <div key={idx} className="flex justify-between items-center bg-white rounded-lg px-3 py-2 border border-slate-200">
-                                                    <div>
-                                                        <p className="font-medium text-slate-700 text-sm">{m.nombre}</p>
-                                                        <p className="text-xs text-slate-400">{m.rol}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm font-bold text-green-600">{m.puntos} pts</p>
-                                                        <p className="text-xs text-slate-400">{m.tareas} tareas</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                            {/* Dashboard del Equipo (expandible) */}
+                            {expandedTribu === t.team_id && (
+                                <div className="border-t border-slate-100 bg-slate-50 p-6 space-y-6">
+                                    {/* Dashboard de Puntos */}
+                                    <PuntosTribu teamId={t.team_id} />
 
                                     {/* Balance de Carga */}
                                     <BalanceCarga teamId={t.team_id} />
