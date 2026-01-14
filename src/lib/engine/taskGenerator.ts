@@ -179,7 +179,7 @@ export async function generarTareas(
                             .select('tarea_id')
                             .eq('contribuyente_id', contribuyente.contribuyente_id)
                             .eq('id_obligacion', obligacion.id_obligacion)
-                            .eq('periodo', periodo)
+                            .eq('periodo_fiscal', periodo)
                             .single()
 
                         if (tareaExistente) {
@@ -203,7 +203,7 @@ export async function generarTareas(
                             ejercicio,
                             periodo_fiscal: periodo,
                             fecha_limite_oficial: fechaLimiteDefault,
-                            estado: 'pendiente'
+                            estado: 'no_iniciado'
                         }
 
                         const { error: insertError } = await supabase
@@ -259,7 +259,7 @@ export async function obtenerResumenTareas(
       responsable_equipo_id,
       teams:responsable_equipo_id (nombre)
     `)
-        .eq('periodo', periodo)
+        .eq('periodo_fiscal', periodo)
 
     if (error || !tareas) {
         return { total: 0, porEstado: {}, porTribu: {} }

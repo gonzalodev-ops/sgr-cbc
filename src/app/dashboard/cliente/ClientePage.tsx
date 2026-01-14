@@ -4,6 +4,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Building2, FileText, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Search } from 'lucide-react'
 
+interface ServicioInfo {
+    servicio_id: string
+    nombre: string
+}
+
 interface ClienteCompleto {
     cliente_id: string
     nombre_comercial: string
@@ -13,7 +18,7 @@ interface ClienteCompleto {
         razon_social: string
         tipo_persona: string
     }[]
-    servicios: string[]
+    servicios: ServicioInfo[]
     obligacionesCubiertas: number
     obligacionesTotales: number
     tareasActivas: number
@@ -56,6 +61,18 @@ export default function ClientesPage() {
                 .select('cliente_id, servicio_id')
                 .eq('activo', true)
 
+            // 2.5 Obtener nombres de servicios
+            const { data: serviciosInfo } = await supabase
+                .from('servicio')
+                .select('servicio_id, nombre')
+                .eq('activo', true)
+
+            // Crear mapa de servicio_id -> nombre
+            const servicioNombreMap = new Map<string, string>()
+            ;(serviciosInfo || []).forEach((s: any) => {
+                servicioNombreMap.set(s.servicio_id, s.nombre)
+            })
+
             // 3. Tareas por cliente
             const { data: tareasData } = await supabase
                 .from('tarea')
@@ -72,9 +89,14 @@ export default function ClientesPage() {
                     .map((cc: any) => cc.contribuyente)
                     .filter(Boolean)
 
-                const serviciosCliente = (serviciosData || [])
+                const serviciosClienteIds = (serviciosData || [])
                     .filter((s: any) => s.cliente_id === c.cliente_id)
                     .map((s: any) => s.servicio_id)
+
+                const serviciosCliente: ServicioInfo[] = serviciosClienteIds.map((id: string) => ({
+                    servicio_id: id,
+                    nombre: servicioNombreMap.get(id) || id
+                }))
 
                 const tareas = (tareasData || []).filter((t: any) => t.cliente_id === c.cliente_id)
                 const tareasActivas = tareas.filter((t: any) =>
@@ -86,7 +108,7 @@ export default function ClientesPage() {
 
                 // Obligaciones cubiertas por los servicios
                 const obligCubiertas = (servicioOblig || [])
-                    .filter((so: any) => serviciosCliente.includes(so.servicio_id)).length
+                    .filter((so: any) => serviciosClienteIds.includes(so.servicio_id)).length
 
                 return {
                     cliente_id: c.cliente_id,
@@ -251,7 +273,7 @@ export default function ClientesPage() {
                                                     <div className="flex flex-wrap gap-2">
                                                         {c.servicios.map((s, i) => (
                                                             <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-medium">
-                                                                {s}
+                                                                {s.nombre}
                                                             </span>
                                                         ))}
                                                     </div>
