@@ -78,7 +78,7 @@ export default function AuditorPage() {
                 </div>
 
                 {pendientes.length === 0 ? (
-                    <div className="p-12 text-center text-slate-400">
+                    <div className="p-12 text-center text-slate-600">
                         <CheckCircle size={48} className="mx-auto mb-3 opacity-50" />
                         <p>No hay auditorías pendientes</p>
                     </div>
@@ -94,17 +94,17 @@ export default function AuditorPage() {
                                     <div className="flex-1 grid grid-cols-5 gap-4">
                                         <div>
                                             <p className="font-medium text-slate-800">{item.rfc}</p>
-                                            <p className="text-xs text-slate-500">{item.cliente}</p>
+                                            <p className="text-xs text-slate-700">{item.cliente}</p>
                                         </div>
                                         <div>
                                             <p className="text-slate-700">{item.entregable}</p>
                                         </div>
                                         <div>
                                             <p className="text-sm text-slate-600">{item.responsable}</p>
-                                            <p className="text-xs text-slate-400">{item.tribu}</p>
+                                            <p className="text-xs text-slate-600">{item.tribu}</p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-slate-500">VoBo: {item.fechaVobo}</p>
+                                            <p className="text-sm text-slate-700">VoBo: {item.fechaVobo}</p>
                                         </div>
                                         <div className="flex items-center justify-end gap-2">
                                             <button
@@ -204,13 +204,13 @@ export default function AuditorPage() {
                                 <div className="flex-1 grid grid-cols-4 gap-4">
                                     <div>
                                         <p className="font-medium text-slate-700">{item.rfc}</p>
-                                        <p className="text-xs text-slate-500">{item.cliente}</p>
+                                        <p className="text-xs text-slate-700">{item.cliente}</p>
                                     </div>
                                     <div>
                                         <p className="text-slate-600">{item.entregable}</p>
                                     </div>
                                     <div>
-                                        <p className="text-sm text-slate-500">{item.responsable}</p>
+                                        <p className="text-sm text-slate-700">{item.responsable}</p>
                                     </div>
                                     <div className="flex items-center justify-end">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.estado === 'aprobado'

@@ -10,7 +10,7 @@ export default function EntregablesPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800">Entregables</h1>
-                        <p className="text-slate-500">Catálogo de servicios y documentos</p>
+                        <p className="text-slate-700">Catálogo de servicios y documentos</p>
                     </div>
                 </div>
             </div>
@@ -20,7 +20,7 @@ export default function EntregablesPage() {
                     <FileCheck className="text-slate-400" size={32} />
                 </div>
                 <h3 className="text-lg font-medium text-slate-900">Vista en Construcción</h3>
-                <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                <p className="text-slate-700 max-w-sm mx-auto mt-2">
                     Aquí podrás gestionar los tipos de entregables, periodicidad y templates de documentos.
                 </p>
             </div>

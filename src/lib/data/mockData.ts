@@ -45,7 +45,7 @@ export const MOCK_ENTREGABLES: Entregable[] = [
 ]
 
 export const ESTADO_CONFIG: Record<EstadoEntregable, { label: string; color: string; bgColor: string }> = {
-    no_iniciado: { label: 'No Iniciado', color: 'text-slate-500', bgColor: 'bg-slate-100 border-slate-200' },
+    no_iniciado: { label: 'No Iniciado', color: 'text-slate-700', bgColor: 'bg-slate-100 border-slate-200' },
     en_curso: { label: 'En Curso', color: 'text-blue-600', bgColor: 'bg-blue-50 border-blue-200' },
     revision: { label: 'Revisión', color: 'text-yellow-700', bgColor: 'bg-yellow-100 border-yellow-200' },
     terminado: { label: 'Terminado', color: 'text-green-700', bgColor: 'bg-green-100 border-green-300' },

@@ -10,7 +10,7 @@ export default function CalendarioPage() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800">Calendario</h1>
-                        <p className="text-slate-500">Agenda fiscal y fechas límite</p>
+                        <p className="text-slate-700">Agenda fiscal y fechas límite</p>
                     </div>
                 </div>
             </div>
@@ -20,7 +20,7 @@ export default function CalendarioPage() {
                     <Calendar className="text-slate-400" size={32} />
                 </div>
                 <h3 className="text-lg font-medium text-slate-900">Vista en Construcción</h3>
-                <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                <p className="text-slate-700 max-w-sm mx-auto mt-2">
                     Vista de calendario mensual/semanal con los vencimientos de obligaciones fiscales.
                 </p>
             </div>

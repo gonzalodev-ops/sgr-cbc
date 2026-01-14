@@ -173,20 +173,20 @@ export default function TribusPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">Tribus</h1>
-                            <p className="text-slate-500">Rendimiento por equipo de trabajo</p>
+                            <p className="text-slate-700">Rendimiento por equipo de trabajo</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Equipos Activos</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Equipos Activos</p>
                             <p className="text-2xl font-bold text-purple-600">{tribus.length}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Tareas Totales</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Tareas Totales</p>
                             <p className="text-2xl font-bold text-slate-600">{totalTareas}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase font-bold">Puntos Totales</p>
+                            <p className="text-xs text-slate-600 uppercase font-bold">Puntos Totales</p>
                             <p className="text-2xl font-bold text-green-600">{totalPuntos}</p>
                         </div>
                     </div>
@@ -197,13 +197,13 @@ export default function TribusPage() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center p-20 gap-4 bg-white rounded-xl border border-slate-200">
                     <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500 font-medium">Cargando equipos...</p>
+                    <p className="text-slate-700 font-medium">Cargando equipos...</p>
                 </div>
             ) : tribus.length === 0 ? (
                 <div className="bg-white rounded-xl p-12 text-center border border-slate-200 border-dashed">
-                    <Building2 className="mx-auto mb-4 text-slate-400" size={48} />
+                    <Building2 className="mx-auto mb-4 text-slate-600" size={48} />
                     <h3 className="text-lg font-medium text-slate-900">No hay equipos configurados</h3>
-                    <p className="text-slate-500 mt-2">Importa equipos desde Configuración.</p>
+                    <p className="text-slate-700 mt-2">Importa equipos desde Configuración.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,13 +218,13 @@ export default function TribusPage() {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <h3 className="text-lg font-bold text-slate-800">{t.nombre}</h3>
-                                        <p className="text-sm text-slate-500 flex items-center gap-1">
+                                        <p className="text-sm text-slate-700 flex items-center gap-1">
                                             <Users size={14} /> {t.miembros} miembros
                                         </p>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
                                         <span className="text-2xl font-bold text-green-600">{t.puntosCompletados}</span>
-                                        <span className="text-xs text-slate-400">puntos</span>
+                                        <span className="text-xs text-slate-600">puntos</span>
                                     </div>
                                 </div>
                             </div>
@@ -232,26 +232,26 @@ export default function TribusPage() {
                             {/* Métricas */}
                             <div className="p-5 grid grid-cols-4 gap-4">
                                 <div className="text-center">
-                                    <Clock className="mx-auto text-slate-400 mb-1" size={18} />
+                                    <Clock className="mx-auto text-slate-600 mb-1" size={18} />
                                     <p className="text-lg font-bold text-slate-700">{t.tareasPendientes}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase">Pendientes</p>
+                                    <p className="text-[10px] text-slate-600 uppercase">Pendientes</p>
                                 </div>
                                 <div className="text-center">
                                     <TrendingUp className="mx-auto text-blue-500 mb-1" size={18} />
                                     <p className="text-lg font-bold text-blue-600">{t.tareasEnCurso}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase">En Curso</p>
+                                    <p className="text-[10px] text-slate-600 uppercase">En Curso</p>
                                 </div>
                                 <div className="text-center">
                                     <CheckCircle className="mx-auto text-green-500 mb-1" size={18} />
                                     <p className="text-lg font-bold text-green-600">{t.tareasCompletadas}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase">Completadas</p>
+                                    <p className="text-[10px] text-slate-600 uppercase">Completadas</p>
                                 </div>
                                 <div className="text-center">
                                     <Target className="mx-auto text-purple-500 mb-1" size={18} />
                                     <p className={`text-lg font-bold ${t.porcentajeATiempo >= 90 ? 'text-green-600' : t.porcentajeATiempo >= 70 ? 'text-yellow-600' : 'text-red-600'}`}>
                                         {t.porcentajeATiempo}%
                                     </p>
-                                    <p className="text-[10px] text-slate-400 uppercase">A Tiempo</p>
+                                    <p className="text-[10px] text-slate-600 uppercase">A Tiempo</p>
                                 </div>
                             </div>
 
@@ -270,17 +270,17 @@ export default function TribusPage() {
                             {/* Miembros (expandible) */}
                             {expandedTribu === t.team_id && miembrosPorTribu[t.team_id] && (
                                 <div className="border-t border-slate-100 bg-slate-50 p-4">
-                                    <p className="text-xs text-slate-500 uppercase font-bold mb-3">Miembros del Equipo</p>
+                                    <p className="text-xs text-slate-700 uppercase font-bold mb-3">Miembros del Equipo</p>
                                     <div className="space-y-2">
                                         {miembrosPorTribu[t.team_id].map((m, idx) => (
                                             <div key={idx} className="flex justify-between items-center bg-white rounded-lg px-3 py-2 border border-slate-200">
                                                 <div>
                                                     <p className="font-medium text-slate-700 text-sm">{m.nombre}</p>
-                                                    <p className="text-xs text-slate-400">{m.rol}</p>
+                                                    <p className="text-xs text-slate-600">{m.rol}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <p className="text-sm font-bold text-green-600">{m.puntos} pts</p>
-                                                    <p className="text-xs text-slate-400">{m.tareas} tareas</p>
+                                                    <p className="text-xs text-slate-600">{m.tareas} tareas</p>
                                                 </div>
                                             </div>
                                         ))}
