@@ -112,7 +112,12 @@ export function ProcesoTable({ tareas, loading }: ProcesoTableProps) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-sm">
                         {tareas.map(tarea => {
-                            const estadoConfig = ESTADO_COLORS[tarea.estado]
+                            // Fallback para estados no definidos
+                            const estadoConfig = ESTADO_COLORS[tarea.estado] || {
+                                bg: 'bg-slate-100',
+                                text: 'text-slate-700',
+                                label: tarea.estado || 'Desconocido'
+                            }
                             const overdue = isOverdue(tarea.fecha_limite_oficial, tarea.estado)
 
                             return (
