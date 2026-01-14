@@ -44,12 +44,13 @@ interface CalendarioDeadline {
 }
 
 interface TareaGenerada {
+    cliente_id: string
     contribuyente_id: string
     id_obligacion: string
-    periodo: string
-    fecha_limite: string | null
+    ejercicio: number
+    periodo_fiscal: string
+    fecha_limite_oficial: string
     estado: string
-    responsable_equipo_id: string | null
 }
 
 /**
@@ -185,21 +186,24 @@ export async function generarTareas(
                             continue // Ya existe, no duplicar
                         }
 
-                        // 9. Obtener deadline del calendario
-                        const { data: deadline, error: dlError } = await supabase
-                            .from('calendario_deadline')
-                            .select('fecha_limite')
-                            .eq('periodo', periodo)
-                            .single()
+                        // 9. Calcular ejercicio y fecha límite por defecto
+                        const [año, mes] = periodo.split('-').map(Number)
+                        const ejercicio = año
+
+                        // Fecha límite por defecto: día 17 del mes siguiente
+                        const mesSiguiente = mes === 12 ? 1 : mes + 1
+                        const añoLimite = mes === 12 ? año + 1 : año
+                        const fechaLimiteDefault = `${añoLimite}-${String(mesSiguiente).padStart(2, '0')}-17`
 
                         // 10. Crear la tarea
                         const nuevaTarea: TareaGenerada = {
+                            cliente_id: clienteId,
                             contribuyente_id: contribuyente.contribuyente_id,
                             id_obligacion: obligacion.id_obligacion,
-                            periodo,
-                            fecha_limite: deadline?.fecha_limite || null,
-                            estado: 'no_iniciado',
-                            responsable_equipo_id: null // Se asignará después
+                            ejercicio,
+                            periodo_fiscal: periodo,
+                            fecha_limite_oficial: fechaLimiteDefault,
+                            estado: 'pendiente'
                         }
 
                         const { error: insertError } = await supabase
