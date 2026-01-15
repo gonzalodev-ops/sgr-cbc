@@ -109,7 +109,7 @@ export default function TabSLA() {
                             <th className="p-3 text-center">Status</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 text-slate-800">
                         {configs.map((config, index) => (
                             <tr key={config.sla_config_id} className={`hover:bg-slate-50 ${saving === config.sla_config_id ? 'opacity-50' : ''}`}>
                                 <td className="p-3 text-slate-700 text-sm">{config.orden_flujo}</td>
