@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import logger from '@/lib/utils/logger'
 
 // Tipos para el motor
 interface Contribuyente {
@@ -20,11 +21,9 @@ interface RegimenObligacion {
     condicion_json: Record<string, unknown> | null
 }
 
-interface ObligacionFiscal {
-    id_obligacion: string
-    nombre: string
-    periodicidad: string
-    nivel: string
+interface ClienteContribuyente {
+    cliente_id: string
+    contribuyente_id: string
 }
 
 interface ClienteServicio {
@@ -37,10 +36,11 @@ interface ServicioObligacion {
     id_obligacion: string
 }
 
-interface CalendarioDeadline {
-    calendario_regla_id: string
-    periodo: string
-    fecha_limite: string
+interface TareaExistente {
+    tarea_id: string
+    contribuyente_id: string
+    id_obligacion: string
+    periodo_fiscal: string
 }
 
 interface TareaGenerada {
@@ -53,29 +53,35 @@ interface TareaGenerada {
     estado: string
 }
 
+// Constantes de paginación
+const QUERY_LIMIT = 1000
+
 /**
- * Motor de generación de tareas
- * Para cada RFC con régimen vigente:
- * 1. Consultar regimen_obligacion → obligaciones que aplican
- * 2. Filtrar por cliente_servicio → obligaciones contratadas
- * 3. Para cada obligación + periodo → generar tarea con deadline
+ * Motor de generación de tareas (OPTIMIZADO)
+ * Estrategia: Batch queries + procesamiento en memoria
+ * 1. Cargar todos los datos necesarios en pocas queries
+ * 2. Procesar en memoria para evitar N+1
+ * 3. Insertar tareas en batch
  */
 export async function generarTareas(
     supabaseUrl: string,
     supabaseKey: string,
-    periodo: string, // Formato: '2026-01' para enero 2026
-    contribuyenteId?: string // Opcional: generar solo para un RFC
+    periodo: string,
+    contribuyenteId?: string
 ): Promise<{ success: boolean; tareasGeneradas: number; errores: string[] }> {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
     const errores: string[] = []
-    let tareasGeneradas = 0
+    const tareasAInsertar: TareaGenerada[] = []
 
     try {
-        // 1. Obtener contribuyentes (todos o uno específico)
+        // === FASE 1: Carga batch de todos los datos necesarios ===
+
+        // 1.1 Obtener contribuyentes
         const contribuyentesQuery = supabase
             .from('contribuyente')
             .select('contribuyente_id, rfc, tipo_persona')
+            .limit(QUERY_LIMIT)
 
         if (contribuyenteId) {
             contribuyentesQuery.eq('contribuyente_id', contribuyenteId)
@@ -91,130 +97,185 @@ export async function generarTareas(
             return { success: true, tareasGeneradas: 0, errores: ['No hay contribuyentes registrados'] }
         }
 
-        // Para cada contribuyente
+        const contribuyenteIds = contribuyentes.map(c => c.contribuyente_id)
+
+        // 1.2 Batch: Obtener TODOS los regímenes de los contribuyentes
+        const { data: todosRegimenes, error: regError } = await supabase
+            .from('contribuyente_regimen')
+            .select('contribuyente_id, c_regimen, vigencia_desde, vigencia_hasta')
+            .in('contribuyente_id', contribuyenteIds)
+            .limit(QUERY_LIMIT)
+
+        if (regError) {
+            logger.error('Error obteniendo regímenes', regError)
+        }
+
+        // Crear mapa: contribuyente_id -> regímenes[]
+        const regimenesPorContribuyente = new Map<string, ContribuyenteRegimen[]>()
+        ;(todosRegimenes || []).forEach((r: ContribuyenteRegimen) => {
+            const existing = regimenesPorContribuyente.get(r.contribuyente_id) || []
+            existing.push(r)
+            regimenesPorContribuyente.set(r.contribuyente_id, existing)
+        })
+
+        // 1.3 Batch: Obtener TODAS las relaciones cliente-contribuyente
+        const { data: clienteContribData, error: ccError } = await supabase
+            .from('cliente_contribuyente')
+            .select('cliente_id, contribuyente_id')
+            .in('contribuyente_id', contribuyenteIds)
+            .limit(QUERY_LIMIT)
+
+        if (ccError) {
+            logger.error('Error obteniendo cliente-contribuyente', ccError)
+        }
+
+        // Crear mapa: contribuyente_id -> cliente_id
+        const clientePorContribuyente = new Map<string, string>()
+        ;(clienteContribData || []).forEach((cc: ClienteContribuyente) => {
+            clientePorContribuyente.set(cc.contribuyente_id, cc.cliente_id)
+        })
+
+        // 1.4 Obtener todos los clientes únicos
+        const clienteIds = [...new Set(clienteContribData?.map(cc => cc.cliente_id) || [])]
+
+        // 1.5 Batch: Obtener TODOS los servicios de los clientes
+        const { data: serviciosClientes, error: scError } = await supabase
+            .from('cliente_servicio')
+            .select('cliente_id, servicio_id')
+            .in('cliente_id', clienteIds)
+            .limit(QUERY_LIMIT)
+
+        if (scError) {
+            logger.error('Error obteniendo servicios de clientes', scError)
+        }
+
+        // Crear mapa: cliente_id -> servicio_ids[]
+        const serviciosPorCliente = new Map<string, string[]>()
+        ;(serviciosClientes || []).forEach((cs: ClienteServicio) => {
+            const existing = serviciosPorCliente.get(cs.cliente_id) || []
+            existing.push(cs.servicio_id)
+            serviciosPorCliente.set(cs.cliente_id, existing)
+        })
+
+        // 1.6 Obtener todos los servicios únicos
+        const servicioIds = [...new Set(serviciosClientes?.map(s => s.servicio_id) || [])]
+
+        // 1.7 Batch: Obtener TODAS las obligaciones por servicio
+        const { data: obligacionesServicios, error: osError } = await supabase
+            .from('servicio_obligacion')
+            .select('servicio_id, id_obligacion')
+            .in('servicio_id', servicioIds)
+            .limit(QUERY_LIMIT)
+
+        if (osError) {
+            logger.error('Error obteniendo obligaciones de servicios', osError)
+        }
+
+        // Crear mapa: servicio_id -> obligacion_ids[]
+        const obligacionesPorServicio = new Map<string, string[]>()
+        ;(obligacionesServicios || []).forEach((so: ServicioObligacion) => {
+            const existing = obligacionesPorServicio.get(so.servicio_id) || []
+            existing.push(so.id_obligacion)
+            obligacionesPorServicio.set(so.servicio_id, existing)
+        })
+
+        // 1.8 Obtener todos los regímenes únicos
+        const regimenCodes = [...new Set(todosRegimenes?.map(r => r.c_regimen) || [])]
+
+        // 1.9 Batch: Obtener TODAS las obligaciones por régimen
+        const { data: obligacionesRegimenes, error: orError } = await supabase
+            .from('regimen_obligacion')
+            .select('c_regimen, id_obligacion, condicion_json')
+            .in('c_regimen', regimenCodes)
+            .limit(QUERY_LIMIT)
+
+        if (orError) {
+            logger.error('Error obteniendo obligaciones de regímenes', orError)
+        }
+
+        // Crear mapa: c_regimen -> obligaciones[]
+        const obligacionesPorRegimen = new Map<string, RegimenObligacion[]>()
+        ;(obligacionesRegimenes || []).forEach((or: RegimenObligacion) => {
+            const existing = obligacionesPorRegimen.get(or.c_regimen) || []
+            existing.push(or)
+            obligacionesPorRegimen.set(or.c_regimen, existing)
+        })
+
+        // 1.10 Batch: Obtener TODAS las tareas existentes para el periodo
+        const { data: tareasExistentes, error: teError } = await supabase
+            .from('tarea')
+            .select('tarea_id, contribuyente_id, id_obligacion, periodo_fiscal')
+            .eq('periodo_fiscal', periodo)
+            .in('contribuyente_id', contribuyenteIds)
+            .limit(QUERY_LIMIT)
+
+        if (teError) {
+            logger.error('Error obteniendo tareas existentes', teError)
+        }
+
+        // Crear set de tareas existentes: "contribuyente_id|id_obligacion|periodo"
+        const tareasExistentesSet = new Set<string>()
+        ;(tareasExistentes || []).forEach((t: TareaExistente) => {
+            tareasExistentesSet.add(`${t.contribuyente_id}|${t.id_obligacion}|${t.periodo_fiscal}`)
+        })
+
+        // === FASE 2: Procesamiento en memoria ===
+
         for (const contribuyente of contribuyentes as Contribuyente[]) {
             try {
-                // 2. Obtener regímenes vigentes del contribuyente
-                const { data: regimenes, error: regError } = await supabase
-                    .from('contribuyente_regimen')
-                    .select('c_regimen, vigencia_desde, vigencia_hasta')
-                    .eq('contribuyente_id', contribuyente.contribuyente_id)
+                // Obtener regímenes del contribuyente (desde mapa)
+                const regimenes = regimenesPorContribuyente.get(contribuyente.contribuyente_id) || []
+                if (regimenes.length === 0) continue
 
-                if (regError) {
-                    errores.push(`Error obteniendo regímenes para ${contribuyente.rfc}: ${regError.message}`)
-                    continue
-                }
-
-                if (!regimenes || regimenes.length === 0) {
-                    continue // Sin regímenes, saltar
-                }
-
-                // 3. Obtener cliente asociado al contribuyente
-                const { data: clienteContrib, error: ccError } = await supabase
-                    .from('cliente_contribuyente')
-                    .select('cliente_id')
-                    .eq('contribuyente_id', contribuyente.contribuyente_id)
-                    .single()
-
-                if (ccError || !clienteContrib) {
+                // Obtener cliente asociado (desde mapa)
+                const clienteId = clientePorContribuyente.get(contribuyente.contribuyente_id)
+                if (!clienteId) {
                     errores.push(`Contribuyente ${contribuyente.rfc} no tiene cliente asociado`)
                     continue
                 }
 
-                const clienteId = clienteContrib.cliente_id
+                // Obtener servicios contratados (desde mapa)
+                const serviciosIds = serviciosPorCliente.get(clienteId) || []
+                if (serviciosIds.length === 0) continue
 
-                // 4. Obtener servicios contratados por el cliente
-                const { data: serviciosCliente, error: scError } = await supabase
-                    .from('cliente_servicio')
-                    .select('servicio_id')
-                    .eq('cliente_id', clienteId)
+                // Calcular obligaciones cubiertas por servicios
+                const obligacionesCubiertas = new Set<string>()
+                serviciosIds.forEach(servId => {
+                    const obligs = obligacionesPorServicio.get(servId) || []
+                    obligs.forEach(o => obligacionesCubiertas.add(o))
+                })
 
-                if (scError) {
-                    errores.push(`Error obteniendo servicios para cliente ${clienteId}: ${scError.message}`)
-                    continue
-                }
+                // Para cada régimen, verificar obligaciones
+                for (const regimen of regimenes) {
+                    const obligacionesDelRegimen = obligacionesPorRegimen.get(regimen.c_regimen) || []
 
-                const serviciosIds = (serviciosCliente as ClienteServicio[] || []).map(s => s.servicio_id)
+                    for (const obligacion of obligacionesDelRegimen) {
+                        // Verificar si está contratada
+                        if (!obligacionesCubiertas.has(obligacion.id_obligacion)) continue
 
-                if (serviciosIds.length === 0) {
-                    continue // Sin servicios contratados
-                }
+                        // Verificar si ya existe
+                        const tareaKey = `${contribuyente.contribuyente_id}|${obligacion.id_obligacion}|${periodo}`
+                        if (tareasExistentesSet.has(tareaKey)) continue
 
-                // 5. Obtener obligaciones cubiertas por los servicios
-                const { data: obligacionesServicios, error: osError } = await supabase
-                    .from('servicio_obligacion')
-                    .select('id_obligacion')
-                    .in('servicio_id', serviciosIds)
-
-                if (osError) {
-                    errores.push(`Error obteniendo obligaciones de servicios: ${osError.message}`)
-                    continue
-                }
-
-                const obligacionesCubiertas = new Set(
-                    (obligacionesServicios as ServicioObligacion[] || []).map(o => o.id_obligacion)
-                )
-
-                // 6. Para cada régimen, obtener obligaciones que aplican
-                for (const regimen of regimenes as ContribuyenteRegimen[]) {
-                    const { data: obligacionesRegimen, error: orError } = await supabase
-                        .from('regimen_obligacion')
-                        .select('id_obligacion, condicion_json')
-                        .eq('c_regimen', regimen.c_regimen)
-
-                    if (orError) {
-                        errores.push(`Error obteniendo obligaciones del régimen ${regimen.c_regimen}: ${orError.message}`)
-                        continue
-                    }
-
-                    // 7. Filtrar obligaciones que están contratadas
-                    for (const obligacion of obligacionesRegimen as RegimenObligacion[] || []) {
-                        if (!obligacionesCubiertas.has(obligacion.id_obligacion)) {
-                            continue // No está contratada
-                        }
-
-                        // 8. Verificar si ya existe tarea para este RFC + obligación + periodo
-                        const { data: tareaExistente, error: teError } = await supabase
-                            .from('tarea')
-                            .select('tarea_id')
-                            .eq('contribuyente_id', contribuyente.contribuyente_id)
-                            .eq('id_obligacion', obligacion.id_obligacion)
-                            .eq('periodo_fiscal', periodo)
-                            .single()
-
-                        if (tareaExistente) {
-                            continue // Ya existe, no duplicar
-                        }
-
-                        // 9. Calcular ejercicio y fecha límite por defecto
+                        // Calcular fecha límite
                         const [año, mes] = periodo.split('-').map(Number)
-                        const ejercicio = año
-
-                        // Fecha límite por defecto: día 17 del mes siguiente
                         const mesSiguiente = mes === 12 ? 1 : mes + 1
                         const añoLimite = mes === 12 ? año + 1 : año
                         const fechaLimiteDefault = `${añoLimite}-${String(mesSiguiente).padStart(2, '0')}-17`
 
-                        // 10. Crear la tarea
-                        const nuevaTarea: TareaGenerada = {
+                        // Agregar a batch de inserción
+                        tareasAInsertar.push({
                             cliente_id: clienteId,
                             contribuyente_id: contribuyente.contribuyente_id,
                             id_obligacion: obligacion.id_obligacion,
-                            ejercicio,
+                            ejercicio: año,
                             periodo_fiscal: periodo,
                             fecha_limite_oficial: fechaLimiteDefault,
                             estado: 'no_iniciado'
-                        }
+                        })
 
-                        const { error: insertError } = await supabase
-                            .from('tarea')
-                            .insert(nuevaTarea)
-
-                        if (insertError) {
-                            errores.push(`Error creando tarea para ${contribuyente.rfc} - ${obligacion.id_obligacion}: ${insertError.message}`)
-                        } else {
-                            tareasGeneradas++
-                        }
+                        // Agregar al set para evitar duplicados en este batch
+                        tareasExistentesSet.add(tareaKey)
                     }
                 }
             } catch (error) {
@@ -222,13 +283,32 @@ export async function generarTareas(
             }
         }
 
+        // === FASE 3: Inserción batch ===
+
+        if (tareasAInsertar.length > 0) {
+            // Insertar en chunks de 100 para evitar timeouts
+            const CHUNK_SIZE = 100
+            for (let i = 0; i < tareasAInsertar.length; i += CHUNK_SIZE) {
+                const chunk = tareasAInsertar.slice(i, i + CHUNK_SIZE)
+                const { error: insertError } = await supabase
+                    .from('tarea')
+                    .insert(chunk)
+
+                if (insertError) {
+                    logger.error(`Error insertando tareas batch ${i}-${i + chunk.length}`, insertError)
+                    errores.push(`Error insertando batch: ${insertError.message}`)
+                }
+            }
+        }
+
         return {
             success: errores.length === 0,
-            tareasGeneradas,
+            tareasGeneradas: tareasAInsertar.length,
             errores
         }
 
     } catch (error) {
+        logger.error('Error en generarTareas', error)
         return {
             success: false,
             tareasGeneradas: 0,
@@ -254,31 +334,40 @@ export async function obtenerResumenTareas(
     const { data: tareas, error } = await supabase
         .from('tarea')
         .select(`
-      tarea_id,
-      estado,
-      responsable_equipo_id,
-      teams:responsable_equipo_id (nombre)
-    `)
+            tarea_id,
+            estado,
+            responsable_equipo_id,
+            teams:responsable_equipo_id (nombre)
+        `)
         .eq('periodo_fiscal', periodo)
+        .limit(QUERY_LIMIT)
 
     if (error || !tareas) {
+        logger.error('Error obteniendo resumen de tareas', error)
         return { total: 0, porEstado: {}, porTribu: {} }
     }
 
     const porEstado: Record<string, number> = {}
     const porTribu: Record<string, number> = {}
 
-    for (const tarea of tareas) {
+    interface TareaConTeam {
+        tarea_id: string
+        estado: string
+        responsable_equipo_id: string | null
+        teams: { nombre: string } | { nombre: string }[] | null
+    }
+
+    for (const tarea of tareas as TareaConTeam[]) {
         // Contar por estado
         porEstado[tarea.estado] = (porEstado[tarea.estado] || 0) + 1
 
-        // Contar por tribu
+        // Contar por tribu - manejar tipos correctamente
         let nombreTribu = 'Sin asignar'
         if (tarea.teams) {
             if (Array.isArray(tarea.teams) && tarea.teams.length > 0) {
-                nombreTribu = (tarea.teams[0] as any).nombre || 'Sin asignar'
-            } else if (!Array.isArray(tarea.teams)) {
-                nombreTribu = (tarea.teams as any).nombre || 'Sin asignar'
+                nombreTribu = tarea.teams[0].nombre || 'Sin asignar'
+            } else if (!Array.isArray(tarea.teams) && typeof tarea.teams === 'object') {
+                nombreTribu = tarea.teams.nombre || 'Sin asignar'
             }
         }
         porTribu[nombreTribu] = (porTribu[nombreTribu] || 0) + 1

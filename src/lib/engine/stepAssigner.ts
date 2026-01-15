@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import logger from '@/lib/utils/logger'
 
 /**
  * Motor de asignación de pasos
@@ -26,6 +27,11 @@ interface TareaStep {
     completado: boolean
     completado_at: string | null
     responsable_usuario_id: string | null
+}
+
+interface UserInfo {
+    nombre: string
+    email: string
 }
 
 
@@ -228,9 +234,11 @@ export async function obtenerPasosTarea(
             let responsable: { nombre: string; email: string } | null = null
             if (p.users) {
                 if (Array.isArray(p.users) && p.users.length > 0) {
-                    responsable = { nombre: p.users[0].nombre, email: p.users[0].email }
+                    const user = p.users[0] as UserInfo
+                    responsable = { nombre: user.nombre, email: user.email }
                 } else if (!Array.isArray(p.users)) {
-                    responsable = { nombre: (p.users as any).nombre, email: (p.users as any).email }
+                    const user = p.users as UserInfo
+                    responsable = { nombre: user.nombre, email: user.email }
                 }
             }
             return {

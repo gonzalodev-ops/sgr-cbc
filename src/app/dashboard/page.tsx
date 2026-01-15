@@ -12,6 +12,10 @@ import {
 } from '@/lib/data/mockData'
 import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter } from 'lucide-react'
 
+// Constantes
+const QUERY_LIMIT = 500
+const PUNTOS_BASE_DEFAULT = 50
+
 // Helper to create client only on client-side
 function getSupabaseClient() {
     if (typeof window === 'undefined') return null
@@ -43,10 +47,16 @@ export default function TMRPage() {
                     user_id,
                     teams:team_id (nombre)
                 `)
+                .limit(QUERY_LIMIT)
+
+            interface TeamMemberData {
+                user_id: string
+                teams: { nombre: string } | null
+            }
 
             const userTeamMap: Record<string, string> = {}
             if (teamData) {
-                teamData.forEach((tm: any) => {
+                (teamData as TeamMemberData[]).forEach((tm) => {
                     if (tm.user_id && tm.teams?.nombre) {
                         userTeamMap[tm.user_id] = tm.teams.nombre
                     }
@@ -58,10 +68,17 @@ export default function TMRPage() {
                 .from('cliente_talla')
                 .select('cliente_id, talla_id, dominio_talla')
                 .eq('activo', true)
+                .limit(QUERY_LIMIT)
+
+            interface ClienteTallaData {
+                cliente_id: string
+                talla_id: string
+                dominio_talla: string
+            }
 
             const clienteTallaMap: Record<string, string> = {}
             if (tallaData) {
-                tallaData.forEach((ct: any) => {
+                (tallaData as ClienteTallaData[]).forEach((ct) => {
                     // Usar talla FISCAL como default
                     if (ct.dominio_talla === 'FISCAL') {
                         clienteTallaMap[ct.cliente_id] = ct.talla_id
@@ -69,7 +86,21 @@ export default function TMRPage() {
                 })
             }
 
-            // 3. Query principal de tareas
+            // 3. Traer evidencias existentes (resuelve TODO de tarea_documento)
+            const { data: evidenciaData } = await client
+                .from('tarea_documento')
+                .select('tarea_id')
+                .eq('tipo', 'EVIDENCIA')
+                .limit(QUERY_LIMIT)
+
+            const tareasConEvidencia = new Set<string>()
+            if (evidenciaData) {
+                evidenciaData.forEach((e: { tarea_id: string }) => {
+                    tareasConEvidencia.add(e.tarea_id)
+                })
+            }
+
+            // 4. Query principal de tareas
             const { data, error } = await client
                 .from('tarea')
                 .select(`
@@ -102,15 +133,38 @@ export default function TMRPage() {
                     )
                 `)
                 .order('fecha_limite_oficial', { ascending: true })
+                .limit(QUERY_LIMIT)
 
             if (error) {
-                console.error('Error fetching tasks:', error)
+                // Solo loguear en desarrollo
+                if (process.env.NODE_ENV === 'development') {
+                    console.error('Error fetching tasks:', error)
+                }
                 setLoading(false)
                 return
             }
 
             if (data) {
-                const mappedData: Entregable[] = data.map((t: any) => {
+                // Interfaces para el mapeo de datos
+                interface TareaData {
+                    tarea_id: string
+                    cliente_id: string
+                    estado: string
+                    id_obligacion: string
+                    responsable_usuario_id: string | null
+                    contribuyente: {
+                        rfc: string
+                        razon_social: string
+                        nombre_comercial: string | null
+                        team_id: string | null
+                        equipo: { nombre: string } | null
+                    } | null
+                    cliente: { nombre_comercial: string } | null
+                    responsable: { nombre: string; rol_global: string } | null
+                    obligacion: { nombre_corto: string; periodicidad: string } | null
+                }
+
+                const mappedData: Entregable[] = (data as TareaData[]).map((t) => {
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -126,13 +180,13 @@ export default function TMRPage() {
                         rfc: t.contribuyente?.rfc || 'N/A',
                         cliente: t.cliente?.nombre_comercial || t.contribuyente?.nombre_comercial || 'N/A',
                         entregable: t.obligacion?.nombre_corto || t.id_obligacion,
-                        talla: (tallaMap[dbTalla] || 'M') as any,
-                        puntosBase: 50, // TODO: Traer de scoring engine
+                        talla: (tallaMap[dbTalla] || 'M') as Entregable['talla'],
+                        puntosBase: PUNTOS_BASE_DEFAULT, // Scoring engine pendiente de implementación
                         responsable: t.responsable?.nombre || 'Sin asignar',
                         rol: t.responsable?.rol_global || 'COLABORADOR',
-                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id] || 'Sin equipo',
+                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
                         estado: mapEstado(t.estado),
-                        evidencia: false, // TODO: Traer de tarea_documento
+                        evidencia: tareasConEvidencia.has(t.tarea_id),
                         voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
                         auditoria: 'no_auditado' as ResultadoAuditoria
                     }
@@ -213,7 +267,9 @@ export default function TMRPage() {
             .eq('tarea_id', id)
 
         if (error) {
-            console.error('Error updating status:', error)
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error updating status:', error)
+            }
             // Rollback if error
             setEntregables(prev => prev.map(e => e.id === id ? { ...e, estado: currentEstado } : e))
         }
@@ -239,7 +295,9 @@ export default function TMRPage() {
             .eq('tarea_id', id)
 
         if (error) {
-            console.error('Error updating vobo:', error)
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error updating vobo:', error)
+            }
             setEntregables(prev => prev.map(e => e.id === id ? { ...e, voboLider: currentVobo } : e))
         }
     }
@@ -263,7 +321,9 @@ export default function TMRPage() {
             }, { onConflict: 'tarea_id' })
 
         if (error) {
-            console.error('Error updating auditoria:', error)
+            if (process.env.NODE_ENV === 'development') {
+                console.error('Error updating auditoria:', error)
+            }
             setEntregables(prev => prev.map(e => e.id === id ? { ...e, auditoria: currentAuditoria } : e))
         }
     }
