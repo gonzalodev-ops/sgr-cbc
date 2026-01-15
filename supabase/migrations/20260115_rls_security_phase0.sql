@@ -725,6 +725,8 @@ END $$;
 -- FIN - Verificar con: SELECT * FROM verificar_rls_status();
 -- ============================================
 
+DROP FUNCTION IF EXISTS verificar_rls_status();
+
 CREATE OR REPLACE FUNCTION verificar_rls_status()
 RETURNS TABLE (tabla TEXT, rls_habilitado BOOLEAN, num_politicas INTEGER) AS $$
 BEGIN
