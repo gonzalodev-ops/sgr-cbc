@@ -55,7 +55,7 @@ CREATE OR REPLACE FUNCTION is_admin_or_socio()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users
-    WHERE id = (SELECT auth.uid())
+    WHERE user_id = (SELECT auth.uid())
     AND rol_global IN ('ADMIN', 'SOCIO')
   );
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
@@ -642,7 +642,7 @@ CREATE POLICY "audits_select" ON audits
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -651,7 +651,7 @@ CREATE POLICY "audits_insert" ON audits
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -660,7 +660,7 @@ CREATE POLICY "audits_update" ON audits
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -678,7 +678,7 @@ CREATE POLICY "findings_select" ON findings
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
     OR
@@ -705,7 +705,7 @@ CREATE POLICY "findings_insert" ON findings
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -714,7 +714,7 @@ CREATE POLICY "findings_update" ON findings
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -732,7 +732,7 @@ CREATE POLICY "retrabajo_select" ON retrabajo
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
     OR
@@ -757,7 +757,7 @@ CREATE POLICY "retrabajo_insert" ON retrabajo
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -766,7 +766,7 @@ CREATE POLICY "retrabajo_update" ON retrabajo
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO', 'AUDITOR')
     )
   );
@@ -784,7 +784,7 @@ CREATE POLICY "system_log_select" ON system_log
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global = 'ADMIN'
     )
   );
@@ -800,7 +800,7 @@ CREATE POLICY "system_log_delete" ON system_log
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global = 'ADMIN'
     )
   );
@@ -815,7 +815,7 @@ CREATE POLICY "config_sistema_select" ON config_sistema
   FOR SELECT USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global IN ('ADMIN', 'SOCIO')
     )
   );
@@ -824,7 +824,7 @@ CREATE POLICY "config_sistema_insert" ON config_sistema
   FOR INSERT WITH CHECK (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global = 'ADMIN'
     )
   );
@@ -833,7 +833,7 @@ CREATE POLICY "config_sistema_update" ON config_sistema
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global = 'ADMIN'
     )
   );
@@ -842,7 +842,7 @@ CREATE POLICY "config_sistema_delete" ON config_sistema
   FOR DELETE USING (
     EXISTS (
       SELECT 1 FROM users u
-      WHERE u.id = (SELECT auth.uid())
+      WHERE u.user_id = (SELECT auth.uid())
       AND u.rol_global = 'ADMIN'
     )
   );
@@ -872,7 +872,7 @@ CREATE POLICY "tarea_documento_select" ON tarea_documento
           SELECT tm.team_id FROM teams tm WHERE tm.lider_id = (SELECT auth.uid())
         )
         OR EXISTS (
-          SELECT 1 FROM users u WHERE u.id = (SELECT auth.uid()) AND u.rol_global = 'AUDITOR'
+          SELECT 1 FROM users u WHERE u.user_id = (SELECT auth.uid()) AND u.rol_global = 'AUDITOR'
         )
       )
     )
@@ -937,7 +937,7 @@ CREATE POLICY "tarea_evento_select" ON tarea_evento
           SELECT tm.team_id FROM teams tm WHERE tm.lider_id = (SELECT auth.uid())
         )
         OR EXISTS (
-          SELECT 1 FROM users u WHERE u.id = (SELECT auth.uid()) AND u.rol_global = 'AUDITOR'
+          SELECT 1 FROM users u WHERE u.user_id = (SELECT auth.uid()) AND u.rol_global = 'AUDITOR'
         )
       )
     )
