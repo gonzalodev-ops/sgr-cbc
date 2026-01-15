@@ -257,6 +257,8 @@ CREATE TABLE tarea (
   fecha_limite_interna DATE,
   estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_curso', 'pendiente_evidencia', 'en_validacion', 'bloqueado_cliente', 'presentado', 'pagado', 'cerrado', 'rechazado')),
   riesgo TEXT NOT NULL DEFAULT 'MEDIO' CHECK (riesgo IN ('ALTO', 'MEDIO', 'BAJO')),
+  en_riesgo BOOLEAN NOT NULL DEFAULT false,
+  fecha_estado_presentado TIMESTAMPTZ,
   prioridad INTEGER NOT NULL DEFAULT 50,
   responsable_usuario_id UUID,
   revisor_usuario_id UUID,
@@ -271,6 +273,7 @@ CREATE INDEX idx_tarea_cliente ON tarea(cliente_id);
 CREATE INDEX idx_tarea_responsable ON tarea(responsable_usuario_id);
 CREATE INDEX idx_tarea_fecha ON tarea(fecha_limite_oficial);
 CREATE INDEX idx_tarea_estado ON tarea(estado);
+CREATE INDEX idx_tarea_en_riesgo ON tarea(en_riesgo) WHERE en_riesgo = true;
 
 CREATE TABLE tarea_step (
   tarea_step_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
