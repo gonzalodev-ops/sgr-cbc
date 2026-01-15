@@ -161,7 +161,7 @@ export default function TabServicios() {
                         {servicios.map(s => (
                             <div key={s.servicio_id} className="flex justify-between items-center bg-white border border-slate-200 rounded-lg p-4">
                                 <div>
-                                    <p className="font-medium">{s.nombre}</p>
+                                    <p className="font-medium text-slate-800">{s.nombre}</p>
                                     <p className="text-xs text-slate-700 font-mono">{s.servicio_id}</p>
                                     {s.descripcion && <p className="text-xs text-slate-700 mt-1">{s.descripcion}</p>}
                                 </div>
@@ -191,7 +191,7 @@ export default function TabServicios() {
                             <thead className="bg-slate-100 text-xs uppercase text-slate-800">
                                 <tr><th className="p-3">Talla</th><th className="p-3">Ponderación (%)</th><th className="p-3">Ejemplo (Base 100pts)</th></tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 text-slate-800">
                                 {tallas.map(t => (
                                     <tr key={t.talla_id} className="hover:bg-slate-50">
                                         <td className="p-3 font-medium">
@@ -255,7 +255,7 @@ export default function TabServicios() {
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 text-slate-800">
                                     {servicios.map(s => {
                                         const obligacionesDelServicio = servicioObligaciones.filter(so => so.servicio_id === s.servicio_id)
                                         return (

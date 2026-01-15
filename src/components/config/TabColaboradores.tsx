@@ -147,7 +147,7 @@ export default function TabColaboradores() {
                     {equipos.map(t => (
                         <div key={t.team_id} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2">
                             <Users size={16} className="text-purple-600" />
-                            <span className="font-medium">{t.nombre}</span>
+                            <span className="font-medium text-slate-800">{t.nombre}</span>
                             <button onClick={() => { setTeamForm({ nombre: t.nombre }); setEditingTeam(t); setShowTeamForm(true) }} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={14} /></button>
                             <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
@@ -206,7 +206,7 @@ export default function TabColaboradores() {
                             <th className="p-3 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-sm">
+                    <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
                         {usuarios.filter(u => u.activo).map(u => (
                             <tr key={u.user_id} className="hover:bg-slate-50">
                                 <td className="p-3 font-medium">{u.nombre}</td>

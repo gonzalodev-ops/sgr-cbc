@@ -356,10 +356,10 @@ export default function TabObligaciones() {
                                 <th className="p-3 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
+                        <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
                             {obligaciones.map(o => (
                                 <tr key={o.id_obligacion} className="hover:bg-slate-50">
-                                    <td className="p-3 font-mono text-xs">{o.id_obligacion}</td>
+                                    <td className="p-3 font-mono text-xs text-slate-800">{o.id_obligacion}</td>
                                     <td className="p-3 font-medium">{o.nombre_corto}</td>
                                     <td className="p-3">{o.impuesto}</td>
                                     <td className="p-3">
@@ -412,7 +412,7 @@ export default function TabObligaciones() {
                             <div key={r.c_regimen} className="flex justify-between items-center bg-white border border-slate-200 rounded-lg p-3">
                                 <div>
                                     <span className="font-mono bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-sm mr-2">{r.c_regimen}</span>
-                                    <span className="text-sm">{r.descripcion}</span>
+                                    <span className="text-sm text-slate-800">{r.descripcion}</span>
                                     <span className={`ml-2 text-xs px-1 rounded ${r.tipo_persona === 'PF' ? 'bg-blue-100 text-blue-700' : r.tipo_persona === 'PM' ? 'bg-green-100 text-green-700' : 'bg-gray-100'}`}>{r.tipo_persona}</span>
                                 </div>
                                 <div>
@@ -451,7 +451,7 @@ export default function TabObligaciones() {
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 text-slate-800">
                                 {regimenes.map(r => (
                                     <tr key={r.c_regimen} className="hover:bg-slate-50">
                                         <td className="p-3 sticky left-0 bg-white z-10 border-r border-slate-200">
@@ -518,10 +518,10 @@ export default function TabObligaciones() {
                         <thead className="bg-slate-100 text-xs uppercase text-slate-800">
                             <tr><th className="p-3">ID</th><th className="p-3">Nombre</th><th className="p-3">Tipo</th><th className="p-3">Dia Base</th><th className="p-3">Regla</th><th className="p-3 text-right">Acciones</th></tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-sm">
+                        <tbody className="divide-y divide-slate-100 text-sm text-slate-800">
                             {calendarios.map(c => (
                                 <tr key={c.calendario_regla_id} className="hover:bg-slate-50">
-                                    <td className="p-3 font-mono text-xs">{c.id_evento_calendario}</td>
+                                    <td className="p-3 font-mono text-xs text-slate-800">{c.id_evento_calendario}</td>
                                     <td className="p-3 font-medium">{c.nombre}</td>
                                     <td className="p-3"><span className={`px-2 py-1 rounded text-xs ${c.tipo_evento === 'MENSUAL' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{c.tipo_evento}</span></td>
                                     <td className="p-3">{c.dia_base || '-'}</td>

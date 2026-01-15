@@ -334,7 +334,7 @@ export default function TabClientes() {
                                 {c.contacto_nombre && (
                                     <div className="bg-white p-3 rounded border border-slate-200">
                                         <p className="text-xs text-slate-700 font-bold uppercase mb-1">Contacto</p>
-                                        <p className="text-sm">{c.contacto_nombre} {c.contacto_email && `| ${c.contacto_email}`} {c.contacto_telefono && `| ${c.contacto_telefono}`}</p>
+                                        <p className="text-sm text-slate-800">{c.contacto_nombre} {c.contacto_email && `| ${c.contacto_email}`} {c.contacto_telefono && `| ${c.contacto_telefono}`}</p>
                                     </div>
                                 )}
 
