@@ -45,3 +45,7 @@ next-env.d.ts
 *.sql
 *.sql.gz
 *.dump
+
+# Allow SQL files in supabase directory (migrations, schema, etc.)
+!supabase/**/*.sql
+!supabase/*.sql
