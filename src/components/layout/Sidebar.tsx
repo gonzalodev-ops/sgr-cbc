@@ -50,6 +50,13 @@ const allNavigation: NavItem[] = [
         icon: LayoutDashboard,
         roles: ['SOCIO', 'ADMIN', 'AUDITOR']
     },
+    // TMR 2.0 - Centro de Control for SOCIO, ADMIN
+    {
+        name: 'TMR 2.0',
+        href: '/dashboard/tmr',
+        icon: TrendingUp,
+        roles: ['SOCIO', 'ADMIN']
+    },
     // Mi Dia - Personal task view for COLABORADOR, LIDER
     {
         name: 'Mi Dia',
