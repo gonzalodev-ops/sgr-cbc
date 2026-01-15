@@ -61,7 +61,7 @@ export default function ClientesPage() {
                     nombre_comercial,
                     estado,
                     cliente_contribuyente (
-                        contribuyente:contribuyente_id (rfc, razon_social, tipo_persona)
+                        contribuyente:contribuyente_id (contribuyente_id, rfc, razon_social, tipo_persona)
                     )
                 `)
                 .eq('estado', 'ACTIVO')
