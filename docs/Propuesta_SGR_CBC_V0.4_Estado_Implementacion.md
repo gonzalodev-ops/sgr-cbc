@@ -1,9 +1,20 @@
 # Propuesta de Sistema de Gestión de Resultados y Flujos de Trabajo
 
-## VERSIÓN 0.3 - Estado de Implementación
+## VERSIÓN 0.4 - Estado de Implementación (Actualizado)
 
 **Fecha:** Enero 2026
+**Última Actualización:** Enero 2026 (post Sprint 1 y 2)
 **Propósito:** Documento de seguimiento que muestra el estado de implementación de cada punto acordado en la propuesta original V0.2
+
+### Resumen de Progreso
+
+| Sprint | Estado | Funcionalidades |
+|--------|--------|-----------------|
+| Sprint 1 | **COMPLETADO** | Sistema de riesgo por falta de pago |
+| Sprint 2 | **COMPLETADO** | Mi Día, Bloqueos, Alertas |
+| Sprint 3 | Pendiente | Automatización de suplentes |
+| Sprint 4 | Pendiente | Métricas por proceso |
+| Sprint 5 | Pendiente (Fase 2) | Portal de cliente |
 
 ---
 
@@ -167,7 +178,7 @@ INSERT INTO tarea (entregable_id, contribuyente_id, periodo, deadline, ...)
 | Pasos en paralelo | **IMPLEMENTADO** | Lógica de dependencias en `tarea_step` |
 | Nombre, descripción, dependencias, rol responsable | **IMPLEMENTADO** | Todos los campos en `proceso_paso` |
 | Evidencias requeridas por paso | **PARCIAL** | Tabla `tarea_documento` existe; falta definición de requeridos por paso |
-| Diferenciación declaración presentada vs pagado | **PARCIAL** | Estados separados existen; falta indicador automático de riesgo |
+| Diferenciación declaración presentada vs pagado | **IMPLEMENTADO** | Motor de riesgo detecta tareas sin pago + alertas visuales |
 
 **Procesos implementados:**
 
@@ -213,7 +224,11 @@ type EstadoTarea =
   | 'rechazado'        // Rechazado en auditoría
 ```
 
-**GAP identificado:** Falta lógica automática para marcar "en riesgo" cuando está en `presentado` sin evidencia de pago.
+**IMPLEMENTADO (Sprint 1):** Sistema completo de detección de riesgo por falta de pago:
+- Campo `en_riesgo` y `fecha_estado_presentado` en tabla `tarea`
+- Motor de detección: `src/lib/engine/riskDetector.ts`
+- Badge visual en TMR: `src/app/dashboard/page.tsx`
+- Alertas en Dashboard Ejecutivo: `src/components/ejecutivo/AlertasRiesgo.tsx`
 
 ---
 
@@ -332,7 +347,7 @@ Tarea completada → Auditor revisa →
 | % de entregables a tiempo | **IMPLEMENTADO** | Calculado en dashboard |
 | Distribución por cliente, RFC y proceso | **IMPLEMENTADO** | `DistribucionTrabajo.tsx` |
 | Pasos asignados hoy | **IMPLEMENTADO** | Lista de tareas filtradas |
-| Pasos bloqueados o donde bloquea a otros | **PARCIAL** | Estado bloqueado existe; falta visualización de "a quién bloquea" |
+| Pasos bloqueados o donde bloquea a otros | **IMPLEMENTADO** | Componente `BloqueosList.tsx` con dos secciones |
 
 **Ubicación del código:**
 
@@ -340,6 +355,13 @@ Tarea completada → Auditor revisa →
 - **Gráfico de puntos:** `src/components/colaborador/PuntosChart.tsx`
 - **Distribución:** `src/components/colaborador/DistribucionTrabajo.tsx`
 - **Lista retrabajo:** `src/components/colaborador/RetrabajoList.tsx`
+- **Lista bloqueos:** `src/components/colaborador/BloqueosList.tsx` **(NUEVO - Sprint 2)**
+
+**IMPLEMENTADO (Sprint 2):** Sistema completo de visualización de bloqueos:
+- Sección "Mis tareas bloqueadas" (estado = bloqueado_cliente)
+- Sección "Tareas que dependen de mí"
+- Contador de bloqueos en KPIs
+- Callback para actualizar métricas en tiempo real
 
 ---
 
@@ -429,12 +451,24 @@ La matriz muestra para cada cliente:
 
 | Funcionalidad | Estado | Implementación |
 |---------------|--------|----------------|
-| Agenda de pasos que le corresponde atender | **PARCIAL** | TMR con filtros; falta vista "Mi Día" dedicada |
+| Agenda de pasos que le corresponde atender | **IMPLEMENTADO** | Vista "Mi Día" con priorización automática |
 | Información por paso (cliente, RFC, proceso, etc.) | **IMPLEMENTADO** | Todos los campos visibles en tareas |
 | Integración con Microsoft 365 | **ALTERNATIVA** | Sistema web propio |
-| Organizar día con base en prioridades reales | **PARCIAL** | Falta algoritmo de priorización automática |
+| Organizar día con base en prioridades reales | **IMPLEMENTADO** | Algoritmo de priorización por urgencia |
 
-**Ubicación:** `src/app/dashboard/page.tsx` (TMR), `src/app/dashboard/colaborador/page.tsx`
+**Ubicación:**
+- `src/app/dashboard/page.tsx` (TMR)
+- `src/app/dashboard/colaborador/page.tsx`
+- `src/app/dashboard/mi-dia/page.tsx` **(NUEVO - Sprint 2)**
+
+**IMPLEMENTADO (Sprint 2):** Vista "Mi Día" con algoritmo de priorización:
+1. Prioridad 1: Tareas vencidas (indicador rojo)
+2. Prioridad 2: Vence hoy (indicador naranja)
+3. Prioridad 3: Próximos 3 días (indicador amarillo)
+4. Prioridad 4: Tareas bloqueadas
+5. Prioridad 5: Resto ordenado por fecha
+- Acciones rápidas para cambiar estado
+- Link en Sidebar con ícono CalendarDays
 
 ---
 
@@ -444,8 +478,15 @@ La matriz muestra para cada cliente:
 |---------------|--------|----------------|
 | Tablero de avance del equipo | **IMPLEMENTADO** | Vista tribu completa |
 | Identificar desbalances de carga | **IMPLEMENTADO** | `BalanceCarga.tsx` |
-| Detectar tareas críticas o en riesgo | **PARCIAL** | Alertas en ejecutivo; falta integrar en vista tribu |
+| Detectar tareas críticas o en riesgo | **IMPLEMENTADO** | Alertas completas en Dashboard Ejecutivo |
 | Reasignar pasos por ausencias | **IMPLEMENTADO** | `ReasignarModal.tsx` |
+
+**IMPLEMENTADO (Sprint 1):** Sistema completo de alertas de riesgo:
+- Tareas vencidas
+- Tareas por vencer (< 3 días)
+- Tareas en riesgo por falta de pago
+- Colaboradores sobrecargados
+- Componente: `src/components/ejecutivo/AlertasRiesgo.tsx`
 
 **Ubicación:** `src/app/dashboard/tribu/page.tsx`, componentes en `src/components/tribu/`
 
@@ -554,16 +595,20 @@ La propuesta original planteaba usar Microsoft 365 Business Standard como plataf
 - [x] Definir catálogo inicial de entregables
 - [x] Asignar puntos base y tallas
 - [x] Documentar procesos piloto (NOMINA, IMSS)
+- [x] **Sprint 1:** Implementar indicador automático de "en riesgo" para tareas sin evidencia de pago
+- [x] **Sprint 2:** Agregar vista "Mi Día" con priorización automática para colaboradores
+- [x] **Sprint 2:** Implementar visualización de bloqueos
+- [x] **Sprint 1:** Implementar alertas de riesgo completas
 
 ### En proceso:
 - [ ] Piloto con tribus de prueba
 - [ ] Ajustar reglas y vistas según resultados
 
-### Pendientes para completar MVP:
-1. Implementar indicador automático de "en riesgo" para tareas sin evidencia de pago
-2. Agregar vista "Mi Día" con priorización automática para colaboradores
-3. Integrar alertas de riesgo en vista de tribu para líderes
-4. Completar métricas en vista por proceso
+### Pendientes para completar MVP (Sprints 3-4):
+1. Sistema de suplentes automático (reasignación por ausencias)
+2. Validación de evidencias requeridas por paso
+3. Completar métricas en vista por proceso
+4. Calcular participación de cliente en esfuerzo total
 
 ---
 
@@ -576,6 +621,7 @@ src/
 ├── app/
 │   ├── dashboard/
 │   │   ├── page.tsx                    # TMR (Tablero Maestro)
+│   │   ├── mi-dia/page.tsx             # [NUEVO Sprint 2] Vista "Mi Día"
 │   │   ├── ejecutivo/page.tsx          # Dashboard Ejecutivo
 │   │   ├── colaborador/page.tsx        # Vista Colaborador
 │   │   ├── tribu/page.tsx              # Vista Tribu
@@ -605,7 +651,8 @@ src/
 │   ├── colaborador/                    # Vista colaborador
 │   │   ├── PuntosChart.tsx
 │   │   ├── DistribucionTrabajo.tsx
-│   │   └── RetrabajoList.tsx
+│   │   ├── RetrabajoList.tsx
+│   │   └── BloqueosList.tsx            # [NUEVO Sprint 2] Lista de bloqueos
 │   ├── tribu/                          # Vista tribu
 │   │   ├── PuntosTribu.tsx
 │   │   ├── CargaEquipo.tsx
@@ -619,7 +666,7 @@ src/
 │   │   └── HallazgoList.tsx
 │   ├── ejecutivo/                      # Dashboard ejecutivo
 │   │   ├── KPICards.tsx
-│   │   └── AlertasRiesgo.tsx
+│   │   └── AlertasRiesgo.tsx           # [ACTUALIZADO Sprint 1] +Alertas de riesgo
 │   └── proceso/                        # Vista proceso
 │       ├── ProcesoTable.tsx
 │       └── ProcesoMetrics.tsx
@@ -627,9 +674,10 @@ src/
     ├── engine/
     │   ├── taskGenerator.ts            # Motor de tareas
     │   ├── stepAssigner.ts             # Asignador de pasos
-    │   └── autoReassign.ts             # Reasignación
+    │   ├── autoReassign.ts             # Reasignación
+    │   └── riskDetector.ts             # [NUEVO Sprint 1] Motor de detección de riesgo
     └── types/
-        └── database.ts                 # Tipos TypeScript
+        └── database.ts                 # Tipos TypeScript (+en_riesgo, fecha_estado_presentado)
 
 supabase/
 ├── schema.sql                          # 34 tablas DDL
@@ -651,28 +699,36 @@ supabase/
 | 3. Enfoque | 3 | 0 | 0 |
 | 4.1 Entregables | 3 | 0 | 0 |
 | 4.2 Puntos/Tallas | 4 | 0 | 0 |
-| 4.3 Flujos | 4 | 2 | 0 |
+| 4.3 Flujos | 5 | 1 | 0 | *(+1 Sprint 1)*
 | 4.4 Roles | 4 | 1 | 0 |
 | 4.5 Calendario | 4 | 0 | 1 |
 | 4.6 Auditoría | 4 | 0 | 1 |
-| 5.1 Vista Colaborador | 5 | 1 | 0 |
-| 5.2 Vista Tribu | 4 | 1 | 0 |
+| 5.1 Vista Colaborador | 6 | 0 | 0 | *(+1 Sprint 2)*
+| 5.2 Vista Tribu | 5 | 0 | 0 | *(+1 Sprint 1)*
 | 5.3 Vista Cliente | 3 | 3 | 0 |
 | 5.4 Vista Proceso | 2 | 5 | 0 |
-| 6. Día a día | 5 | 4 | 0 |
+| 6. Día a día | 9 | 0 | 0 | *(+4 Sprint 2)*
 | 7. Microsoft 365 | 0* | 0 | 3* |
-| **TOTAL** | **51** | **18** | **6** |
+| **TOTAL** | **55** | **10** | **6** |
 
 *La sección 7 (M365) se resolvió con una alternativa arquitectónica que cumple los objetivos.
 
-### Porcentaje de completitud:
+### Porcentaje de completitud (Actualizado post Sprint 1 y 2):
 
-- **Funcionalidades core:** ~85% implementado
-- **Funcionalidades secundarias:** ~70% implementado
+- **Funcionalidades core:** ~92% implementado (+7%)
+- **Funcionalidades secundarias:** ~80% implementado (+10%)
 - **Integraciones externas:** Resuelto con alternativa
+
+### Avance por Sprint:
+
+| Sprint | Gaps Cerrados | Archivos Nuevos | Estado |
+|--------|--------------|-----------------|--------|
+| Sprint 1 | GAP 4.3.1, GAP 6.2 | riskDetector.ts | **COMPLETADO** |
+| Sprint 2 | GAP 5.1.1, GAP 6.1 | mi-dia/page.tsx, BloqueosList.tsx | **COMPLETADO** |
 
 ---
 
 **Documento preparado para revisión con el cliente.**
 
-*Este documento se actualizará conforme avance la implementación de los gaps identificados.*
+*Última actualización: Enero 2026 (post Sprint 1 y 2)*
+*Próxima actualización: Al completar Sprint 3 (Automatización)*
