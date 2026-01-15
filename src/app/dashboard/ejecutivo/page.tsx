@@ -32,6 +32,14 @@ interface ColaboradorSobrecarga {
     tareasActivas: number
 }
 
+interface TareaRiesgoFaltaPago {
+    tarea_id: string
+    cliente: string
+    rfc: string
+    obligacion: string
+    dias_sin_pago: number
+}
+
 export default function DashboardEjecutivo() {
     const [loading, setLoading] = useState(true)
     const [userRole, setUserRole] = useState<RolGlobal | null>(null)
@@ -51,6 +59,7 @@ export default function DashboardEjecutivo() {
     const [tareasPorVencer, setTareasPorVencer] = useState<TareaAlerta[]>([])
     const [tareasVencidasAlertas, setTareasVencidasAlertas] = useState<TareaAlerta[]>([])
     const [colaboradoresSobrecargados, setColaboradoresSobrecargados] = useState<ColaboradorSobrecarga[]>([])
+    const [tareasEnRiesgoFaltaPago, setTareasEnRiesgoFaltaPago] = useState<TareaRiesgoFaltaPago[]>([])
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,7 +98,8 @@ export default function DashboardEjecutivo() {
                 cargarKPIs(),
                 cargarTopClientes(),
                 cargarTopProcesos(),
-                cargarAlertas()
+                cargarAlertas(),
+                cargarTareasEnRiesgoFaltaPago()
             ])
 
             setLoading(false)
@@ -342,6 +352,44 @@ export default function DashboardEjecutivo() {
         }
     }
 
+    async function cargarTareasEnRiesgoFaltaPago() {
+        // Obtener tareas en estado 'presentado' marcadas como en_riesgo
+        const { data: tareasRiesgo } = await supabase
+            .from('tarea')
+            .select(`
+                tarea_id,
+                fecha_estado_presentado,
+                cliente:cliente_id (
+                    nombre_comercial
+                ),
+                contribuyente:contribuyente_id (
+                    rfc
+                ),
+                obligacion:id_obligacion (
+                    nombre_corto
+                )
+            `)
+            .eq('estado', 'presentado')
+            .eq('en_riesgo', true)
+            .order('fecha_estado_presentado', { ascending: true })
+
+        if (tareasRiesgo) {
+            const alertasRiesgo: TareaRiesgoFaltaPago[] = tareasRiesgo.map((t: any) => {
+                const fechaPresentado = t.fecha_estado_presentado ? new Date(t.fecha_estado_presentado) : new Date()
+                const diasSinPago = Math.floor((Date.now() - fechaPresentado.getTime()) / (1000 * 60 * 60 * 24))
+
+                return {
+                    tarea_id: t.tarea_id,
+                    cliente: t.cliente?.nombre_comercial || 'Sin cliente',
+                    rfc: t.contribuyente?.rfc || 'N/A',
+                    obligacion: t.obligacion?.nombre_corto || 'Sin nombre',
+                    dias_sin_pago: diasSinPago
+                }
+            })
+            setTareasEnRiesgoFaltaPago(alertasRiesgo)
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -410,6 +458,7 @@ export default function DashboardEjecutivo() {
                     tareasPorVencer={tareasPorVencer}
                     tareasVencidas={tareasVencidasAlertas}
                     colaboradoresSobrecargados={colaboradoresSobrecargados}
+                    tareasEnRiesgoFaltaPago={tareasEnRiesgoFaltaPago}
                 />
             </div>
 

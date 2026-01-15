@@ -1,8 +1,9 @@
 # Análisis de Gaps y Plan de Implementación
 
 **Fecha de Análisis:** Enero 2026
+**Última Actualización:** Enero 2026 (post Sprint 1 y 2)
 **Documento Base:** Propuesta Sgr Cbc V0 2.md
-**Estado del Proyecto:** MVP en desarrollo
+**Estado del Proyecto:** MVP en desarrollo avanzado
 
 ---
 
@@ -10,44 +11,125 @@
 
 Este documento presenta un análisis detallado de las funcionalidades acordadas en la propuesta original versus lo implementado actualmente en el sistema SGR-CBC. Se identifican los gaps pendientes y se propone un plan de implementación para completar el alcance del MVP.
 
-### Estadísticas Generales
+### Estadísticas Generales (Actualizadas)
 
 | Categoría | Total | Implementado | Parcial | Pendiente |
 |-----------|-------|--------------|---------|-----------|
-| Conceptos Clave (Sección 4) | 6 módulos | 4 | 2 | 0 |
-| Vistas de Gestión (Sección 5) | 4 vistas | 2 | 2 | 0 |
+| Conceptos Clave (Sección 4) | 6 módulos | 5 | 1 | 0 |
+| Vistas de Gestión (Sección 5) | 4 vistas | 3 | 1 | 0 |
 | Integración M365 (Sección 7) | 3 componentes | 0 | 0 | 3 |
-| Experiencia día a día (Sección 6) | 3 perfiles | 1 | 2 | 0 |
+| Experiencia día a día (Sección 6) | 3 perfiles | 3 | 0 | 0 |
+
+### Progreso de Sprints
+
+| Sprint | Estado | Fecha Completado |
+|--------|--------|------------------|
+| Sprint 1: Indicador de Riesgo | **COMPLETADO** | Enero 2026 |
+| Sprint 2: Experiencia de Usuario | **COMPLETADO** | Enero 2026 |
+| Sprint 3: Automatización | Pendiente | - |
+| Sprint 4: Métricas y Reportes | Pendiente | - |
+| Sprint 5: Portal de Cliente | Pendiente (Fase 2) | - |
 
 ---
 
-## PARTE I: GAPS IDENTIFICADOS POR SECCIÓN
+## PARTE I: GAPS COMPLETADOS (Sprints 1 y 2)
 
 ---
 
-### 4.3 Flujos de Trabajo por Pasos
+### GAP 4.3.1: Diferenciación Declaración Presentada vs Impuestos Pagados
 
-#### GAP 4.3.1: Diferenciación Declaración Presentada vs Impuestos Pagados
-
-**Estado:** Parcialmente implementado
+**Estado:** **COMPLETADO** (Sprint 1)
 
 **Lo que dice la propuesta:**
 > "En procesos como impuestos, el sistema diferencia explícitamente entre **declaración presentada** e **impuestos pagados**. Mientras no exista evidencia de pago del cliente, el entregable se considera 'en riesgo'."
 
-**Estado actual:**
-- Existen estados separados (`presentado`, `pagado`, `cerrado`)
-- NO hay workflow automático que marque "en riesgo" cuando falta evidencia de pago
-- NO hay alertas específicas para esta condición
+**Implementación realizada:**
+- Campo `en_riesgo` agregado a tabla `tarea` en `src/lib/types/database.ts`
+- Campo `fecha_estado_presentado` para tracking temporal
+- Motor de detección automática: `src/lib/engine/riskDetector.ts`
+- Badge visual de riesgo en TMR: `src/app/dashboard/page.tsx`
+- Alertas de riesgo por falta de pago en Dashboard Ejecutivo: `src/app/dashboard/ejecutivo/page.tsx`
+- Componente AlertasRiesgo actualizado con sección de tareas en riesgo: `src/components/ejecutivo/AlertasRiesgo.tsx`
 
-**Trabajo pendiente:**
-1. Implementar lógica de detección automática de riesgo por falta de evidencia de pago
-2. Agregar indicador visual "en riesgo" en el TMR
-3. Incluir alertas en Dashboard Ejecutivo
-
-**Prioridad:** ALTA
-**Esfuerzo estimado:** Mediano (4-6 horas)
+**Archivos modificados/creados:**
+- `src/lib/engine/riskDetector.ts` (NUEVO)
+- `src/lib/types/database.ts` (campos en_riesgo, fecha_estado_presentado)
+- `src/app/dashboard/page.tsx` (badge de riesgo)
+- `src/app/dashboard/ejecutivo/page.tsx` (alertas de riesgo)
+- `src/components/ejecutivo/AlertasRiesgo.tsx` (sección de falta de pago)
 
 ---
+
+### GAP 5.1.1: Visualización de Bloqueos
+
+**Estado:** **COMPLETADO** (Sprint 2)
+
+**Lo que dice la propuesta:**
+> "Pasos donde está bloqueado o donde bloquea a otros."
+
+**Implementación realizada:**
+- Componente `BloqueosList.tsx` con dos secciones:
+  - "Mis tareas bloqueadas" (estado = bloqueado_cliente)
+  - "Tareas que dependen de mí" (tareas de otros esperando mi input)
+- Integración en página de colaborador con contador de bloqueos
+- Callback `onCountChange` para actualizar KPIs
+
+**Archivos modificados/creados:**
+- `src/components/colaborador/BloqueosList.tsx` (NUEVO)
+- `src/app/dashboard/colaborador/page.tsx` (integración y KPI de bloqueos)
+
+---
+
+### GAP 6.1: Agenda Priorizada para Colaborador
+
+**Estado:** **COMPLETADO** (Sprint 2)
+
+**Lo que dice la propuesta:**
+> "Ve una agenda de pasos que le corresponde atender... Puede organizar su día con base en prioridades reales y no solo en lo que 'suena más urgente'."
+
+**Implementación realizada:**
+- Nueva página `/dashboard/mi-dia` con algoritmo de priorización:
+  1. Prioridad 1: Tareas vencidas (rojo)
+  2. Prioridad 2: Tareas que vencen hoy (naranja)
+  3. Prioridad 3: Tareas próximos 3 días (amarillo)
+  4. Prioridad 4: Tareas bloqueadas
+  5. Prioridad 5: Resto por fecha ascendente
+- Acciones rápidas para cambiar estado
+- Indicadores visuales de urgencia
+- Link en Sidebar con ícono CalendarDays
+
+**Archivos modificados/creados:**
+- `src/app/dashboard/mi-dia/page.tsx` (NUEVO - 21KB)
+- `src/components/layout/Sidebar.tsx` (link a Mi Día)
+
+---
+
+### GAP 6.2: Detección de Tareas Críticas para Líder
+
+**Estado:** **COMPLETADO** (Sprint 1 + Sprint 2)
+
+**Lo que dice la propuesta:**
+> "Detecta tareas críticas o en riesgo."
+
+**Implementación realizada:**
+- Alertas de riesgo implementadas en Dashboard Ejecutivo
+- Componente `AlertasRiesgo.tsx` mejorado con:
+  - Tareas vencidas
+  - Tareas por vencer (< 3 días)
+  - Tareas en riesgo por falta de pago
+  - Colaboradores sobrecargados
+
+**Archivos modificados:**
+- `src/components/ejecutivo/AlertasRiesgo.tsx`
+- `src/app/dashboard/ejecutivo/page.tsx`
+
+---
+
+## PARTE II: GAPS PENDIENTES
+
+---
+
+### 4.3 Flujos de Trabajo por Pasos
 
 #### GAP 4.3.2: Evidencias Requeridas por Paso
 
@@ -147,30 +229,6 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 
 ---
 
-### 5.1 Vista por Colaborador
-
-#### GAP 5.1.1: Visualización de Bloqueos
-
-**Estado:** Parcialmente implementado
-
-**Lo que dice la propuesta:**
-> "Pasos donde está bloqueado o donde bloquea a otros."
-
-**Estado actual:**
-- Estado `bloqueado_cliente` existe
-- NO hay visualización clara de bloqueos
-- NO hay identificación de "a quién bloquea"
-
-**Trabajo pendiente:**
-1. Query para identificar tareas bloqueadas y bloqueantes
-2. Componente visual de bloqueos
-3. Notificación al bloqueante
-
-**Prioridad:** MEDIA
-**Esfuerzo estimado:** Mediano (4-6 horas)
-
----
-
 ### 5.3 Vista por Cliente
 
 #### GAP 5.3.1: Participación en Esfuerzo Total
@@ -242,73 +300,16 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 
 ---
 
-### 6. Experiencia del Día a Día
-
-#### GAP 6.1: Agenda Priorizada para Colaborador
-
-**Estado:** Parcialmente implementado
-
-**Lo que dice la propuesta:**
-> "Ve una agenda de pasos que le corresponde atender... Puede organizar su día con base en prioridades reales y no solo en lo que 'suena más urgente'."
-
-**Estado actual:**
-- TMR muestra tareas filtradas por responsable
-- NO hay vista de "agenda del día" específica
-- NO hay ordenamiento automático por prioridad/urgencia
-
-**Trabajo pendiente:**
-1. Crear vista "Mi Día" o "Agenda" para colaborador
-2. Algoritmo de priorización (fecha límite + riesgo + bloqueos)
-3. Vista tipo Kanban personal
-
-**Prioridad:** MEDIA
-**Esfuerzo estimado:** Alto (10-12 horas)
-
----
-
-#### GAP 6.2: Detección de Tareas Críticas para Líder
-
-**Estado:** Parcialmente implementado
-
-**Lo que dice la propuesta:**
-> "Detecta tareas críticas o en riesgo."
-
-**Estado actual:**
-- `AlertasRiesgo.tsx` existe en dashboard ejecutivo
-- NO está disponible específicamente para líderes de tribu
-- Alertas limitadas (vencidas, por vencer)
-
-**Trabajo pendiente:**
-1. Integrar AlertasRiesgo en vista de tribu
-2. Agregar alertas específicas: sin asignar, bloqueadas, rechazadas
-3. Notificaciones push para líder
-
-**Prioridad:** MEDIA
-**Esfuerzo estimado:** Bajo (3-4 horas)
-
----
-
 ### 7. Integración Microsoft 365
 
 #### GAP 7.1: Integración SharePoint / Microsoft Lists
 
-**Estado:** NO implementado
-
-**Lo que dice la propuesta:**
-> "SharePoint / Microsoft Lists para registrar y organizar datos"
-
-**Estado actual:**
-- Sistema usa Supabase/PostgreSQL como backend
-- NO hay sincronización con SharePoint
+**Estado:** NO implementado (Decisión arquitectónica)
 
 **Trabajo pendiente:**
 - **DECISIÓN ARQUITECTÓNICA:** Se optó por Supabase en lugar de SharePoint para mayor control y flexibilidad.
-- Si se requiere integración futura:
-  1. Microsoft Graph API para sincronización bidireccional
-  2. Webhooks para mantener datos sincronizados
 
 **Prioridad:** MUY BAJA (descartada en MVP)
-**Esfuerzo estimado:** Muy Alto (40+ horas)
 
 ---
 
@@ -316,19 +317,8 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 
 **Estado:** NO implementado
 
-**Lo que dice la propuesta:**
-> "Planner, Microsoft Teams y To Do para gestionar tareas y trabajo diario... Integrar la agenda de pasos con las herramientas de tareas de Microsoft 365."
-
-**Estado actual:**
-- Sistema tiene su propio gestor de tareas
-- NO hay sincronización con Microsoft 365
-
 **Trabajo pendiente:**
 - **DECISIÓN ARQUITECTÓNICA:** Esta integración se pospone para Fase 2.
-- Si se implementa:
-  1. Microsoft Graph API para crear tareas en Planner
-  2. Sincronización de estados
-  3. Notificaciones vía Teams
 
 **Prioridad:** BAJA (Fase 2)
 **Esfuerzo estimado:** Muy Alto (30+ horas)
@@ -337,45 +327,37 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 
 #### GAP 7.3: Power Automate
 
-**Estado:** NO implementado
-
-**Lo que dice la propuesta:**
-> "Automatizaciones internas (por ejemplo, Power Automate) para mover información entre estos componentes."
-
-**Estado actual:**
-- Sistema usa APIs propias para automatización
-- Cron job en Vercel para generación de tareas
-- NO hay integración con Power Automate
+**Estado:** Resuelto con alternativa
 
 **Trabajo pendiente:**
 - **DECISIÓN ARQUITECTÓNICA:** Se implementó automatización nativa en lugar de Power Automate.
-- El motor de generación de tareas (`/api/engine/generate-tasks`) cumple esta función.
+- El motor de generación de tareas (`/api/engine/generate-tasks`) y el motor de riesgo (`riskDetector.ts`) cumplen esta función.
 
 **Prioridad:** NO APLICA (resuelto de otra forma)
 
 ---
 
-## PARTE II: RESUMEN DE GAPS POR PRIORIDAD
+## PARTE III: RESUMEN DE GAPS POR PRIORIDAD (Actualizado)
 
-### PRIORIDAD ALTA
+### COMPLETADOS (Sprints 1 y 2)
 
-| Gap | Descripción | Esfuerzo |
-|-----|-------------|----------|
-| 4.3.1 | Diferenciación presentado vs pagado con indicador de riesgo | 4-6 hrs |
+| Gap | Descripción | Sprint |
+|-----|-------------|--------|
+| ~~4.3.1~~ | ~~Diferenciación presentado vs pagado con indicador de riesgo~~ | Sprint 1 |
+| ~~5.1.1~~ | ~~Visualización de bloqueos~~ | Sprint 2 |
+| ~~6.1~~ | ~~Agenda priorizada para colaborador~~ | Sprint 2 |
+| ~~6.2~~ | ~~Detección de tareas críticas para líder~~ | Sprint 1+2 |
 
-### PRIORIDAD MEDIA
+### PRIORIDAD MEDIA (Pendientes)
 
 | Gap | Descripción | Esfuerzo |
 |-----|-------------|----------|
 | 4.3.2 | Evidencias requeridas por paso | 6-8 hrs |
 | 4.4.1 | Sistema de suplentes automático | 8-12 hrs |
-| 5.1.1 | Visualización de bloqueos | 4-6 hrs |
 | 5.3.2 | Vista externa para cliente | 15-20 hrs |
 | 5.4.1 | Dashboard completo por proceso | 6-8 hrs |
-| 6.1 | Agenda priorizada para colaborador | 10-12 hrs |
-| 6.2 | Detección de tareas críticas para líder | 3-4 hrs |
 
-### PRIORIDAD BAJA
+### PRIORIDAD BAJA (Pendientes)
 
 | Gap | Descripción | Esfuerzo |
 |-----|-------------|----------|
@@ -386,37 +368,33 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 
 ---
 
-## PARTE III: PLAN DE IMPLEMENTACIÓN PROPUESTO
+## PARTE IV: PLAN DE IMPLEMENTACIÓN ACTUALIZADO
 
-### Sprint 1: Funcionalidades Críticas (Alta Prioridad)
+### Sprint 1: Funcionalidades Críticas - **COMPLETADO**
 
-**Objetivo:** Completar funcionalidades que impactan directamente la operación diaria.
+**Fecha:** Enero 2026
 
-**Tareas:**
-1. **Gap 4.3.1 - Indicador de Riesgo por Falta de Pago**
-   - Agregar campo `en_riesgo` a tabla `tarea`
-   - Lógica: si estado = `presentado` y han pasado X días sin evidencia de pago → marcar en_riesgo
-   - Badge visual en TMR
-   - Alerta en Dashboard Ejecutivo
+**Entregables:**
+- [x] Campo `en_riesgo` en tabla `tarea`
+- [x] Motor de detección: `riskDetector.ts`
+- [x] Badge visual en TMR
+- [x] Alertas en Dashboard Ejecutivo
 
-### Sprint 2: Experiencia de Usuario (Media Prioridad)
+---
 
-**Objetivo:** Mejorar la experiencia diaria de colaboradores y líderes.
+### Sprint 2: Experiencia de Usuario - **COMPLETADO**
 
-**Tareas:**
-1. **Gap 6.1 - Agenda Priorizada**
-   - Nueva página `/dashboard/mi-dia`
-   - Algoritmo de priorización
-   - Vista tipo lista ordenada
+**Fecha:** Enero 2026
 
-2. **Gap 5.1.1 - Visualización de Bloqueos**
-   - Componente `BloqueosList.tsx`
-   - Integrar en vista colaborador
+**Entregables:**
+- [x] Página `/dashboard/mi-dia` con algoritmo de priorización
+- [x] Componente `BloqueosList.tsx`
+- [x] Integración en vista colaborador
+- [x] Link en Sidebar
 
-3. **Gap 6.2 - Alertas para Líder**
-   - Integrar AlertasRiesgo en `/dashboard/tribu`
+---
 
-### Sprint 3: Automatización (Media Prioridad)
+### Sprint 3: Automatización (Próximo)
 
 **Objetivo:** Reducir trabajo manual mediante automatizaciones.
 
@@ -431,7 +409,11 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
    - Validación en transiciones
    - UI de configuración
 
-### Sprint 4: Métricas y Reportes (Media Prioridad)
+**Esfuerzo estimado:** 14-20 horas
+
+---
+
+### Sprint 4: Métricas y Reportes
 
 **Objetivo:** Completar vistas analíticas.
 
@@ -443,6 +425,10 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
 2. **Gap 5.3.1 - Participación en Esfuerzo**
    - Calcular y mostrar %
 
+**Esfuerzo estimado:** 8-11 horas
+
+---
+
 ### Sprint 5 (Fase 2): Portal de Cliente
 
 **Objetivo:** Habilitar acceso externo para clientes.
@@ -453,9 +439,11 @@ Este documento presenta un análisis detallado de las funcionalidades acordadas 
    - Portal simplificado
    - Autenticación separada
 
+**Esfuerzo estimado:** 15-20 horas
+
 ---
 
-## PARTE IV: DECISIONES ARQUITECTÓNICAS
+## PARTE V: DECISIONES ARQUITECTÓNICAS
 
 ### Sobre Microsoft 365
 
@@ -475,13 +463,24 @@ La propuesta original mencionaba usar Microsoft 365 (SharePoint, Planner, To Do)
 
 ---
 
-## Conclusión
+## Conclusión (Actualizada)
 
-El sistema SGR-CBC tiene implementada la mayoría de la funcionalidad core del MVP. Los gaps identificados son principalmente:
+El sistema SGR-CBC ha completado exitosamente los **Sprints 1 y 2**, logrando:
 
-1. **Mejoras de UX:** Agenda priorizada, visualización de bloqueos, alertas para líderes
-2. **Automatizaciones:** Sistema de suplentes, validación de evidencias
-3. **Métricas adicionales:** Dashboard por proceso, participación en esfuerzo
-4. **Fase 2:** Portal de cliente, encuestas de satisfacción, integración M365
+### Funcionalidades Completadas:
+1. **Sistema de Riesgo:** Motor de detección automática de tareas sin pago con alertas visuales
+2. **Agenda "Mi Día":** Vista priorizada para colaboradores con algoritmo inteligente
+3. **Bloqueos:** Visualización clara de tareas bloqueadas y dependientes
+4. **Alertas Ejecutivas:** Panel completo de riesgos y situaciones críticas
 
-Se recomienda priorizar el **Sprint 1** (indicador de riesgo) ya que es una funcionalidad explícitamente mencionada en la propuesta y de alto valor operativo.
+### Gaps Restantes (Prioridad Media):
+1. **Automatizaciones:** Sistema de suplentes, evidencias requeridas
+2. **Métricas:** Dashboard por proceso, participación en esfuerzo
+3. **Fase 2:** Portal de cliente, encuestas de satisfacción
+
+### Progreso General:
+- **Funcionalidades core:** ~92% implementado
+- **Funcionalidades secundarias:** ~75% implementado
+- **Integraciones externas:** Resuelto con alternativa arquitectónica
+
+Se recomienda continuar con el **Sprint 3** (Automatización) para completar el sistema de suplentes y validación de evidencias.

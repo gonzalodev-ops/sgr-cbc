@@ -125,6 +125,8 @@ export interface Tarea {
     responsable_usuario_id?: string
     revisor_usuario_id?: string
     comentarios?: string
+    en_riesgo: boolean
+    fecha_estado_presentado?: string
     created_at: string
     updated_at: string
 }

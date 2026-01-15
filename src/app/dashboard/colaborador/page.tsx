@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { User, CheckCircle, Clock, AlertTriangle, ListTodo, RefreshCw } from 'lucide-react'
+import { User, CheckCircle, Clock, AlertTriangle, ListTodo, RefreshCw, Ban } from 'lucide-react'
 import RetrabajoList from '@/components/colaborador/RetrabajoList'
+import BloqueosList from '@/components/colaborador/BloqueosList'
 
 interface TareaData {
   tarea_id: string
@@ -36,6 +37,7 @@ export default function AgendaColaboradorPage() {
   const [tareas, setTareas] = useState<TareaData[]>([])
   const [colaboradorInfo, setColaboradorInfo] = useState<ColaboradorInfo | null>(null)
   const [cantidadRetrabajos, setCantidadRetrabajos] = useState(0)
+  const [cantidadBloqueos, setCantidadBloqueos] = useState({ bloqueadas: 0, dependientes: 0 })
   const [loading, setLoading] = useState(true)
   const [filtroEstado, setFiltroEstado] = useState('all')
 
@@ -224,6 +226,14 @@ export default function AgendaColaboradorPage() {
                 </span>
               </div>
             )}
+            {cantidadBloqueos.bloqueadas > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 border-2 border-purple-300 rounded-lg">
+                <Ban size={18} className="text-purple-600" />
+                <span className="text-sm font-bold text-purple-700">
+                  {cantidadBloqueos.bloqueadas} Bloqueo{cantidadBloqueos.bloqueadas > 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
             <div className="text-right">
               <p className="text-xs text-slate-400 uppercase font-bold">Tareas Activas</p>
               <p className="text-2xl font-bold text-blue-600">
@@ -236,6 +246,9 @@ export default function AgendaColaboradorPage() {
 
       {/* Sección de Retrabajos */}
       <RetrabajoList />
+
+      {/* Sección de Bloqueos */}
+      <BloqueosList onCountChange={setCantidadBloqueos} />
 
       {/* Filtros */}
       <div className="flex gap-3">
