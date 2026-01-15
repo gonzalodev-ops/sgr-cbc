@@ -59,15 +59,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'No se pudo crear el usuario' }, { status: 500 })
         }
 
-        // Insertar en tabla users
+        // Insertar en tabla users (upsert para manejar trigger automático)
         const { error: userError } = await supabaseAdmin
             .from('users')
-            .insert({
+            .upsert({
                 user_id: authData.user.id,
                 email,
                 nombre,
                 rol_global: rol_global || 'COLABORADOR',
                 activo: true
+            }, {
+                onConflict: 'user_id'
             })
 
         if (userError) {
