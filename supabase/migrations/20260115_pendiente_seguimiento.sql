@@ -75,15 +75,13 @@ CREATE POLICY "pendiente_seguimiento_select" ON pendiente_seguimiento
     is_admin_or_socio()
     OR
     -- Lider del equipo ve seguimientos de su equipo
-    team_id IN (
-      SELECT t.team_id FROM teams t WHERE t.lider_id = auth.uid()
-    )
+    team_id IN (SELECT get_leader_teams())
     OR
     -- Responsable ve sus seguimientos asignados
-    responsable_id = auth.uid()
+    responsable_id = (SELECT auth.uid())
     OR
     -- Lider asignado ve el seguimiento
-    lider_id = auth.uid()
+    lider_id = (SELECT auth.uid())
     OR
     -- Miembros del equipo ven seguimientos del equipo
     team_id IN (SELECT get_user_teams())
@@ -96,14 +94,10 @@ CREATE POLICY "pendiente_seguimiento_insert" ON pendiente_seguimiento
     is_admin_or_socio()
     OR
     -- Lideres pueden crear para su equipo
-    EXISTS (
-      SELECT 1 FROM teams t
-      WHERE t.lider_id = auth.uid()
-      AND (pendiente_seguimiento.team_id = t.team_id OR pendiente_seguimiento.team_id IS NULL)
-    )
+    (is_team_leader() AND (team_id IN (SELECT get_leader_teams()) OR team_id IS NULL))
     OR
     -- Cualquier usuario autenticado puede crear (el sistema asigna team automaticamente)
-    auth.uid() IS NOT NULL
+    (SELECT auth.uid()) IS NOT NULL
   );
 
 -- 5.3 UPDATE: Admin/Socio/Lider/Responsable pueden actualizar
@@ -113,15 +107,13 @@ CREATE POLICY "pendiente_seguimiento_update" ON pendiente_seguimiento
     is_admin_or_socio()
     OR
     -- Lider del equipo puede actualizar
-    team_id IN (
-      SELECT t.team_id FROM teams t WHERE t.lider_id = auth.uid()
-    )
+    team_id IN (SELECT get_leader_teams())
     OR
     -- Responsable puede actualizar sus seguimientos
-    responsable_id = auth.uid()
+    responsable_id = (SELECT auth.uid())
     OR
     -- Lider asignado puede actualizar
-    lider_id = auth.uid()
+    lider_id = (SELECT auth.uid())
   );
 
 -- 5.4 DELETE: Solo Admin/Socio pueden eliminar

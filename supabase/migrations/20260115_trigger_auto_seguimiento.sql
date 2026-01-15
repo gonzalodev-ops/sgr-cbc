@@ -15,11 +15,14 @@ RETURNS UUID AS $$
 DECLARE
   v_lider_id UUID;
 BEGIN
-  SELECT t.lider_id INTO v_lider_id
+  SELECT tm.user_id INTO v_lider_id
   FROM tarea ta
   JOIN contribuyente c ON c.contribuyente_id = ta.contribuyente_id
-  JOIN teams t ON t.team_id = c.team_id
-  WHERE ta.tarea_id = p_tarea_id;
+  JOIN team_members tm ON tm.team_id = c.team_id
+  WHERE ta.tarea_id = p_tarea_id
+    AND tm.rol_en_equipo = 'LIDER'
+    AND tm.activo = true
+  LIMIT 1;
 
   RETURN v_lider_id;
 END;
