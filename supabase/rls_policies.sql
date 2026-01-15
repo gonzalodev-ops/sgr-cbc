@@ -14,6 +14,7 @@ ALTER TABLE documento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tarea_documento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- HELPER FUNCTIONS
@@ -156,6 +157,22 @@ CREATE POLICY "team_members_view" ON team_members
 
 CREATE POLICY "team_members_manage" ON team_members
   FOR ALL USING (is_admin_or_socio());
+
+-- ============================================
+-- POLÍTICAS: USUARIOS
+-- ============================================
+
+-- Admin/Socio: acceso total a usuarios
+CREATE POLICY "admin_socio_all_users" ON users
+  FOR ALL USING (is_admin_or_socio());
+
+-- Todos los usuarios autenticados pueden ver la lista de usuarios (necesario para asignar tareas, ver equipos, etc.)
+CREATE POLICY "users_view_authenticated" ON users
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+-- Usuarios pueden actualizar su propio perfil (nombre)
+CREATE POLICY "users_update_own" ON users
+  FOR UPDATE USING (user_id = auth.uid());
 
 -- ============================================
 -- AUDITORÍA MEJORADA: Trigger para tarea_evento
