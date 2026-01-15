@@ -725,14 +725,20 @@ END $$;
 -- FIN - Verificar con: SELECT * FROM verificar_rls_status();
 -- ============================================
 
-DROP FUNCTION IF EXISTS verificar_rls_status();
+DROP FUNCTION IF EXISTS public.verificar_rls_status() CASCADE;
 
 CREATE OR REPLACE FUNCTION verificar_rls_status()
-RETURNS TABLE (tabla TEXT, rls_habilitado BOOLEAN, num_politicas INTEGER) AS $$
+RETURNS TABLE (tabla TEXT, rls_habilitado BOOLEAN, tiene_politicas BOOLEAN, num_politicas INTEGER) AS $$
 BEGIN
   RETURN QUERY
-  SELECT t.tablename::TEXT, t.rowsecurity,
+  SELECT
+    t.tablename::TEXT,
+    t.rowsecurity,
+    EXISTS (SELECT 1 FROM pg_policies p WHERE p.tablename = t.tablename),
     (SELECT COUNT(*)::INTEGER FROM pg_policies p WHERE p.tablename = t.tablename)
-  FROM pg_tables t WHERE t.schemaname = 'public' ORDER BY t.tablename;
+  FROM pg_tables t
+  WHERE t.schemaname = 'public'
+  AND t.tablename NOT LIKE 'pg_%'
+  ORDER BY t.tablename;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
