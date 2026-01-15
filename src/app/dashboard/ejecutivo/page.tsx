@@ -32,6 +32,14 @@ interface ColaboradorSobrecarga {
     tareasActivas: number
 }
 
+interface TareaRiesgoFaltaPago {
+    tarea_id: string
+    cliente: string
+    rfc: string
+    obligacion: string
+    dias_sin_pago: number
+}
+
 export default function DashboardEjecutivo() {
     const [loading, setLoading] = useState(true)
     const [userRole, setUserRole] = useState<RolGlobal | null>(null)
@@ -51,6 +59,7 @@ export default function DashboardEjecutivo() {
     const [tareasPorVencer, setTareasPorVencer] = useState<TareaAlerta[]>([])
     const [tareasVencidasAlertas, setTareasVencidasAlertas] = useState<TareaAlerta[]>([])
     const [colaboradoresSobrecargados, setColaboradoresSobrecargados] = useState<ColaboradorSobrecarga[]>([])
+    const [tareasEnRiesgoFaltaPago, setTareasEnRiesgoFaltaPago] = useState<TareaRiesgoFaltaPago[]>([])
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -89,7 +98,8 @@ export default function DashboardEjecutivo() {
                 cargarKPIs(),
                 cargarTopClientes(),
                 cargarTopProcesos(),
-                cargarAlertas()
+                cargarAlertas(),
+                cargarTareasEnRiesgoFaltaPago()
             ])
 
             setLoading(false)

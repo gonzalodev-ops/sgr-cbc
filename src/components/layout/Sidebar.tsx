@@ -14,13 +14,15 @@ import {
     ChevronRight,
     Shield,
     BarChart3,
-    Workflow
+    Workflow,
+    CalendarDays
 } from 'lucide-react'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
 const navigation = [
     { name: 'TMR', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Mi Dia', href: '/dashboard/mi-dia', icon: CalendarDays },
     { name: 'Ejecutivo', href: '/dashboard/ejecutivo', icon: BarChart3 },
     { name: 'Colaboradores', href: '/dashboard/colaborador', icon: Users },
     { name: 'Tribus', href: '/dashboard/tribu', icon: Building2 },

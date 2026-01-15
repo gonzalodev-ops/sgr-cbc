@@ -10,7 +10,7 @@ import {
     type EstadoEntregable,
     type ResultadoAuditoria
 } from '@/lib/data/mockData'
-import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar } from 'lucide-react'
+import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar, AlertTriangle } from 'lucide-react'
 import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
 
 // Constantes
@@ -113,6 +113,7 @@ export default function TMRPage() {
                     fecha_limite_oficial,
                     prioridad,
                     riesgo,
+                    en_riesgo,
                     id_obligacion,
                     responsable_usuario_id,
                     contribuyente:contribuyente_id (
@@ -152,6 +153,7 @@ export default function TMRPage() {
                     tarea_id: string
                     cliente_id: string
                     estado: string
+                    en_riesgo: boolean
                     id_obligacion: string
                     responsable_usuario_id: string | null
                     contribuyente: {
@@ -189,6 +191,7 @@ export default function TMRPage() {
                         tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         estadoOriginal: t.estado,
+                        enRiesgo: t.en_riesgo || false,
                         fechaLimite: t.fecha_limite_oficial,
                         evidencia: tareasConEvidencia.has(t.tarea_id),
                         voboLider: ['presentado', 'pagado', 'cerrado'].includes(t.estado),
@@ -256,6 +259,10 @@ export default function TMRPage() {
 
     const tareasEsperandoPago = useMemo(() =>
         entregables.filter(e => (e as any).estadoOriginal === 'presentado').length
+        , [entregables])
+
+    const tareasEnRiesgo = useMemo(() =>
+        entregables.filter(e => (e as any).enRiesgo === true).length
         , [entregables])
 
     const hayFiltrosActivos = filtroRFC !== 'all' || filtroTribu !== 'all' || filtroEntregable !== 'all' || filtroResponsable !== 'all'
@@ -367,6 +374,16 @@ export default function TMRPage() {
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {tareasEnRiesgo > 0 && (
+                        <div className="text-right px-4 py-2 bg-orange-50 border border-orange-300 rounded-lg animate-pulse">
+                            <p className="text-[10px] text-orange-700 font-bold uppercase tracking-wider flex items-center gap-1">
+                                <AlertTriangle size={12} /> En Riesgo
+                            </p>
+                            <div className="text-2xl font-bold text-orange-600">
+                                {tareasEnRiesgo} <span className="text-sm text-orange-600 font-normal">tarea{tareasEnRiesgo !== 1 ? 's' : ''}</span>
+                            </div>
+                        </div>
+                    )}
                     {tareasEsperandoPago > 0 && (
                         <div className="text-right px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
                             <p className="text-[10px] text-red-700 font-bold uppercase tracking-wider">Esperando Pago</p>
@@ -537,13 +554,23 @@ export default function TMRPage() {
                                                         >
                                                             {estadoConfig.label}
                                                         </button>
-                                                        {(e as any).estadoOriginal === 'presentado' && (
+                                                        {(e as any).enRiesgo && (
+                                                            <div className="relative group">
+                                                                <span className="px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 animate-pulse">
+                                                                    <AlertTriangle size={10} /> RIESGO
+                                                                </span>
+                                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                                                    Tarea en riesgo: Presentada ante el SAT pero sin comprobante de pago despues de 3 dias
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {(e as any).estadoOriginal === 'presentado' && !(e as any).enRiesgo && (
                                                             <div className="relative group">
                                                                 <span className="px-2 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded text-[9px] font-bold uppercase tracking-wide">
                                                                     SIN PAGO
                                                                 </span>
                                                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                                                    El impuesto fue presentado ante el SAT pero el cliente aún no ha realizado el pago
+                                                                    El impuesto fue presentado ante el SAT pero el cliente aun no ha realizado el pago
                                                                 </div>
                                                             </div>
                                                         )}

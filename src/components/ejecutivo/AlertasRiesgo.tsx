@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, Clock, XCircle, Users } from 'lucide-react'
+import { AlertTriangle, Clock, XCircle, Users, DollarSign } from 'lucide-react'
 
 interface TareaAlerta {
     tarea_id: string
@@ -9,6 +9,14 @@ interface TareaAlerta {
     fecha_limite: string
     responsable: string
     diasRestantes?: number
+}
+
+interface TareaRiesgoFaltaPago {
+    tarea_id: string
+    cliente: string
+    rfc: string
+    obligacion: string
+    dias_sin_pago: number
 }
 
 interface ColaboradorSobrecarga {
@@ -20,14 +28,16 @@ interface AlertasRiesgoProps {
     tareasPorVencer: TareaAlerta[]
     tareasVencidas: TareaAlerta[]
     colaboradoresSobrecargados: ColaboradorSobrecarga[]
+    tareasEnRiesgoFaltaPago?: TareaRiesgoFaltaPago[]
 }
 
 export function AlertasRiesgo({
     tareasPorVencer,
     tareasVencidas,
-    colaboradoresSobrecargados
+    colaboradoresSobrecargados,
+    tareasEnRiesgoFaltaPago = []
 }: AlertasRiesgoProps) {
-    const hayAlertas = tareasPorVencer.length > 0 || tareasVencidas.length > 0 || colaboradoresSobrecargados.length > 0
+    const hayAlertas = tareasPorVencer.length > 0 || tareasVencidas.length > 0 || colaboradoresSobrecargados.length > 0 || tareasEnRiesgoFaltaPago.length > 0
 
     if (!hayAlertas) {
         return (
@@ -81,13 +91,51 @@ export function AlertasRiesgo({
                 </div>
             )}
 
-            {/* Tareas Próximas a Vencer */}
+            {/* Tareas en Riesgo por Falta de Pago */}
+            {tareasEnRiesgoFaltaPago.length > 0 && (
+                <div className="bg-orange-50 rounded-xl border border-orange-200 overflow-hidden">
+                    <div className="bg-orange-100 px-4 py-3 border-b border-orange-200">
+                        <h3 className="font-semibold text-orange-800 flex items-center gap-2">
+                            <DollarSign size={18} />
+                            Tareas en Riesgo por Falta de Pago ({tareasEnRiesgoFaltaPago.length})
+                        </h3>
+                    </div>
+                    <div className="p-4">
+                        <div className="space-y-2">
+                            {tareasEnRiesgoFaltaPago.slice(0, 5).map((tarea) => (
+                                <div
+                                    key={tarea.tarea_id}
+                                    className="bg-white rounded-lg p-3 border border-orange-200 flex justify-between items-center"
+                                >
+                                    <div className="flex-1">
+                                        <p className="font-medium text-slate-800">{tarea.cliente}</p>
+                                        <p className="text-sm text-slate-600">{tarea.obligacion}</p>
+                                        <p className="text-xs text-slate-500">RFC: {tarea.rfc}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">
+                                            {tarea.dias_sin_pago} dias sin pago
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {tareasEnRiesgoFaltaPago.length > 5 && (
+                            <p className="text-xs text-orange-600 mt-2 text-center">
+                                + {tareasEnRiesgoFaltaPago.length - 5} tareas mas en riesgo por falta de pago
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Tareas Proximas a Vencer */}
             {tareasPorVencer.length > 0 && (
                 <div className="bg-amber-50 rounded-xl border border-amber-200 overflow-hidden">
                     <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
                         <h3 className="font-semibold text-amber-800 flex items-center gap-2">
                             <Clock size={18} />
-                            Próximas a Vencer - Menos de 3 Días ({tareasPorVencer.length})
+                            Proximas a Vencer - Menos de 3 Dias ({tareasPorVencer.length})
                         </h3>
                     </div>
                     <div className="p-4">
