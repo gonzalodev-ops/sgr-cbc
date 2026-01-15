@@ -136,7 +136,7 @@ export default function TabColaboradores() {
                     <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex gap-4 items-end">
                         <div className="flex-1">
                             <label className="text-xs text-purple-700 font-medium">Nombre del Equipo *</label>
-                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-600" placeholder="Ej: Equipo Isidora" />
+                            <input value={teamForm.nombre} onChange={e => setTeamForm({ nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg mt-1 placeholder:text-slate-500" placeholder="Ej: Equipo Isidora" />
                         </div>
                         <button onClick={saveTeam} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"><Save size={18} /></button>
                         <button onClick={resetTeamForm} className="px-4 py-2 border border-slate-300 rounded-lg"><X size={18} /></button>
@@ -148,11 +148,11 @@ export default function TabColaboradores() {
                         <div key={t.team_id} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2">
                             <Users size={16} className="text-purple-600" />
                             <span className="font-medium">{t.nombre}</span>
-                            <button onClick={() => { setTeamForm({ nombre: t.nombre }); setEditingTeam(t); setShowTeamForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={14} /></button>
-                            <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                            <button onClick={() => { setTeamForm({ nombre: t.nombre }); setEditingTeam(t); setShowTeamForm(true) }} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={14} /></button>
+                            <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
-                    {equipos.length === 0 && <p className="text-slate-600 text-sm">No hay equipos. Crea uno.</p>}
+                    {equipos.length === 0 && <p className="text-slate-700 text-sm">No hay equipos. Crea uno.</p>}
                 </div>
             </div>
 
@@ -171,11 +171,11 @@ export default function TabColaboradores() {
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between">
                             <h3 className="font-semibold text-blue-800">{editingUser ? 'Editar' : 'Nuevo'} Colaborador</h3>
-                            <button onClick={resetUserForm}><X size={20} className="text-slate-400" /></button>
+                            <button onClick={resetUserForm}><X size={20} className="text-slate-500" /></button>
                         </div>
                         <div className="grid grid-cols-4 gap-3">
-                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-600" />
+                            <input placeholder="Nombre *" value={userForm.nombre} onChange={e => setUserForm({ ...userForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                            <input placeholder="Email *" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} disabled={!!editingUser} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 placeholder:text-slate-500" />
                             <select value={userForm.rol_global} onChange={e => setUserForm({ ...userForm, rol_global: e.target.value })} className="px-3 py-2 border rounded-lg">
                                 {ROLES_GLOBAL.map(r => <option key={r} value={r}>{r}</option>)}
                             </select>
@@ -196,7 +196,7 @@ export default function TabColaboradores() {
                 )}
 
                 <table className="w-full text-left bg-white rounded-lg overflow-hidden border border-slate-200">
-                    <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+                    <thead className="bg-slate-100 text-xs uppercase text-slate-800">
                         <tr>
                             <th className="p-3">Nombre</th>
                             <th className="p-3">Email</th>
@@ -211,12 +211,12 @@ export default function TabColaboradores() {
                             <tr key={u.user_id} className="hover:bg-slate-50">
                                 <td className="p-3 font-medium">{u.nombre}</td>
                                 <td className="p-3 text-slate-700">{u.email}</td>
-                                <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${u.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' : u.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>{u.rol_global}</span></td>
+                                <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${u.rol_global === 'ADMIN' ? 'bg-red-100 text-red-700' : u.rol_global === 'LIDER' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>{u.rol_global}</span></td>
                                 <td className="p-3">{u.equipo || '-'}</td>
                                 <td className="p-3">{u.rol_en_equipo || '-'}</td>
                                 <td className="p-3 text-right">
-                                    <button onClick={() => editUser(u)} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                    <button onClick={() => deleteUser(u.user_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button onClick={() => editUser(u)} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={16} /></button>
+                                    <button onClick={() => deleteUser(u.user_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={16} /></button>
                                 </td>
                             </tr>
                         ))}

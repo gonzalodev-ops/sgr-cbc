@@ -147,11 +147,11 @@ export default function TabServicios() {
 
                     {showServicioForm && (
                         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 space-y-3">
-                            <div className="flex justify-between"><h4 className="font-semibold text-indigo-800">{editingServicio ? 'Editar' : 'Nuevo'} Servicio</h4><button onClick={resetServicioForm}><X size={20} className="text-slate-400" /></button></div>
+                            <div className="flex justify-between"><h4 className="font-semibold text-indigo-800">{editingServicio ? 'Editar' : 'Nuevo'} Servicio</h4><button onClick={resetServicioForm}><X size={20} className="text-slate-500" /></button></div>
                             <div className="grid grid-cols-3 gap-3">
                                 <input placeholder="ID (CONTABILIDAD) *" value={servicioForm.servicio_id} onChange={e => setServicioForm({ ...servicioForm, servicio_id: e.target.value.toUpperCase() })} disabled={!!editingServicio} className="px-3 py-2 border rounded-lg disabled:bg-slate-100 font-mono" />
-                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
+                                <input placeholder="Nombre *" value={servicioForm.nombre} onChange={e => setServicioForm({ ...servicioForm, nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                                <input placeholder="Descripción" value={servicioForm.descripcion} onChange={e => setServicioForm({ ...servicioForm, descripcion: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
                             </div>
                             <button onClick={saveServicio} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg"><Save size={18} /> Guardar</button>
                         </div>
@@ -162,17 +162,17 @@ export default function TabServicios() {
                             <div key={s.servicio_id} className="flex justify-between items-center bg-white border border-slate-200 rounded-lg p-4">
                                 <div>
                                     <p className="font-medium">{s.nombre}</p>
-                                    <p className="text-xs text-slate-600 font-mono">{s.servicio_id}</p>
+                                    <p className="text-xs text-slate-700 font-mono">{s.servicio_id}</p>
                                     {s.descripcion && <p className="text-xs text-slate-700 mt-1">{s.descripcion}</p>}
                                 </div>
                                 <div>
-                                    <button onClick={() => { setServicioForm({ servicio_id: s.servicio_id, nombre: s.nombre, descripcion: s.descripcion || '' }); setEditingServicio(s); setShowServicioForm(true) }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                    <button onClick={() => deleteServicio(s.servicio_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button onClick={() => { setServicioForm({ servicio_id: s.servicio_id, nombre: s.nombre, descripcion: s.descripcion || '' }); setEditingServicio(s); setShowServicioForm(true) }} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={16} /></button>
+                                    <button onClick={() => deleteServicio(s.servicio_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={16} /></button>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    {servicios.length === 0 && <p className="text-center text-slate-600 py-8">No hay servicios. Crea uno.</p>}
+                    {servicios.length === 0 && <p className="text-center text-slate-700 py-8">No hay servicios. Crea uno.</p>}
                 </div>
             )}
 
@@ -188,7 +188,7 @@ export default function TabServicios() {
 
                     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+                            <thead className="bg-slate-100 text-xs uppercase text-slate-800">
                                 <tr><th className="p-3">Talla</th><th className="p-3">Ponderación (%)</th><th className="p-3">Ejemplo (Base 100pts)</th></tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -212,13 +212,13 @@ export default function TabServicios() {
                                                 max={500}
                                             />%
                                         </td>
-                                        <td className="p-3 text-slate-600">{100 * t.ponderacion / 100} pts</td>
+                                        <td className="p-3 text-slate-700">{100 * t.ponderacion / 100} pts</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                    {tallas.length === 0 && <p className="text-center text-slate-600 py-8">No hay tallas. Haz clic en "Inicializar Tallas Default".</p>}
+                    {tallas.length === 0 && <p className="text-center text-slate-700 py-8">No hay tallas. Haz clic en "Inicializar Tallas Default".</p>}
                 </div>
             )}
 
@@ -234,7 +234,7 @@ export default function TabServicios() {
                     </div>
 
                     {servicios.length === 0 || obligaciones.length === 0 ? (
-                        <div className="text-center py-8 text-slate-600">
+                        <div className="text-center py-8 text-slate-700">
                             {servicios.length === 0 && <p>No hay servicios. Crea uno en la pestaña "Servicios CBC".</p>}
                             {obligaciones.length === 0 && <p>No hay obligaciones fiscales. Créalas en "Catálogo Fiscal".</p>}
                         </div>
@@ -243,11 +243,11 @@ export default function TabServicios() {
                             <table className="w-full border-collapse min-w-max">
                                 <thead>
                                     <tr className="bg-slate-100">
-                                        <th className="p-3 text-left font-medium text-slate-600 sticky left-0 bg-slate-100 border-r border-slate-200 min-w-[200px]">
+                                        <th className="p-3 text-left font-medium text-slate-800 sticky left-0 bg-slate-100 border-r border-slate-200 min-w-[200px]">
                                             Servicio
                                         </th>
                                         {obligaciones.map(o => (
-                                            <th key={o.id_obligacion} className="p-2 text-center text-xs font-medium text-slate-600 min-w-[80px] border-l border-slate-100">
+                                            <th key={o.id_obligacion} className="p-2 text-center text-xs font-medium text-slate-700 min-w-[80px] border-l border-slate-100">
                                                 <div className="writing-mode-vertical" title={o.id_obligacion}>
                                                     {o.nombre_corto}
                                                 </div>
@@ -263,7 +263,7 @@ export default function TabServicios() {
                                                 <td className="p-3 font-medium sticky left-0 bg-white border-r border-slate-200">
                                                     <div>
                                                         <span>{s.nombre}</span>
-                                                        <span className="ml-2 text-xs text-slate-600">
+                                                        <span className="ml-2 text-xs text-slate-700">
                                                             ({obligacionesDelServicio.length})
                                                         </span>
                                                     </div>

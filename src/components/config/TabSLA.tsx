@@ -68,7 +68,7 @@ export default function TabSLA() {
         if (config.es_estado_final) return <CheckCircle size={16} className="text-green-600" />
         if (config.sla_pausado) return <Pause size={16} className="text-amber-600" />
         if (config.sla_activo) return <Clock size={16} className="text-blue-600" />
-        return <XCircle size={16} className="text-slate-400" />
+        return <XCircle size={16} className="text-slate-500" />
     }
 
     function getStatusLabel(config: SlaConfig): string {
@@ -96,7 +96,7 @@ export default function TabSLA() {
 
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                 <table className="w-full">
-                    <thead className="bg-slate-100 text-xs uppercase text-slate-600">
+                    <thead className="bg-slate-100 text-xs uppercase text-slate-800">
                         <tr>
                             <th className="p-3 text-left w-8">#</th>
                             <th className="p-3 text-left">Estado</th>
@@ -112,7 +112,7 @@ export default function TabSLA() {
                     <tbody className="divide-y divide-slate-100">
                         {configs.map((config, index) => (
                             <tr key={config.sla_config_id} className={`hover:bg-slate-50 ${saving === config.sla_config_id ? 'opacity-50' : ''}`}>
-                                <td className="p-3 text-slate-600 text-sm">{config.orden_flujo}</td>
+                                <td className="p-3 text-slate-700 text-sm">{config.orden_flujo}</td>
                                 <td className="p-3">
                                     <div className="flex items-center gap-2">
                                         <div className={`w-3 h-3 rounded-full ${getColorClass(config.color_ui)}`} />
@@ -196,7 +196,7 @@ export default function TabSLA() {
                                 {config.estado}
                             </div>
                             {index < configs.length - 1 && (
-                                <span className="text-slate-600">→</span>
+                                <span className="text-slate-700">→</span>
                             )}
                         </div>
                     ))}

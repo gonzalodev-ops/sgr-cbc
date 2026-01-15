@@ -312,7 +312,7 @@ export default function TabDatos() {
 
                 {deletePreview && (
                     <div className={`mt-4 p-3 rounded-lg ${deletePreview.tareas > 0 ? 'bg-red-50 border border-red-200' : 'bg-slate-50 border border-slate-200'}`}>
-                        <p className={`text-sm ${deletePreview.tareas > 0 ? 'text-red-700' : 'text-slate-600'}`}>
+                        <p className={`text-sm ${deletePreview.tareas > 0 ? 'text-red-700' : 'text-slate-700'}`}>
                             {deletePreview.mensaje}
                         </p>
                     </div>
@@ -356,7 +356,7 @@ export default function TabDatos() {
             {log.length > 0 && (
                 <div className="bg-slate-900 rounded-lg p-4 max-h-64 overflow-y-auto">
                     <div className="flex justify-between items-center mb-2">
-                        <p className="text-xs text-slate-300">Log de operaciones:</p>
+                        <p className="text-xs text-slate-400">Log de operaciones:</p>
                         <button
                             onClick={() => setLog([])}
                             className="text-xs text-slate-500 hover:text-slate-300"
@@ -463,7 +463,7 @@ export default function TabDatos() {
                     </button>
 
                     {autoGenConfig.updated_at && (
-                        <p className="text-xs text-slate-600">
+                        <p className="text-xs text-slate-700">
                             Última actualización: {new Date(autoGenConfig.updated_at).toLocaleString()}
                         </p>
                     )}
@@ -477,7 +477,7 @@ export default function TabDatos() {
                     <p className="text-sm text-slate-700 mb-3">
                         Revisa que todos los datos estén correctamente enlazados.
                     </p>
-                    <button className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
+                    <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm">
                         Ejecutar Verificación
                     </button>
                 </div>
@@ -487,7 +487,7 @@ export default function TabDatos() {
                     <p className="text-sm text-slate-700 mb-3">
                         Actualiza los puntos de todas las tareas según las nuevas reglas.
                     </p>
-                    <button className="px-4 py-2 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 text-sm">
+                    <button className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 text-sm">
                         Recalcular Puntos
                     </button>
                 </div>

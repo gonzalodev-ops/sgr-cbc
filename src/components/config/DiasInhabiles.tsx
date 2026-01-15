@@ -132,7 +132,7 @@ export default function DiasInhabiles() {
         setAnioSeleccionado(prev => prev + delta)
     }
 
-    if (loading) return <div className="text-center py-8 text-slate-500">Cargando...</div>
+    if (loading) return <div className="text-center py-8 text-slate-700">Cargando...</div>
 
     return (
         <div className="space-y-4">
@@ -146,7 +146,7 @@ export default function DiasInhabiles() {
                             className="p-1 hover:bg-white rounded transition-colors"
                             title="Año anterior"
                         >
-                            <ChevronLeft size={18} className="text-slate-600" />
+                            <ChevronLeft size={18} className="text-slate-700" />
                         </button>
                         <span className="px-3 py-1 font-semibold text-slate-700 min-w-[80px] text-center">
                             {anioSeleccionado}
@@ -156,10 +156,10 @@ export default function DiasInhabiles() {
                             className="p-1 hover:bg-white rounded transition-colors"
                             title="Año siguiente"
                         >
-                            <ChevronRight size={18} className="text-slate-600" />
+                            <ChevronRight size={18} className="text-slate-700" />
                         </button>
                     </div>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-slate-700">
                         {diasInhabiles.length} días registrados
                     </span>
                 </div>
@@ -189,7 +189,7 @@ export default function DiasInhabiles() {
                             {editing ? 'Editar' : 'Nuevo'} Día Inhábil
                         </h3>
                         <button onClick={resetForm}>
-                            <X size={20} className="text-slate-400 hover:text-slate-600" />
+                            <X size={20} className="text-slate-500 hover:text-slate-700" />
                         </button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
@@ -232,11 +232,11 @@ export default function DiasInhabiles() {
             <div className="space-y-2">
                 {diasInhabiles.length === 0 ? (
                     <div className="text-center py-12 bg-slate-50 rounded-lg border border-slate-200">
-                        <Calendar size={48} className="mx-auto text-slate-300 mb-3" />
-                        <p className="text-slate-500 font-medium">
+                        <Calendar size={48} className="mx-auto text-slate-400 mb-3" />
+                        <p className="text-slate-700 font-medium">
                             No hay días inhábiles registrados para {anioSeleccionado}
                         </p>
-                        <p className="text-slate-400 text-sm mt-1">
+                        <p className="text-slate-600 text-sm mt-1">
                             Agrega días manualmente o carga los feriados oficiales del SAT
                         </p>
                     </div>
@@ -260,7 +260,7 @@ export default function DiasInhabiles() {
                                     <Calendar size={20} className={color.text} />
                                     <div>
                                         <p className="font-medium text-slate-800">{dia.descripcion}</p>
-                                        <p className="text-sm text-slate-500 capitalize">{fechaFormateada}</p>
+                                        <p className="text-sm text-slate-700 capitalize">{fechaFormateada}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -269,14 +269,14 @@ export default function DiasInhabiles() {
                                     </span>
                                     <button
                                         onClick={() => editDia(dia)}
-                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                        className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                         title="Editar"
                                     >
                                         <Save size={16} />
                                     </button>
                                     <button
                                         onClick={() => deleteDia(dia.dia_inhabil_id)}
-                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                        className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                         title="Eliminar"
                                     >
                                         <Trash2 size={16} />
@@ -291,7 +291,7 @@ export default function DiasInhabiles() {
             {/* Resumen por tipo */}
             {diasInhabiles.length > 0 && (
                 <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                    <p className="text-xs font-bold text-slate-500 uppercase mb-3">Resumen</p>
+                    <p className="text-xs font-bold text-slate-700 uppercase mb-3">Resumen</p>
                     <div className="grid grid-cols-3 gap-3">
                         {(['FERIADO', 'PUENTE', 'ESPECIAL'] as const).map(tipo => {
                             const count = diasInhabiles.filter(d => d.tipo === tipo).length
