@@ -133,8 +133,10 @@ export default function AjusteFechaModal({
         .insert({
           tarea_id: tareaId,
           tipo_evento: 'CAMBIO_FECHA',
-          descripcion: `Fecha límite ajustada de ${fechaActual} a ${fechaNueva}. Motivo: ${motivo.trim()}`,
-          usuario_id: user.id
+          estado_anterior: fechaActual,
+          estado_nuevo: fechaNueva,
+          actor_usuario_id: user.id,
+          metadata_json: { motivo: motivo.trim() }
         })
 
       if (eventoError) {
@@ -244,9 +246,8 @@ export default function AjusteFechaModal({
                 id="fecha_nueva"
                 value={fechaNueva}
                 onChange={(e) => setFechaNueva(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                  validacion?.campo === 'fecha_nueva' ? 'border-red-300' : 'border-slate-300'
-                }`}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${validacion?.campo === 'fecha_nueva' ? 'border-red-300' : 'border-slate-300'
+                  }`}
                 disabled={loading}
                 required
               />
@@ -265,9 +266,8 @@ export default function AjusteFechaModal({
               id="motivo"
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
-                validacion?.campo === 'motivo' ? 'border-red-300' : 'border-slate-300'
-              }`}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${validacion?.campo === 'motivo' ? 'border-red-300' : 'border-slate-300'
+                }`}
               rows={4}
               placeholder="Explica la razón del cambio de fecha (mínimo 10 caracteres)..."
               disabled={loading}
