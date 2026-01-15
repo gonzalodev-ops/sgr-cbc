@@ -117,9 +117,10 @@ export default function DashboardEjecutivo() {
         const finMes = new Date(año, mes + 1, 0, 23, 59, 59).toISOString()
 
         // Obtener todas las tareas del mes
+        // Note: puntos_reales doesn't exist in DB - points calculated dynamically
         const { data: tareasMes } = await supabase
             .from('tarea')
-            .select('tarea_id, estado, fecha_limite_oficial, puntos_reales')
+            .select('tarea_id, estado, fecha_limite_oficial, prioridad')
             .gte('fecha_limite_oficial', inicioMes)
             .lte('fecha_limite_oficial', finMes)
 
@@ -132,10 +133,10 @@ export default function DashboardEjecutivo() {
             const cumplimiento = total > 0 ? (completadas / total) * 100 : 0
             setPorcentajeCumplimiento(cumplimiento)
 
-            // Calcular puntos generados
+            // Calcular puntos generados (50 puntos base por tarea cerrada)
             const puntos = tareasMes
                 .filter(t => t.estado === 'cerrado')
-                .reduce((sum, t) => sum + (t.puntos_reales || 0), 0)
+                .reduce((sum, t) => sum + 50, 0) // Base points per completed task
             setPuntosGenerados(puntos)
 
             // Calcular tareas vencidas (fecha límite pasada y no cerradas)
@@ -154,7 +155,7 @@ export default function DashboardEjecutivo() {
             .from('tarea')
             .select(`
                 cliente_id,
-                puntos_reales,
+                prioridad,
                 cliente:cliente_id (
                     nombre_comercial
                 )
@@ -168,7 +169,7 @@ export default function DashboardEjecutivo() {
             data.forEach((tarea: any) => {
                 const clienteId = tarea.cliente_id
                 const nombreCliente = tarea.cliente?.nombre_comercial || 'Sin nombre'
-                const puntos = tarea.puntos_reales || 0
+                const puntos = 50 // Base points per completed task
 
                 if (clientesMap.has(clienteId)) {
                     const cliente = clientesMap.get(clienteId)!
@@ -481,9 +482,9 @@ export default function DashboardEjecutivo() {
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${idx === 0 ? 'bg-yellow-500 text-white' :
-                                                idx === 1 ? 'bg-slate-300 text-slate-700' :
-                                                    idx === 2 ? 'bg-orange-400 text-white' :
-                                                        'bg-slate-200 text-slate-600'
+                                            idx === 1 ? 'bg-slate-300 text-slate-700' :
+                                                idx === 2 ? 'bg-orange-400 text-white' :
+                                                    'bg-slate-200 text-slate-600'
                                             }`}>
                                             {idx + 1}
                                         </div>

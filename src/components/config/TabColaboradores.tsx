@@ -44,9 +44,11 @@ export default function TabColaboradores() {
 
     async function loadData() {
         setLoading(true)
+
+        // Fetch users first (without the problematic join)
         const { data: usersData, error } = await supabase
             .from('users')
-            .select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`)
+            .select('*')
             .eq('activo', true)
             .order('nombre')
 
@@ -54,10 +56,28 @@ export default function TabColaboradores() {
             console.error('Error loading users:', error)
         }
 
+        // Fetch team_members separately to avoid FK ambiguity
+        const { data: membersData } = await supabase
+            .from('team_members')
+            .select('user_id, team_id, rol_en_equipo, teams:team_id(nombre)')
+            .eq('activo', true)
+
+        // Create a map of user_id -> team info
+        const userTeamMap: Record<string, { equipo: string; rol_en_equipo: string }> = {}
+        if (membersData) {
+            membersData.forEach((m: any) => {
+                userTeamMap[m.user_id] = {
+                    equipo: m.teams?.nombre || '',
+                    rol_en_equipo: m.rol_en_equipo || ''
+                }
+            })
+        }
+
+        // Merge users with their team info
         setUsuarios((usersData || []).map((u: any) => ({
             ...u,
-            equipo: u.team_members?.[0]?.teams?.nombre || '',
-            rol_en_equipo: u.team_members?.[0]?.rol_en_equipo || ''
+            equipo: userTeamMap[u.user_id]?.equipo || '',
+            rol_en_equipo: userTeamMap[u.user_id]?.rol_en_equipo || ''
         })))
 
         const { data: teamsData } = await supabase.from('teams').select('*').eq('activo', true).order('nombre')
