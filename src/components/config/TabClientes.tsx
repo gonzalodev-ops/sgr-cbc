@@ -290,20 +290,20 @@ export default function TabClientes() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
                     <div className="flex justify-between items-center">
                         <h3 className="font-semibold text-blue-800">{editing ? 'Editar' : 'Nuevo'} Cliente</h3>
-                        <button onClick={resetForm}><X size={20} className="text-slate-400" /></button>
+                        <button onClick={resetForm}><X size={20} className="text-slate-500" /></button>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                        <input placeholder="Nombre Comercial *" value={form.nombre_comercial} onChange={e => setForm({ ...form, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                        <input placeholder="Razon Social" value={form.razon_social_principal} onChange={e => setForm({ ...form, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
+                        <input placeholder="Nombre Comercial *" value={form.nombre_comercial} onChange={e => setForm({ ...form, nombre_comercial: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Razon Social" value={form.razon_social_principal} onChange={e => setForm({ ...form, razon_social_principal: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
                         <select value={form.segmento} onChange={e => setForm({ ...form, segmento: e.target.value })} className="px-3 py-2 border rounded-lg text-slate-700">
                             <option value="">-- Segmento --</option>
                             {SEGMENTOS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <input placeholder="Contacto: Nombre" value={form.contacto_nombre} onChange={e => setForm({ ...form, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                        <input placeholder="Contacto: Email" value={form.contacto_email} onChange={e => setForm({ ...form, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
-                        <input placeholder="Contacto: Telefono" value={form.contacto_telefono} onChange={e => setForm({ ...form, contacto_telefono: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-600" />
+                        <input placeholder="Contacto: Nombre" value={form.contacto_nombre} onChange={e => setForm({ ...form, contacto_nombre: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Contacto: Email" value={form.contacto_email} onChange={e => setForm({ ...form, contacto_email: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
+                        <input placeholder="Contacto: Telefono" value={form.contacto_telefono} onChange={e => setForm({ ...form, contacto_telefono: e.target.value })} className="px-3 py-2 border rounded-lg placeholder:text-slate-500" />
                     </div>
-                    <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-600" rows={2} />
+                    <textarea placeholder="Notas" value={form.notas} onChange={e => setForm({ ...form, notas: e.target.value })} className="w-full px-3 py-2 border rounded-lg placeholder:text-slate-500" rows={2} />
                     <button onClick={saveCliente} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><Save size={18} /> Guardar</button>
                 </div>
             )}
@@ -317,14 +317,14 @@ export default function TabClientes() {
                                 <Building2 size={18} className="text-emerald-600" />
                                 <div>
                                     <p className="font-medium text-slate-800">{c.nombre_comercial}</p>
-                                    <p className="text-xs text-slate-600">{c.razon_social_principal || 'Sin razon social'} {c.segmento && `| ${c.segmento}`}</p>
+                                    <p className="text-xs text-slate-700">{c.razon_social_principal || 'Sin razon social'} {c.segmento && `| ${c.segmento}`}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                                 <span className="text-xs bg-slate-100 px-2 py-1 rounded">{contribuyentes[c.cliente_id]?.length || 0} RFCs</span>
                                 <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">{clienteServicios[c.cliente_id]?.length || 0} Servicios</span>
-                                <button onClick={() => editCliente(c)} className="p-1 text-slate-400 hover:text-blue-600"><Pencil size={16} /></button>
-                                <button onClick={() => deleteCliente(c.cliente_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+                                <button onClick={() => editCliente(c)} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={16} /></button>
+                                <button onClick={() => deleteCliente(c.cliente_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={16} /></button>
                             </div>
                         </div>
 
@@ -333,7 +333,7 @@ export default function TabClientes() {
                                 {/* Contacto */}
                                 {c.contacto_nombre && (
                                     <div className="bg-white p-3 rounded border border-slate-200">
-                                        <p className="text-xs text-slate-600 font-bold uppercase mb-1">Contacto</p>
+                                        <p className="text-xs text-slate-700 font-bold uppercase mb-1">Contacto</p>
                                         <p className="text-sm">{c.contacto_nombre} {c.contacto_email && `| ${c.contacto_email}`} {c.contacto_telefono && `| ${c.contacto_telefono}`}</p>
                                     </div>
                                 )}
@@ -348,7 +348,7 @@ export default function TabClientes() {
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <p className="font-mono text-sm font-medium">{rfc.rfc}</p>
-                                                    <p className="text-xs text-slate-600">{rfc.razon_social} ({rfc.tipo_persona})</p>
+                                                    <p className="text-xs text-slate-700">{rfc.razon_social} ({rfc.tipo_persona})</p>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs text-slate-700 font-medium">Tribu:</span>
@@ -360,7 +360,7 @@ export default function TabClientes() {
                                                         <option value="" className="text-slate-900">Sin asignar</option>
                                                         {teams.map(t => <option key={t.team_id} value={t.team_id} className="text-slate-900">{t.nombre}</option>)}
                                                     </select>
-                                                    <button onClick={() => deleteRFC(rfc.contribuyente_id, c.cliente_id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 size={14} /></button>
+                                                    <button onClick={() => deleteRFC(rfc.contribuyente_id, c.cliente_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={14} /></button>
                                                 </div>
                                             </div>
                                             <div className="flex flex-wrap gap-1">
@@ -384,11 +384,11 @@ export default function TabClientes() {
                                         </div>
                                     ))}
                                     {(!contribuyentes[c.cliente_id] || contribuyentes[c.cliente_id].length === 0) && (
-                                        <p className="text-sm text-slate-600 mb-2">Sin RFCs asociados</p>
+                                        <p className="text-sm text-slate-700 mb-2">Sin RFCs asociados</p>
                                     )}
                                     <div className="flex gap-2 mt-2 pt-2 border-t border-slate-200">
-                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono placeholder:text-slate-600" maxLength={13} />
-                                        <input placeholder="Razon Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 placeholder:text-slate-600" />
+                                        <input placeholder="RFC *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.rfc : ''} onChange={e => setRfcForm({ ...rfcForm, rfc: e.target.value.toUpperCase(), cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 font-mono placeholder:text-slate-500" maxLength={13} />
+                                        <input placeholder="Razon Social *" value={rfcForm.cliente_id === c.cliente_id ? rfcForm.razon_social : ''} onChange={e => setRfcForm({ ...rfcForm, razon_social: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm flex-1 placeholder:text-slate-500" />
                                         <select value={rfcForm.cliente_id === c.cliente_id ? rfcForm.tipo_persona : 'PM'} onChange={e => setRfcForm({ ...rfcForm, tipo_persona: e.target.value, cliente_id: c.cliente_id })} className="px-2 py-1 border rounded text-sm">
                                             <option value="PM">PM</option>
                                             <option value="PF">PF</option>
@@ -441,7 +441,7 @@ export default function TabClientes() {
                                             )
                                         })}
                                         {servicios.length === 0 && (
-                                            <p className="text-sm text-slate-600">No hay servicios configurados. Ve a la pestana Servicios.</p>
+                                            <p className="text-sm text-slate-700">No hay servicios configurados. Ve a la pestana Servicios.</p>
                                         )}
                                     </div>
                                 </div>
@@ -456,7 +456,7 @@ export default function TabClientes() {
                         )}
                     </div>
                 ))}
-                {clientes.length === 0 && <p className="text-center text-slate-600 py-8">No hay clientes. Agrega uno nuevo.</p>}
+                {clientes.length === 0 && <p className="text-center text-slate-700 py-8">No hay clientes. Agrega uno nuevo.</p>}
             </div>
         </div>
     )
