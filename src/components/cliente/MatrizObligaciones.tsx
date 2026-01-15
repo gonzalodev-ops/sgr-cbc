@@ -40,20 +40,41 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                 setLoading(true)
                 setError(null)
 
-                // 1. Obtener RFCs del cliente con sus regímenes
-                const { data: contribuyentesData, error: errorContrib } = await supabase
+                // 1. Obtener IDs de contribuyentes del cliente
+                const { data: clienteContribData, error: errorClienteContrib } = await supabase
                     .from('cliente_contribuyente')
+                    .select('contribuyente_id')
+                    .eq('cliente_id', clienteId)
+
+                if (errorClienteContrib) throw errorClienteContrib
+
+                if (!clienteContribData || clienteContribData.length === 0) {
+                    setRfcsObligaciones([])
+                    setLoading(false)
+                    return
+                }
+
+                // Extraer IDs de contribuyentes
+                const contribuyenteIds = clienteContribData.map((cc: any) => cc.contribuyente_id).filter(Boolean)
+
+                if (contribuyenteIds.length === 0) {
+                    setRfcsObligaciones([])
+                    setLoading(false)
+                    return
+                }
+
+                // 1b. Obtener datos de contribuyentes con sus regímenes
+                const { data: contribuyentesData, error: errorContrib } = await supabase
+                    .from('contribuyente')
                     .select(`
-                        contribuyente:contribuyente_id (
-                            contribuyente_id,
-                            rfc,
-                            razon_social,
-                            contribuyente_regimen (
-                                c_regimen
-                            )
+                        contribuyente_id,
+                        rfc,
+                        razon_social,
+                        contribuyente_regimen (
+                            c_regimen
                         )
                     `)
-                    .eq('cliente_id', clienteId)
+                    .in('contribuyente_id', contribuyenteIds)
 
                 if (errorContrib) throw errorContrib
 
@@ -99,8 +120,7 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                 // 3. Para cada RFC, obtener sus obligaciones basadas en regímenes
                 const resultado: RFCObligaciones[] = []
 
-                for (const item of contribuyentesData) {
-                    const contrib = item.contribuyente as any
+                for (const contrib of contribuyentesData) {
                     if (!contrib) continue
 
                     // Extraer regímenes del contribuyente
