@@ -323,19 +323,12 @@ CREATE POLICY "contribuyente_regimen_select" ON contribuyente_regimen
     -- Admin/Socio ven todo
     is_admin_or_socio()
     OR
-    -- Usuarios ven contribuyentes de clientes accesibles
+    -- Usuarios ven contribuyentes de clientes donde tienen tareas asignadas
     EXISTS (
       SELECT 1 FROM cliente_contribuyente cc
-      JOIN cliente c ON c.cliente_id = cc.cliente_id
+      JOIN tarea t ON t.cliente_id = cc.cliente_id
       WHERE cc.contribuyente_id = contribuyente_regimen.contribuyente_id
-      AND (
-        c.team_id IN (SELECT get_user_teams())
-        OR EXISTS (
-          SELECT 1 FROM tarea t
-          WHERE t.cliente_id = c.cliente_id
-          AND t.responsable_usuario_id = (SELECT auth.uid())
-        )
-      )
+      AND t.responsable_usuario_id = (SELECT auth.uid())
     )
   );
 
@@ -356,17 +349,11 @@ CREATE POLICY "cliente_servicio_select" ON cliente_servicio
   FOR SELECT USING (
     is_admin_or_socio()
     OR
+    -- Usuario tiene tareas del cliente
     EXISTS (
-      SELECT 1 FROM cliente c
-      WHERE c.cliente_id = cliente_servicio.cliente_id
-      AND (
-        c.team_id IN (SELECT get_user_teams())
-        OR EXISTS (
-          SELECT 1 FROM tarea t
-          WHERE t.cliente_id = c.cliente_id
-          AND t.responsable_usuario_id = (SELECT auth.uid())
-        )
-      )
+      SELECT 1 FROM tarea t
+      WHERE t.cliente_id = cliente_servicio.cliente_id
+      AND t.responsable_usuario_id = (SELECT auth.uid())
     )
   );
 
@@ -387,17 +374,11 @@ CREATE POLICY "cliente_talla_select" ON cliente_talla
   FOR SELECT USING (
     is_admin_or_socio()
     OR
+    -- Usuario tiene tareas del cliente
     EXISTS (
-      SELECT 1 FROM cliente c
-      WHERE c.cliente_id = cliente_talla.cliente_id
-      AND (
-        c.team_id IN (SELECT get_user_teams())
-        OR EXISTS (
-          SELECT 1 FROM tarea t
-          WHERE t.cliente_id = c.cliente_id
-          AND t.responsable_usuario_id = (SELECT auth.uid())
-        )
-      )
+      SELECT 1 FROM tarea t
+      WHERE t.cliente_id = cliente_talla.cliente_id
+      AND t.responsable_usuario_id = (SELECT auth.uid())
     )
   );
 
