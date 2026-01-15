@@ -958,14 +958,48 @@ CREATE POLICY "tarea_evento_delete" ON tarea_evento
 -- Previene ataques de inyección de esquema
 -- ============================================
 
-ALTER FUNCTION IF EXISTS handle_new_user() SET search_path = public;
-ALTER FUNCTION IF EXISTS update_updated_at_column() SET search_path = public;
-ALTER FUNCTION IF EXISTS get_user_role() SET search_path = public;
-ALTER FUNCTION IF EXISTS is_admin_or_socio() SET search_path = public;
-ALTER FUNCTION IF EXISTS get_user_teams() SET search_path = public;
-ALTER FUNCTION IF EXISTS get_user_clients() SET search_path = public;
-ALTER FUNCTION IF EXISTS fn_audit_tarea_changes() SET search_path = public;
-ALTER FUNCTION IF EXISTS check_tarea_exists(UUID, TEXT, TEXT) SET search_path = public;
+DO $$
+BEGIN
+  -- handle_new_user
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'handle_new_user') THEN
+    ALTER FUNCTION handle_new_user() SET search_path = public;
+  END IF;
+
+  -- update_updated_at_column
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'update_updated_at_column') THEN
+    ALTER FUNCTION update_updated_at_column() SET search_path = public;
+  END IF;
+
+  -- get_user_role
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_user_role') THEN
+    ALTER FUNCTION get_user_role() SET search_path = public;
+  END IF;
+
+  -- is_admin_or_socio
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'is_admin_or_socio') THEN
+    ALTER FUNCTION is_admin_or_socio() SET search_path = public;
+  END IF;
+
+  -- get_user_teams
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_user_teams') THEN
+    ALTER FUNCTION get_user_teams() SET search_path = public;
+  END IF;
+
+  -- get_user_clients
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'get_user_clients') THEN
+    ALTER FUNCTION get_user_clients() SET search_path = public;
+  END IF;
+
+  -- fn_audit_tarea_changes
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'fn_audit_tarea_changes') THEN
+    ALTER FUNCTION fn_audit_tarea_changes() SET search_path = public;
+  END IF;
+
+  -- check_tarea_exists
+  IF EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'check_tarea_exists') THEN
+    ALTER FUNCTION check_tarea_exists(UUID, TEXT, TEXT) SET search_path = public;
+  END IF;
+END $$;
 
 -- ============================================
 -- SECCIÓN 7: CAMBIAR VISTA A SECURITY INVOKER
