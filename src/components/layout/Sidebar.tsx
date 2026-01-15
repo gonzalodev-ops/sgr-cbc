@@ -60,7 +60,7 @@ const allNavigation: NavItem[] = [
     // Mi Equipo - Team management for LIDER
     {
         name: 'Mi Equipo',
-        href: '/dashboard/mi-equipo',
+        href: '/dashboard/equipo',
         icon: UsersRound,
         roles: ['LIDER', 'SOCIO', 'ADMIN']
     },
@@ -166,7 +166,7 @@ function getHomeRoute(rol: UserRole): string {
         case 'COLABORADOR':
             return '/dashboard/mi-dia'
         case 'LIDER':
-            return '/dashboard/mi-equipo'
+            return '/dashboard/equipo'
         case 'AUDITOR':
             return '/dashboard/auditor'
         case 'SOCIO':
