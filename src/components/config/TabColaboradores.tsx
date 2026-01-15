@@ -44,7 +44,16 @@ export default function TabColaboradores() {
 
     async function loadData() {
         setLoading(true)
-        const { data: usersData } = await supabase.from('users').select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`).order('nombre')
+        const { data: usersData, error } = await supabase
+            .from('users')
+            .select(`*, team_members(team_id, rol_en_equipo, teams:team_id(nombre))`)
+            .eq('activo', true)
+            .order('nombre')
+
+        if (error && process.env.NODE_ENV === 'development') {
+            console.error('Error loading users:', error)
+        }
+
         setUsuarios((usersData || []).map((u: any) => ({
             ...u,
             equipo: u.team_members?.[0]?.teams?.nombre || '',
@@ -66,6 +75,7 @@ export default function TabColaboradores() {
             })
             const result = await res.json()
             if (!result.success) return alert('Error: ' + result.error)
+            alert(result.mensaje || 'Usuario creado exitosamente')
         } else {
             await supabase.from('users').update({ nombre: userForm.nombre, rol_global: userForm.rol_global }).eq('user_id', editingUser.user_id)
             // Actualizar equipo si cambió
@@ -75,7 +85,8 @@ export default function TabColaboradores() {
             }
         }
         resetUserForm()
-        loadData()
+        // Pequeño delay para asegurar que la BD se actualizó
+        setTimeout(() => loadData(), 500)
     }
 
     async function deleteUser(id: string) {
@@ -207,7 +218,7 @@ export default function TabColaboradores() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-sm">
-                        {usuarios.filter(u => u.activo).map(u => (
+                        {usuarios.map(u => (
                             <tr key={u.user_id} className="hover:bg-slate-50">
                                 <td className="p-3 font-medium">{u.nombre}</td>
                                 <td className="p-3 text-slate-700">{u.email}</td>
