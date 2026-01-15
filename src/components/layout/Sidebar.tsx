@@ -13,6 +13,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Shield,
+    BarChart3,
     Workflow
 } from 'lucide-react'
 import { useState } from 'react'
@@ -20,6 +21,7 @@ import { createBrowserClient } from '@supabase/ssr'
 
 const navigation = [
     { name: 'TMR', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Ejecutivo', href: '/dashboard/ejecutivo', icon: BarChart3 },
     { name: 'Colaboradores', href: '/dashboard/colaborador', icon: Users },
     { name: 'Tribus', href: '/dashboard/tribu', icon: Building2 },
     { name: 'Clientes', href: '/dashboard/cliente', icon: Building2 },
@@ -27,6 +29,7 @@ const navigation = [
     { name: 'Calendario', href: '/dashboard/calendario', icon: Calendar },
     { name: 'Auditor', href: '/dashboard/auditor', icon: Shield },
     { name: 'Procesos', href: '/dashboard/proceso', icon: Workflow },
+    { name: 'Análisis', href: '/dashboard/analisis', icon: BarChart3 },
 ]
 
 const bottomNavigation = [

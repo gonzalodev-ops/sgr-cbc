@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
 import { ExcelImport } from '@/components/import/ExcelImport'
-import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle, Clock } from 'lucide-react'
+import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle, Clock, Calendar } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 
 // Importar componentes dinámicamente para evitar problemas de SSR
@@ -14,9 +14,10 @@ const TabObligaciones = dynamicImport(() => import('@/components/config/TabOblig
 const TabProcesos = dynamicImport(() => import('@/components/config/TabProcesos'), { ssr: false })
 const TabServicios = dynamicImport(() => import('@/components/config/TabServicios'), { ssr: false })
 const TabSLA = dynamicImport(() => import('@/components/config/TabSLA'), { ssr: false })
+const DiasInhabiles = dynamicImport(() => import('@/components/config/DiasInhabiles'), { ssr: false })
 const TabDatos = dynamicImport(() => import('@/components/config/TabDatos'), { ssr: false })
 
-type TabType = 'clientes' | 'colaboradores' | 'obligaciones' | 'procesos' | 'servicios' | 'sla' | 'datos'
+type TabType = 'clientes' | 'colaboradores' | 'obligaciones' | 'procesos' | 'servicios' | 'sla' | 'diasInhabiles' | 'datos'
 
 const tabs = [
     { id: 'clientes' as const, label: 'Clientes', icon: Building2, color: 'emerald' },
@@ -25,6 +26,7 @@ const tabs = [
     { id: 'procesos' as const, label: 'Procesos', icon: Settings, color: 'teal' },
     { id: 'servicios' as const, label: 'Servicios/Tallas', icon: Package, color: 'indigo' },
     { id: 'sla' as const, label: 'SLA', icon: Clock, color: 'rose' },
+    { id: 'diasInhabiles' as const, label: 'Días Inhábiles', icon: Calendar, color: 'green' },
     { id: 'datos' as const, label: 'Base de Datos', icon: Database, color: 'amber' },
 ]
 
@@ -65,6 +67,7 @@ export default function ConfiguracionPage() {
                     {activeTab === 'procesos' && <TabProcesos />}
                     {activeTab === 'servicios' && <TabServicios />}
                     {activeTab === 'sla' && <TabSLA />}
+                    {activeTab === 'diasInhabiles' && <DiasInhabiles />}
                     {activeTab === 'datos' && <TabDatos />}
                 </div>
             </div>
@@ -80,6 +83,7 @@ function getColor(name: string): string {
         teal: '#14b8a6',
         indigo: '#6366f1',
         rose: '#f43f5e',
+        green: '#22c55e',
         amber: '#f59e0b'
     }
     return colors[name] || '#6b7280'
