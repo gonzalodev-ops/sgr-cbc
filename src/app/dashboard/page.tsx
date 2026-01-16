@@ -17,6 +17,13 @@ import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
 const QUERY_LIMIT = 500
 const PUNTOS_BASE_DEFAULT = 50
 
+// Extended Entregable with DB-specific fields
+interface EntregableExtended extends Entregable {
+    estadoOriginal: string
+    enRiesgo: boolean
+    fechaLimite: string | null
+}
+
 // Helper to create client only on client-side
 function getSupabaseClient() {
     if (typeof window === 'undefined') return null
@@ -27,7 +34,7 @@ function getSupabaseClient() {
 }
 
 export default function TMRPage() {
-    const [entregables, setEntregables] = useState<Entregable[]>([])
+    const [entregables, setEntregables] = useState<EntregableExtended[]>([])
     const [loading, setLoading] = useState(true)
     const [modalAjusteFecha, setModalAjusteFecha] = useState<{ tareaId: string; fechaActual: string } | null>(null)
 
@@ -182,7 +189,7 @@ export default function TMRPage() {
                     return Array.isArray(val) ? val[0] ?? null : val
                 }
 
-                const mappedData: Entregable[] = (data as unknown as TareaData[]).map((t) => {
+                const mappedData: EntregableExtended[] = (data as unknown as TareaData[]).map((t) => {
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -279,11 +286,11 @@ export default function TMRPage() {
         , [entregablesFiltrados])
 
     const tareasEsperandoPago = useMemo(() =>
-        entregables.filter(e => (e as any).estadoOriginal === 'presentado').length
+        entregables.filter(e => e.estadoOriginal === 'presentado').length
         , [entregables])
 
     const tareasEnRiesgo = useMemo(() =>
-        entregables.filter(e => (e as any).enRiesgo === true).length
+        entregables.filter(e => e.enRiesgo === true).length
         , [entregables])
 
     const hayFiltrosActivos = filtroRFC !== 'all' || filtroTribu !== 'all' || filtroEntregable !== 'all' || filtroResponsable !== 'all'
@@ -575,7 +582,7 @@ export default function TMRPage() {
                                                         >
                                                             {estadoConfig.label}
                                                         </button>
-                                                        {(e as any).enRiesgo && (
+                                                        {e.enRiesgo && (
                                                             <div className="relative group">
                                                                 <span className="px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 animate-pulse">
                                                                     <AlertTriangle size={10} /> RIESGO
@@ -585,7 +592,7 @@ export default function TMRPage() {
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {(e as any).estadoOriginal === 'presentado' && !(e as any).enRiesgo && (
+                                                        {e.estadoOriginal === 'presentado' && !e.enRiesgo && (
                                                             <div className="relative group">
                                                                 <span className="px-2 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded text-[9px] font-bold uppercase tracking-wide">
                                                                     SIN PAGO
@@ -599,7 +606,7 @@ export default function TMRPage() {
                                                 </td>
                                                 <td
                                                     className="p-4 text-center bg-purple-50/20 border-l border-slate-100 cursor-pointer hover:bg-purple-100/50 transition-colors"
-                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: (e as any).fechaLimite })}
+                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: e.fechaLimite || '' })}
                                                 >
                                                     <Calendar className="text-purple-600 mx-auto" size={16} />
                                                 </td>

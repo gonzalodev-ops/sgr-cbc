@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Ban, Users, Clock, Building2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import { Ban, Users, Building2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface TareaBloqueada {
   tarea_id: string
@@ -10,13 +10,13 @@ interface TareaBloqueada {
   fecha_limite_oficial: string
   cliente: {
     nombre_comercial: string
-  }
+  } | null
   contribuyente: {
     rfc: string
-  }
+  } | null
   obligacion: {
     nombre_corto: string
-  }
+  } | null
 }
 
 interface TareaDependiente {
@@ -25,20 +25,41 @@ interface TareaDependiente {
   fecha_limite_oficial: string
   responsable: {
     nombre: string
-  }
+  } | null
   cliente: {
     nombre_comercial: string
-  }
+  } | null
   contribuyente: {
     rfc: string
-  }
+  } | null
   obligacion: {
     nombre_corto: string
-  }
+  } | null
 }
 
 interface BloqueosListProps {
   onCountChange?: (count: { bloqueadas: number; dependientes: number }) => void
+}
+
+// Supabase query result types for tareas bloqueadas
+interface TareaBloqueadaRow {
+  tarea_id: string
+  estado: string
+  fecha_limite_oficial: string
+  cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+  contribuyente: { rfc: string } | { rfc: string }[] | null
+  obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+}
+
+// Supabase query result types for tareas dependientes
+interface TareaDependienteRow {
+  tarea_id: string
+  estado: string
+  fecha_limite_oficial: string
+  responsable: { nombre: string } | { nombre: string }[] | null
+  cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+  contribuyente: { rfc: string } | { rfc: string }[] | null
+  obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
 }
 
 export default function BloqueosList({ onCountChange }: BloqueosListProps) {
@@ -88,7 +109,7 @@ export default function BloqueosList({ onCountChange }: BloqueosListProps) {
       if (bloqueadasError) {
         console.error('Error cargando tareas bloqueadas:', bloqueadasError)
       } else {
-        const transformadas = (bloqueadasData || []).map((t: any) => ({
+        const transformadas = ((bloqueadasData || []) as TareaBloqueadaRow[]).map((t: TareaBloqueadaRow) => ({
           ...t,
           cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
           contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
@@ -131,7 +152,7 @@ export default function BloqueosList({ onCountChange }: BloqueosListProps) {
         if (dependientesError) {
           console.error('Error cargando tareas dependientes:', dependientesError)
         } else {
-          const transformadas = (dependientesData || []).map((t: any) => ({
+          const transformadas = ((dependientesData || []) as TareaDependienteRow[]).map((t: TareaDependienteRow) => ({
             ...t,
             responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
             cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,

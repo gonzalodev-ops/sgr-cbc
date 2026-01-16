@@ -8,23 +8,30 @@ interface PuntosChartProps {
     usuarioId: string
 }
 
+// Supabase query result types
+interface ObligacionProcesoRow {
+    proceso?: {
+        nombre_proceso: string
+    } | null
+}
+
+interface ObligacionRow {
+    nombre_corto: string
+    obligacion_proceso: ObligacionProcesoRow | ObligacionProcesoRow[] | null
+}
+
+interface ClienteRow {
+    nombre_comercial: string
+}
+
 interface TareaCompletada {
     tarea_id: string
     updated_at: string
     cliente_id: string
     id_obligacion: string
     puntos: number
-    cliente?: {
-        nombre_comercial: string
-    }
-    obligacion?: {
-        nombre_corto: string
-        obligacion_proceso?: Array<{
-            proceso?: {
-                nombre_proceso: string
-            }
-        }>
-    }
+    cliente?: ClienteRow | ClienteRow[] | null
+    obligacion?: ObligacionRow | ObligacionRow[] | null
 }
 
 interface DesgloseProceso {
@@ -35,6 +42,15 @@ interface DesgloseProceso {
 interface DesgloseCliente {
     cliente: string
     puntos: number
+}
+
+interface TareaQueryRow {
+    tarea_id: string
+    updated_at: string
+    cliente_id: string
+    id_obligacion: string
+    cliente: ClienteRow | ClienteRow[] | null
+    obligacion: ObligacionRow | ObligacionRow[] | null
 }
 
 export default function PuntosChart({ usuarioId }: PuntosChartProps) {
@@ -83,7 +99,7 @@ export default function PuntosChart({ usuarioId }: PuntosChartProps) {
             }
 
             // Asignar puntos por tarea (50 puntos por tarea completada)
-            const tareasConPuntos = (data || []).map((t: any) => ({
+            const tareasConPuntos = ((data || []) as TareaQueryRow[]).map((t: TareaQueryRow) => ({
                 ...t,
                 puntos: 50
             }))
@@ -132,13 +148,13 @@ export default function PuntosChart({ usuarioId }: PuntosChartProps) {
         const procesoMap = new Map<string, number>()
 
         tareasCompletadas.forEach(t => {
-            const obligacion = t.obligacion as any
+            const obligacion = t.obligacion as ObligacionRow | null
             if (obligacion?.obligacion_proceso) {
                 const procesos = Array.isArray(obligacion.obligacion_proceso)
                     ? obligacion.obligacion_proceso
                     : [obligacion.obligacion_proceso]
 
-                procesos.forEach((op: any) => {
+                procesos.forEach((op: ObligacionProcesoRow) => {
                     const nombreProceso = op?.proceso?.nombre_proceso || 'Sin proceso'
                     procesoMap.set(
                         nombreProceso,
@@ -160,7 +176,8 @@ export default function PuntosChart({ usuarioId }: PuntosChartProps) {
         const clienteMap = new Map<string, number>()
 
         tareasCompletadas.forEach(t => {
-            const cliente = (t.cliente as any)?.nombre_comercial || 'Sin cliente'
+            const clienteData = t.cliente as ClienteRow | null
+            const cliente = clienteData?.nombre_comercial || 'Sin cliente'
             clienteMap.set(cliente, (clienteMap.get(cliente) || 0) + t.puntos)
         })
 

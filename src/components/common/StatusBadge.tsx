@@ -4,7 +4,6 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  XCircle,
   Pause,
   Play,
   FileCheck,

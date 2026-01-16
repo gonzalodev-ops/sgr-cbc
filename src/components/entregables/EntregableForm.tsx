@@ -3,9 +3,18 @@
 import { useState, useEffect } from 'react'
 import { Save, X } from 'lucide-react'
 
+type TipoEntregable = 'OBLIGACION' | 'OPERATIVO' | 'OTRO'
+
+interface EntregableFormData {
+    entregable_id: string
+    nombre: string
+    descripcion?: string
+    tipo: TipoEntregable
+}
+
 interface EntregableFormProps {
-    editing: any | null
-    onSave: (form: any) => Promise<void>
+    editing: EntregableFormData | null
+    onSave: (form: EntregableFormData) => Promise<void>
     onCancel: () => void
 }
 
@@ -92,7 +101,7 @@ export default function EntregableForm({ editing, onSave, onCancel }: Entregable
                                 name="tipo"
                                 value={tipo}
                                 checked={form.tipo === tipo}
-                                onChange={e => setForm({ ...form, tipo: e.target.value as any })}
+                                onChange={e => setForm({ ...form, tipo: e.target.value as TipoEntregable })}
                                 className="w-4 h-4"
                             />
                             <span className="text-sm">{tipo}</span>

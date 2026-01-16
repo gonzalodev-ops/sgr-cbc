@@ -25,12 +25,11 @@ interface HallazgoFormData {
 }
 
 interface HallazgoFormProps {
-  auditoriaId: string
   onSave: (hallazgo: HallazgoFormData) => void
   onCancel: () => void
 }
 
-export default function HallazgoForm({ auditoriaId, onSave, onCancel }: HallazgoFormProps) {
+export default function HallazgoForm({ onSave, onCancel }: HallazgoFormProps) {
   const [formData, setFormData] = useState<HallazgoFormData>({
     tipo: 'ERROR_TECNICO',
     gravedad: 'MEDIA',
@@ -77,7 +76,7 @@ export default function HallazgoForm({ auditoriaId, onSave, onCancel }: Hallazgo
     }
   }
 
-  const handleChange = (field: keyof HallazgoFormData, value: any) => {
+  const handleChange = (field: keyof HallazgoFormData, value: HallazgoFormData[keyof HallazgoFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     // Clear error when user starts typing
     if (errors[field]) {

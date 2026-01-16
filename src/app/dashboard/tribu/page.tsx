@@ -49,6 +49,41 @@ interface TareaEquipo {
     }
 }
 
+// Supabase query result types
+interface UserData {
+    user_id: string
+    nombre: string
+    rol_global?: string
+}
+
+interface TeamMemberData {
+    team_id: string
+    rol_en_equipo: string
+    users: UserData | UserData[] | null
+}
+
+interface TeamData {
+    team_id: string
+    nombre: string
+}
+
+interface TareaDataItem {
+    tarea_id: string
+    estado: string
+    responsable_usuario_id: string
+    fecha_limite_oficial: string
+    updated_at: string
+}
+
+interface TareaQueryData {
+    tarea_id: string
+    estado: string
+    fecha_limite_oficial: string
+    responsable: { user_id: string; nombre: string } | { user_id: string; nombre: string }[] | null
+    cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+    obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+}
+
 export default function TribusPage() {
     const [tribus, setTribus] = useState<TribuData[]>([])
     const [miembrosPorTribu, setMiembrosPorTribu] = useState<Record<string, MiembroResumen[]>>({})
@@ -133,24 +168,25 @@ export default function TribusPage() {
             const teamMembers: Record<string, MiembroResumen[]> = {}
 
             if (membersData) {
-                membersData.forEach((m: any) => {
-                    if (m.users?.user_id) {
-                        userToTeam[m.users.user_id] = m.team_id
+                ((membersData || []) as TeamMemberData[]).forEach((m) => {
+                    const user = Array.isArray(m.users) ? m.users[0] : m.users
+                    if (user?.user_id) {
+                        userToTeam[user.user_id] = m.team_id
 
                         if (!teamMembers[m.team_id]) {
                             teamMembers[m.team_id] = []
                         }
 
                         // Calcular tareas y puntos del miembro
-                        const tareasUsuario = (tareaData || []).filter(
-                            (t: any) => t.responsable_usuario_id === m.users.user_id
+                        const tareasUsuario = ((tareaData || []) as TareaDataItem[]).filter(
+                            (t) => t.responsable_usuario_id === user.user_id
                         )
-                        const completadas = tareasUsuario.filter((t: any) =>
+                        const completadas = tareasUsuario.filter((t) =>
                             ['presentado', 'pagado', 'cerrado'].includes(t.estado)
                         ).length
 
                         teamMembers[m.team_id].push({
-                            nombre: m.users.nombre,
+                            nombre: user.nombre,
                             rol: m.rol_en_equipo,
                             tareas: tareasUsuario.length,
                             puntos: completadas * 50
@@ -161,32 +197,32 @@ export default function TribusPage() {
             setMiembrosPorTribu(teamMembers)
 
             // 5. Calcular métricas por tribu
-            const tribusConMetricas: TribuData[] = (teamsData || []).map((team: any) => {
+            const tribusConMetricas: TribuData[] = ((teamsData || []) as TeamData[]).map((team) => {
                 // Usuarios de este equipo
                 const usuariosEquipo = Object.entries(userToTeam)
                     .filter(([, teamId]) => teamId === team.team_id)
                     .map(([userId]) => userId)
 
                 // Tareas del equipo
-                const tareasEquipo = (tareaData || []).filter(
-                    (t: any) => usuariosEquipo.includes(t.responsable_usuario_id)
+                const tareasEquipoFiltradas = ((tareaData || []) as TareaDataItem[]).filter(
+                    (t) => usuariosEquipo.includes(t.responsable_usuario_id)
                 )
 
-                const pendientes = tareasEquipo.filter((t: any) => t.estado === 'pendiente').length
-                const enCurso = tareasEquipo.filter((t: any) =>
+                const pendientes = tareasEquipoFiltradas.filter((t) => t.estado === 'pendiente').length
+                const enCurso = tareasEquipoFiltradas.filter((t) =>
                     ['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)
                 ).length
-                const completadas = tareasEquipo.filter((t: any) =>
+                const completadas = tareasEquipoFiltradas.filter((t) =>
                     ['presentado', 'pagado', 'cerrado'].includes(t.estado)
                 ).length
 
                 // Tareas en riesgo (bloquedas o rechazadas)
-                const enRiesgo = tareasEquipo.filter((t: any) =>
+                const enRiesgo = tareasEquipoFiltradas.filter((t) =>
                     ['bloqueado_cliente', 'rechazado'].includes(t.estado)
                 ).length
 
                 // % a tiempo
-                const completadasATiempo = tareasEquipo.filter((t: any) => {
+                const completadasATiempo = tareasEquipoFiltradas.filter((t) => {
                     if (!['presentado', 'pagado', 'cerrado'].includes(t.estado)) return false
                     const fechaLimite = new Date(t.fecha_limite_oficial)
                     const fechaCompletado = new Date(t.updated_at)
@@ -213,9 +249,9 @@ export default function TribusPage() {
             setLoading(false)
         }
 
-        async function fetchTeamData(supabase: any, teamId: string) {
+        async function fetchTeamData(supabaseClient: ReturnType<typeof createBrowserClient>, teamId: string) {
             // Obtener todos los miembros del equipo con sus tareas
-            const { data: members } = await supabase
+            const { data: members } = await supabaseClient
                 .from('team_members')
                 .select(`
                     users:user_id (user_id, nombre),
@@ -226,10 +262,13 @@ export default function TribusPage() {
 
             if (!members || members.length === 0) return
 
-            const miembroIds = members.map((m: any) => m.users.user_id)
+            const miembroIds = ((members || []) as TeamMemberData[]).map((m) => {
+                const user = Array.isArray(m.users) ? m.users[0] : m.users
+                return user?.user_id
+            }).filter((id): id is string => id !== undefined)
 
             // Obtener tareas del equipo
-            const { data: tareas } = await supabase
+            const { data: tareas } = await supabaseClient
                 .from('tarea')
                 .select(`
                     tarea_id, estado, fecha_limite_oficial,
@@ -241,24 +280,27 @@ export default function TribusPage() {
                 .not('estado', 'in', '("cerrado","pagado")')
 
             // Transformar datos de Supabase (relaciones vienen como arrays)
-            const tareasTransformadas = (tareas || []).map((t: any) => ({
-                ...t,
+            const tareasTransformadas: TareaEquipo[] = ((tareas || []) as TareaQueryData[]).map((t) => ({
+                tarea_id: t.tarea_id,
+                estado: t.estado,
+                fecha_limite_oficial: t.fecha_limite_oficial,
                 responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
                 cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
                 obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
-            }))
+            })) as TareaEquipo[]
 
             // Construir datos de carga por miembro
-            const miembrosCarga: MiembroCarga[] = members.map((m: any) => {
+            const miembrosCarga: MiembroCarga[] = ((members || []) as TeamMemberData[]).map((m) => {
+                const user = Array.isArray(m.users) ? m.users[0] : m.users
                 const tareasMiembro = tareasTransformadas.filter(
-                    (t: any) => t.responsable?.user_id === m.users.user_id
+                    (t) => t.responsable?.user_id === user?.user_id
                 )
                 return {
-                    user_id: m.users.user_id,
-                    nombre: m.users.nombre,
+                    user_id: user?.user_id || '',
+                    nombre: user?.nombre || '',
                     rol_en_equipo: m.rol_en_equipo,
-                    tareasPendientes: tareasMiembro.filter((t: any) => t.estado === 'pendiente').length,
-                    tareasEnCurso: tareasMiembro.filter((t: any) =>
+                    tareasPendientes: tareasMiembro.filter((t) => t.estado === 'pendiente').length,
+                    tareasEnCurso: tareasMiembro.filter((t) =>
                         ['en_curso', 'pendiente_evidencia', 'en_validacion', 'bloqueado_cliente', 'rechazado'].includes(t.estado)
                     ).length
                 }
@@ -333,7 +375,10 @@ export default function TribusPage() {
                 .eq('activo', true)
 
             if (members && members.length > 0) {
-                const miembroIds = members.map((m: any) => m.users.user_id)
+                const miembroIds = ((members || []) as TeamMemberData[]).map((m) => {
+                    const user = Array.isArray(m.users) ? m.users[0] : m.users
+                    return user?.user_id
+                }).filter((id): id is string => id !== undefined)
 
                 const { data: tareas } = await supabase
                     .from('tarea')
@@ -347,23 +392,26 @@ export default function TribusPage() {
                     .not('estado', 'in', '("cerrado","pagado")')
 
                 // Transformar datos de Supabase (relaciones vienen como arrays)
-                const tareasTransformadas = (tareas || []).map((t: any) => ({
-                    ...t,
+                const tareasTransformadas: TareaEquipo[] = ((tareas || []) as TareaQueryData[]).map((t) => ({
+                    tarea_id: t.tarea_id,
+                    estado: t.estado,
+                    fecha_limite_oficial: t.fecha_limite_oficial,
                     responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
                     cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
                     obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
-                }))
+                })) as TareaEquipo[]
 
-                const miembrosCarga: MiembroCarga[] = members.map((m: any) => {
+                const miembrosCarga: MiembroCarga[] = ((members || []) as TeamMemberData[]).map((m) => {
+                    const user = Array.isArray(m.users) ? m.users[0] : m.users
                     const tareasMiembro = tareasTransformadas.filter(
-                        (t: any) => t.responsable?.user_id === m.users.user_id
+                        (t) => t.responsable?.user_id === user?.user_id
                     )
                     return {
-                        user_id: m.users.user_id,
-                        nombre: m.users.nombre,
+                        user_id: user?.user_id || '',
+                        nombre: user?.nombre || '',
                         rol_en_equipo: m.rol_en_equipo,
-                        tareasPendientes: tareasMiembro.filter((t: any) => t.estado === 'pendiente').length,
-                        tareasEnCurso: tareasMiembro.filter((t: any) =>
+                        tareasPendientes: tareasMiembro.filter((t) => t.estado === 'pendiente').length,
+                        tareasEnCurso: tareasMiembro.filter((t) =>
                             ['en_curso', 'pendiente_evidencia', 'en_validacion', 'bloqueado_cliente', 'rechazado'].includes(t.estado)
                         ).length
                     }

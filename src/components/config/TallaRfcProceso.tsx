@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Settings, Save, RotateCcw, Loader2, AlertTriangle } from 'lucide-react'
 
@@ -26,6 +26,11 @@ interface ConfiguracionProceso {
   tiene_config_especifica: boolean
 }
 
+interface ConfigData {
+  proceso_id: string
+  talla_id: string | null
+}
+
 const TALLAS_LABELS: Record<string, string> = {
   'EXTRA_CHICA': 'XS',
   'CHICA': 'S',
@@ -44,16 +49,12 @@ export default function TallaRfcProceso({ contribuyenteId, rfcNombre }: TallaRfc
   const [error, setError] = useState<string | null>(null)
   const [cambiosPendientes, setCambiosPendientes] = useState(false)
 
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  ), [])
 
-  useEffect(() => {
-    cargarDatos()
-  }, [contribuyenteId])
-
-  async function cargarDatos() {
+  const cargarDatos = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -100,7 +101,7 @@ export default function TallaRfcProceso({ contribuyenteId, rfcNombre }: TallaRfc
       // Construir mapa de configuraciones
       const configMap: Record<string, ConfiguracionProceso> = {}
       ;(procesosData || []).forEach((proceso: Proceso) => {
-        const config = (configData || []).find((c: any) => c.proceso_id === proceso.proceso_id)
+        const config = ((configData || []) as ConfigData[]).find((c) => c.proceso_id === proceso.proceso_id)
         configMap[proceso.proceso_id] = {
           proceso_id: proceso.proceso_id,
           talla_id: config?.talla_id || null,
@@ -111,13 +112,18 @@ export default function TallaRfcProceso({ contribuyenteId, rfcNombre }: TallaRfc
       setConfiguraciones(configMap)
       // Por ahora no tenemos talla default a nivel contribuyente, usar MEDIANA
       setTallaDefault('MEDIANA')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error al cargar datos:', err)
-      setError(err.message || 'Error al cargar la configuración')
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar la configuracion'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase, contribuyenteId])
+
+  useEffect(() => {
+    cargarDatos()
+  }, [cargarDatos])
 
   function handleCambioTalla(procesoId: string, tallaId: string) {
     setConfiguraciones(prev => ({
@@ -168,9 +174,10 @@ export default function TallaRfcProceso({ contribuyenteId, rfcNombre }: TallaRfc
 
       setCambiosPendientes(false)
       await cargarDatos() // Recargar para reflejar cambios
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error al guardar:', err)
-      setError(err.message || 'Error al guardar los cambios')
+      const errorMessage = err instanceof Error ? err.message : 'Error al guardar los cambios'
+      setError(errorMessage)
     } finally {
       setSaving(false)
     }

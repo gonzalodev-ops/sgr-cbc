@@ -171,7 +171,11 @@ export default function AusenciasPage() {
         throw new Error(result.error || 'Error en la reasignación')
       }
 
-      alert(result.mensaje + (result.detalles ? `\n\nDetalles:\n${result.detalles.map((d: any) => `- ${d.obligacionNombre} (${d.clienteNombre})`).join('\n')}` : ''))
+      interface DetalleReasignacion {
+        obligacionNombre: string
+        clienteNombre: string
+      }
+      alert(result.mensaje + (result.detalles ? `\n\nDetalles:\n${(result.detalles as DetalleReasignacion[]).map((d) => `- ${d.obligacionNombre} (${d.clienteNombre})`).join('\n')}` : ''))
     } catch (error) {
       console.error('Error reasignando tareas:', error)
       alert('Error al reasignar tareas: ' + (error as Error).message)

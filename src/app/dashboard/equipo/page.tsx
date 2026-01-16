@@ -10,7 +10,6 @@ import {
   Target,
   ArrowRightLeft,
   Calendar,
-  TrendingUp,
   Shield,
   Ban,
   RefreshCw,

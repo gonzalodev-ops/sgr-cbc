@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import {
-  CheckCircle,
   Upload,
   Eye,
   Play,

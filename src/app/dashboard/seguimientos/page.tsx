@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   TrendingUp,
@@ -14,24 +14,29 @@ import {
   FileText,
   RotateCcw,
   X,
-  Building2,
-  User,
   Shield,
-  ChevronDown,
-  ChevronUp,
-  Eye,
   Check
 } from 'lucide-react'
 import { useUserRole } from '@/lib/hooks/useUserRole'
 import { KPICard, KPICardGrid } from '@/components/common/KPICard'
-import { StatusBadge } from '@/components/common/StatusBadge'
 import {
   CategoriaSeguimiento,
-  PrioridadSeguimiento,
-  PRIORIDAD_CONFIG,
-  Prioridad
+  PrioridadSeguimiento
 } from '@/lib/constants/enums'
-import { calcularDiasRestantes, formatearFecha, diferenciaEnDias, formatearFechaHora } from '@/lib/utils/dateCalculations'
+import { formatearFecha, diferenciaEnDias, formatearFechaHora } from '@/lib/utils/dateCalculations'
+
+interface TareaInfo {
+  tarea_id: string
+  cliente?: {
+    nombre_comercial: string
+  }
+  obligacion?: {
+    nombre_corto: string
+  }
+  responsable?: {
+    nombre: string
+  }
+}
 
 interface Seguimiento {
   seguimiento_id: string
@@ -44,24 +49,45 @@ interface Seguimiento {
   cerrado: boolean
   fecha_cierre: string | null
   evidencia_cierre: string | null
-  tarea?: {
-    tarea_id: string
-    cliente: {
-      nombre_comercial: string
-    }
-    obligacion: {
-      nombre_corto: string
-    }
-    responsable: {
-      nombre: string
-    }
-  }
+  tarea?: TareaInfo
+}
+
+interface NuevoSeguimientoData {
+  tarea_id: string
+  categoria: CategoriaSeguimiento
+  descripcion: string
+  prioridad: PrioridadSeguimiento
+  fecha_recordatorio: string
+}
+
+interface TareaQueryRecord {
+  tarea_id: string
+  cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+  obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+  responsable: { nombre: string } | { nombre: string }[] | null
+}
+
+interface SeguimientoRecord {
+  seguimiento_id: string
+  tarea_id: string
+  categoria: CategoriaSeguimiento
+  descripcion: string
+  prioridad: PrioridadSeguimiento
+  fecha_creacion: string
+  fecha_recordatorio: string | null
+  cerrado: boolean
+  fecha_cierre: string | null
+  evidencia_cierre: string | null
+}
+
+interface TeamMemberRecord {
+  user_id: string
 }
 
 interface NuevoSeguimientoModalProps {
-  tareasDisponibles: any[]
+  tareasDisponibles: TareaInfo[]
   onClose: () => void
-  onSave: (data: any) => Promise<void>
+  onSave: (data: NuevoSeguimientoData) => Promise<void>
 }
 
 function NuevoSeguimientoModal({ tareasDisponibles, onClose, onSave }: NuevoSeguimientoModalProps) {
@@ -336,7 +362,7 @@ function CerrarSeguimientoModal({ seguimiento, onClose, onCerrar }: CerrarSeguim
 }
 
 // Category icons and colors
-const CATEGORIA_CONFIG: Record<CategoriaSeguimiento, { icon: any; bgColor: string; textColor: string }> = {
+const CATEGORIA_CONFIG: Record<CategoriaSeguimiento, { icon: React.ComponentType<{ size?: number; className?: string }>; bgColor: string; textColor: string }> = {
   PAGO: { icon: CreditCard, bgColor: 'bg-green-100', textColor: 'text-green-700' },
   TRAMITE: { icon: FileText, bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
   CAMBIO: { icon: RotateCcw, bgColor: 'bg-purple-100', textColor: 'text-purple-700' },
@@ -349,7 +375,7 @@ export default function SeguimientosPage() {
   const { rol, isLoading: roleLoading, userId, canManageTeam } = useUserRole()
 
   const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([])
-  const [tareasEquipo, setTareasEquipo] = useState<any[]>([])
+  const [tareasEquipo, setTareasEquipo] = useState<TareaInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroCategoria, setFiltroCategoria] = useState<string>('all')
   const [filtroPrioridad, setFiltroPrioridad] = useState<string>('all')
@@ -398,7 +424,7 @@ export default function SeguimientosPage() {
           return
         }
 
-        const memberIds = membersData.map((m: any) => m.user_id)
+        const memberIds = membersData.map((m: TeamMemberRecord) => m.user_id)
 
         // Get team's tasks (for creating new seguimientos)
         const { data: tareasData } = await supabase
@@ -413,11 +439,11 @@ export default function SeguimientosPage() {
           .not('estado', 'in', '("cerrado","pagado")')
           .limit(200)
 
-        const tareasTransformadas = (tareasData || []).map((t: any) => ({
-          ...t,
-          cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
-          obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
-          responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable,
+        const tareasTransformadas: TareaInfo[] = (tareasData || []).map((t: TareaQueryRecord) => ({
+          tarea_id: t.tarea_id,
+          cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente ?? undefined,
+          obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion ?? undefined,
+          responsable: Array.isArray(t.responsable) ? t.responsable[0] : t.responsable ?? undefined,
         }))
 
         setTareasEquipo(tareasTransformadas)
@@ -450,8 +476,8 @@ export default function SeguimientosPage() {
         }
 
         // Enrich with task data
-        const enrichedSeguimientos: Seguimiento[] = (seguimientosData || []).map((s: any) => {
-          const tarea = tareasTransformadas.find((t: any) => t.tarea_id === s.tarea_id)
+        const enrichedSeguimientos: Seguimiento[] = (seguimientosData || []).map((s: SeguimientoRecord) => {
+          const tarea = tareasTransformadas.find((t: TareaInfo) => t.tarea_id === s.tarea_id)
           return { ...s, tarea }
         })
 
@@ -498,7 +524,7 @@ export default function SeguimientosPage() {
   }, [seguimientos, filtroCategoria, filtroPrioridad, filtroEstado])
 
   // Create new seguimiento
-  const crearSeguimiento = async (data: any) => {
+  const crearSeguimiento = async (data: NuevoSeguimientoData) => {
     if (!supabase || !userId) return
 
     const { data: newSeguimiento, error } = await supabase

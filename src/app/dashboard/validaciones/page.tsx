@@ -16,8 +16,6 @@ import {
   CheckSquare,
   X,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   Download
 } from 'lucide-react'

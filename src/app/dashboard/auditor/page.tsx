@@ -174,7 +174,21 @@ export default function AuditorDashboardPage() {
         .limit(10)
 
       if (colaData) {
-        const formattedCola: AuditoriaPendiente[] = colaData.map((a: any) => ({
+        interface AuditoriaColaRow {
+          auditoria_id: string
+          tarea_id: string
+          periodo_fiscal: string
+          estado: string
+          fecha_seleccion: string
+          tipo_seleccion: string
+          tarea: {
+            fecha_limite_oficial: string
+            cliente: { nombre_comercial: string } | null
+            obligacion: { nombre_corto: string } | null
+            responsable: { nombre: string } | null
+          } | null
+        }
+        const formattedCola: AuditoriaPendiente[] = (colaData as unknown as AuditoriaColaRow[]).map((a) => ({
           auditoria_id: a.auditoria_id,
           tarea_id: a.tarea_id,
           periodo_fiscal: a.periodo_fiscal,
@@ -213,7 +227,17 @@ export default function AuditorDashboardPage() {
         .limit(5)
 
       if (recientesData) {
-        const formattedRecientes: EvaluacionReciente[] = recientesData.map((a: any) => ({
+        interface AuditoriaRecienteRow {
+          auditoria_id: string
+          estado: string
+          calificacion: number | null
+          fecha_fin_revision: string
+          tarea: {
+            cliente: { nombre_comercial: string } | null
+            obligacion: { nombre_corto: string } | null
+          } | null
+        }
+        const formattedRecientes: EvaluacionReciente[] = (recientesData as unknown as AuditoriaRecienteRow[]).map((a) => ({
           auditoria_id: a.auditoria_id,
           cliente: a.tarea?.cliente?.nombre_comercial || 'Sin cliente',
           obligacion: a.tarea?.obligacion?.nombre_corto || 'Sin obligacion',

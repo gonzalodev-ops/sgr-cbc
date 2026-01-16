@@ -353,9 +353,19 @@ export default function AjusteFechaModal({
   )
 }
 
+// Interface for historial items in embed component
+interface HistorialItemEmbed {
+  log_id: string
+  fecha_anterior: string
+  fecha_nueva: string
+  motivo: string
+  created_at: string
+  usuario: { nombre: string } | { nombre: string }[] | null
+}
+
 // Componente interno simplificado para mostrar historial dentro del modal
 function HistorialFechasEmbed({ tareaId }: { tareaId: string }) {
-  const [historial, setHistorial] = useState<any[]>([])
+  const [historial, setHistorial] = useState<HistorialItemEmbed[]>([])
   const [loading, setLoading] = useState(true)
 
   const supabase = createBrowserClient(
@@ -427,7 +437,7 @@ function HistorialFechasEmbed({ tareaId }: { tareaId: string }) {
           </div>
           <p className="text-xs text-slate-600 mb-1">{item.motivo}</p>
           <p className="text-xs text-slate-500">
-            Por: {(item.usuario as any)?.nombre || 'Usuario desconocido'}
+            Por: {(Array.isArray(item.usuario) ? item.usuario[0]?.nombre : item.usuario?.nombre) || 'Usuario desconocido'}
           </p>
         </div>
       ))}

@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Save,
   Plus,
-  Eye,
   Clock,
   Paperclip,
   Award,

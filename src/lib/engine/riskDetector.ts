@@ -12,11 +12,6 @@ interface TareaEnRiesgo {
     en_riesgo: boolean
 }
 
-interface TareaConDocumento {
-    tarea_id: string
-    tiene_comprobante_pago: boolean
-}
-
 interface ConfigRiesgo {
     dias_sin_pago_para_riesgo: number
     habilitado: boolean

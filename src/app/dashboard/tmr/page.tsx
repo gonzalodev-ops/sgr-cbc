@@ -6,7 +6,6 @@ import { useUserRole } from '@/lib/hooks/useUserRole'
 import { usePeriodo } from '@/lib/context/PeriodoContext'
 import { KPICard, KPICardGrid } from '@/components/common/KPICard'
 import { StatusBadge } from '@/components/common/StatusBadge'
-import { TrendIndicator } from '@/components/common/TrendIndicator'
 import {
     AlertTriangle,
     Clock,
@@ -22,7 +21,6 @@ import {
     Users,
     Target,
     TrendingUp,
-    AlertCircle,
     RefreshCw,
     ArrowUpDown,
     Lock,

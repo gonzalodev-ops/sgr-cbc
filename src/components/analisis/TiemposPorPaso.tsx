@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { Clock, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
 
@@ -22,23 +22,37 @@ interface PasoMetrica {
     esCuelloBotella: boolean
 }
 
+interface ProcesoData {
+    proceso_id: string
+}
+
+interface ObligacionData {
+    proceso: ProcesoData[] | null
+}
+
+interface TareaQueryData {
+    tarea_id: string
+    obligacion: ObligacionData | ObligacionData[] | null
+}
+
+interface TareaStepData {
+    proceso_paso_id: string
+    created_at: string
+    completado_at: string | null
+    tarea_id: string
+}
+
 export default function TiemposPorPaso({ procesoId, fechaInicio, fechaFin }: TiemposPorPasoProps) {
     const [metricas, setMetricas] = useState<PasoMetrica[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const supabase = createBrowserClient(
+    const supabase = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    ), [])
 
-    useEffect(() => {
-        if (procesoId && fechaInicio && fechaFin) {
-            cargarMetricas()
-        }
-    }, [procesoId, fechaInicio, fechaFin])
-
-    async function cargarMetricas() {
+    const cargarMetricas = useCallback(async () => {
         setLoading(true)
         setError(null)
 
@@ -76,11 +90,12 @@ export default function TiemposPorPaso({ procesoId, fechaInicio, fechaFin }: Tie
             if (tareasError) throw tareasError
 
             // Filtrar tareas que pertenecen al proceso
-            const tareasFiltradas = (tareas || []).filter((t: any) =>
-                t.obligacion?.proceso?.some((p: any) => p.proceso_id === procesoId)
-            )
+            const tareasFiltradas = ((tareas || []) as TareaQueryData[]).filter((t) => {
+                const oblig = Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion
+                return oblig?.proceso?.some((p) => p.proceso_id === procesoId)
+            })
 
-            const tareaIds = tareasFiltradas.map((t: any) => t.tarea_id)
+            const tareaIds = tareasFiltradas.map((t) => t.tarea_id)
 
             if (tareaIds.length === 0) {
                 setError('No hay tareas completadas en el rango de fechas seleccionado')
@@ -101,7 +116,7 @@ export default function TiemposPorPaso({ procesoId, fechaInicio, fechaFin }: Tie
             // 4. Calcular métricas por paso
             const metricasPorPaso: PasoMetrica[] = pasos.map(paso => {
                 // Filtrar steps de este paso
-                const stepsDelPaso = (steps || []).filter((s: any) => s.proceso_paso_id === paso.paso_id)
+                const stepsDelPaso = ((steps || []) as TareaStepData[]).filter((s) => s.proceso_paso_id === paso.paso_id)
 
                 if (stepsDelPaso.length === 0) {
                     return {
@@ -118,9 +133,9 @@ export default function TiemposPorPaso({ procesoId, fechaInicio, fechaFin }: Tie
                 }
 
                 // Calcular tiempos en horas
-                const tiempos = stepsDelPaso.map((s: any) => {
+                const tiempos = stepsDelPaso.map((s) => {
                     const inicio = new Date(s.created_at).getTime()
-                    const fin = new Date(s.completado_at).getTime()
+                    const fin = new Date(s.completado_at!).getTime()
                     return (fin - inicio) / (1000 * 60 * 60) // Convertir a horas
                 })
 
@@ -162,7 +177,13 @@ export default function TiemposPorPaso({ procesoId, fechaInicio, fechaFin }: Tie
         } finally {
             setLoading(false)
         }
-    }
+    }, [supabase, procesoId, fechaInicio, fechaFin])
+
+    useEffect(() => {
+        if (procesoId && fechaInicio && fechaFin) {
+            cargarMetricas()
+        }
+    }, [procesoId, fechaInicio, fechaFin, cargarMetricas])
 
     function formatearTiempo(horas: number): string {
         if (horas === 0) return 'N/A'

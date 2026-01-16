@@ -139,7 +139,17 @@ export default function CalendarioPage() {
                 .eq('activo', true)
 
             // Transformar datos de Supabase (relaciones vienen como arrays)
-            setTareas(tareasData?.map((t: any) => ({
+            interface TareaSupabaseRow {
+                tarea_id: string
+                fecha_limite_oficial: string
+                estado: string
+                periodo_fiscal: string
+                cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+                contribuyente: { rfc: string } | { rfc: string }[] | null
+                obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+                responsable: { nombre: string; user_id: string } | { nombre: string; user_id: string }[] | null
+            }
+            setTareas((tareasData as TareaSupabaseRow[] | null)?.map((t) => ({
                 ...t,
                 cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
                 contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
@@ -249,7 +259,17 @@ export default function CalendarioPage() {
         setMostrarFormEvento(true)
     }
 
-    const handleSaveEvento = async (eventoData: any) => {
+    interface EventoFormData {
+        evento_id?: string
+        titulo: string
+        descripcion: string
+        fecha: string
+        hora?: string | null
+        tipo: 'REUNION' | 'RECORDATORIO' | 'OTRO'
+        equipo_id?: string | null
+    }
+
+    const handleSaveEvento = async (eventoData: EventoFormData) => {
         const { data: userData } = await supabase.auth.getUser()
         const userId = userData?.user?.id
 

@@ -23,7 +23,24 @@ interface Retrabajo {
     obligacion: {
       nombre_corto: string
     }
-  }
+  } | null
+}
+
+// Raw Supabase response type where relations may come as arrays
+interface RetrabajoRaw {
+  retrabajo_id: string
+  estado: string
+  fecha_limite: string
+  finding: { tipo: string; gravedad: string; descripcion: string } | { tipo: string; gravedad: string; descripcion: string }[]
+  tarea: {
+    cliente: { nombre_comercial: string } | { nombre_comercial: string }[]
+    contribuyente: { rfc: string } | { rfc: string }[]
+    obligacion: { nombre_corto: string } | { nombre_corto: string }[]
+  } | {
+    cliente: { nombre_comercial: string } | { nombre_comercial: string }[]
+    contribuyente: { rfc: string } | { rfc: string }[]
+    obligacion: { nombre_corto: string } | { nombre_corto: string }[]
+  }[]
 }
 
 export default function RetrabajoList() {
@@ -79,7 +96,7 @@ export default function RetrabajoList() {
         console.error('Error cargando retrabajos:', error)
       } else {
         // Transformar datos de Supabase (relaciones vienen como arrays)
-        setRetrabajos((data || []).map((r: any) => {
+        setRetrabajos((data || []).map((r: RetrabajoRaw) => {
           const finding = Array.isArray(r.finding) ? r.finding[0] : r.finding
           const tarea = Array.isArray(r.tarea) ? r.tarea[0] : r.tarea
           return {

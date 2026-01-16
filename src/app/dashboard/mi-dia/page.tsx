@@ -13,8 +13,7 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  AlertCircle,
-  Eye
+  AlertCircle
 } from 'lucide-react'
 import { usePeriodo } from '@/lib/context/PeriodoContext'
 import {

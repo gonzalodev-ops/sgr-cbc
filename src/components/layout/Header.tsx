@@ -6,8 +6,6 @@ import Link from 'next/link'
 import {
   Bell,
   Search,
-  User,
-  X,
   CheckCircle,
   AlertTriangle,
   Clock,
@@ -15,8 +13,9 @@ import {
   FileText,
   ChevronRight,
   Check,
-  LogOut
+  LucideIcon
 } from 'lucide-react'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { useUserRole } from '@/lib/hooks/useUserRole'
 import { formatearFechaRelativa } from '@/lib/utils/dateCalculations'
 
@@ -32,11 +31,11 @@ interface Notification {
   leida: boolean
   created_at: string
   link?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown> | null
 }
 
 // Notification type config
-const NOTIFICATION_CONFIG: Record<string, { icon: any; bgColor: string; textColor: string }> = {
+const NOTIFICATION_CONFIG: Record<string, { icon: LucideIcon; bgColor: string; textColor: string }> = {
   tarea: { icon: FileText, bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
   validacion: { icon: CheckCircle, bgColor: 'bg-green-100', textColor: 'text-green-600' },
   reasignacion: { icon: ArrowRightLeft, bgColor: 'bg-purple-100', textColor: 'text-purple-600' },
@@ -103,8 +102,23 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
     return () => clearInterval(interval)
   }, [supabase, userId])
 
+  // Raw event type from Supabase query
+  interface TareaEventoRaw {
+    evento_id: string
+    tipo_evento: string
+    occurred_at: string
+    metadata_json: Record<string, unknown> | null
+    tarea: {
+      cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+      obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+    } | {
+      cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+      obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+    }[] | null
+  }
+
   // Generate notifications from tarea_evento if notificaciones table doesn't exist
-  async function generateNotificationsFromEvents(supabase: any, userId: string): Promise<Notification[]> {
+  async function generateNotificationsFromEvents(supabase: SupabaseClient, userId: string): Promise<Notification[]> {
     const { data: events } = await supabase
       .from('tarea_evento')
       .select(`
@@ -123,10 +137,12 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
 
     if (!events) return []
 
-    return events.map((event: any, index: number) => {
+    return events.map((event: TareaEventoRaw, index: number) => {
       const tarea = Array.isArray(event.tarea) ? event.tarea[0] : event.tarea
-      const cliente = tarea?.cliente?.nombre_comercial || 'Cliente'
-      const obligacion = tarea?.obligacion?.nombre_corto || 'Tarea'
+      const clienteData = tarea?.cliente
+      const obligacionData = tarea?.obligacion
+      const cliente = (Array.isArray(clienteData) ? clienteData[0]?.nombre_comercial : clienteData?.nombre_comercial) || 'Cliente'
+      const obligacion = (Array.isArray(obligacionData) ? obligacionData[0]?.nombre_corto : obligacionData?.nombre_corto) || 'Tarea'
 
       let titulo = ''
       let tipo: Notification['tipo'] = 'sistema'

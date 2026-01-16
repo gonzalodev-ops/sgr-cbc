@@ -10,13 +10,11 @@ import {
   Calendar,
   Filter,
   Building2,
-  Users,
   CreditCard,
   FileText,
   RotateCcw,
   Shield,
   TrendingUp,
-  TrendingDown,
   ChevronDown,
   ChevronUp,
   ArrowUpDown,
@@ -25,8 +23,6 @@ import {
 } from 'lucide-react'
 import { useUserRole } from '@/lib/hooks/useUserRole'
 import { KPICard, KPICardGrid } from '@/components/common/KPICard'
-import { StatusBadge } from '@/components/common/StatusBadge'
-import { TrendIndicator } from '@/components/common/TrendIndicator'
 import {
   CategoriaSeguimiento,
   PrioridadSeguimiento
