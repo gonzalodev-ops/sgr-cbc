@@ -96,8 +96,15 @@ export default function CalendarioPage() {
             setLoading(true)
 
             const { inicio, fin } = rangoFechas
-            const inicioStr = inicio.toISOString().split('T')[0]
-            const finStr = fin.toISOString().split('T')[0]
+            // Formatear fecha local para evitar desplazamiento por zona horaria
+            const formatFechaLocal = (d: Date) => {
+                const year = d.getFullYear()
+                const month = String(d.getMonth() + 1).padStart(2, '0')
+                const day = String(d.getDate()).padStart(2, '0')
+                return `${year}-${month}-${day}`
+            }
+            const inicioStr = formatFechaLocal(inicio)
+            const finStr = formatFechaLocal(fin)
 
             // Cargar tareas
             const { data: tareasData } = await supabase
@@ -287,11 +294,12 @@ export default function CalendarioPage() {
 
         // Recargar eventos
         const { inicio, fin } = rangoFechas
+        const formatLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         const { data: eventosData } = await supabase
             .from('evento_calendario')
             .select('*')
-            .gte('fecha', inicio.toISOString().split('T')[0])
-            .lte('fecha', fin.toISOString().split('T')[0])
+            .gte('fecha', formatLocal(inicio))
+            .lte('fecha', formatLocal(fin))
             .eq('activo', true)
             .order('fecha')
 
@@ -311,11 +319,12 @@ export default function CalendarioPage() {
 
         // Recargar eventos
         const { inicio, fin } = rangoFechas
+        const formatLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         const { data: eventosData } = await supabase
             .from('evento_calendario')
             .select('*')
-            .gte('fecha', inicio.toISOString().split('T')[0])
-            .lte('fecha', fin.toISOString().split('T')[0])
+            .gte('fecha', formatLocal(inicio))
+            .lte('fecha', formatLocal(fin))
             .eq('activo', true)
             .order('fecha')
 
