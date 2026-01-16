@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
     LayoutDashboard,
@@ -224,27 +225,38 @@ export function Sidebar() {
         window.location.href = '/login'
     }
 
-    // Role badge colors
+    // Role badge colors - Using brand colors
     const roleBadgeColors: Record<string, string> = {
-        ADMIN: 'bg-purple-600',
-        SOCIO: 'bg-blue-600',
-        LIDER: 'bg-green-600',
-        AUDITOR: 'bg-orange-600',
+        ADMIN: 'bg-[#34588C]',
+        SOCIO: 'bg-[#34588C]',
+        LIDER: 'bg-[#F19F53]',
+        AUDITOR: 'bg-[#4A6FA3]',
         COLABORADOR: 'bg-slate-600',
     }
 
     return (
-        <div className={`flex flex-col h-full bg-slate-900 text-white transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
+        <div className={`flex flex-col h-full bg-[#1e293b] text-white transition-all duration-300 ${collapsed ? 'w-16' : 'w-64'}`}>
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700">
-                {!collapsed && (
-                    <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                        SGR CBC
-                    </span>
+                {!collapsed ? (
+                    <Link href={getHomeRoute(rol)} className="flex items-center">
+                        <Image
+                            src="/cb-logo-flat.svg"
+                            alt="Calderón & Berges"
+                            width={140}
+                            height={40}
+                            className="brightness-0 invert"
+                            priority
+                        />
+                    </Link>
+                ) : (
+                    <Link href={getHomeRoute(rol)} className="flex items-center justify-center w-full">
+                        <span className="text-xl font-bold text-[#F19F53]">CB</span>
+                    </Link>
                 )}
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
                 >
                     {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                 </button>
@@ -280,8 +292,8 @@ export function Sidebar() {
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group
                 ${isActive
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        ? 'bg-[#F19F53] text-white shadow-lg shadow-[#F19F53]/30'
+                                        : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                                     }`}
                                 title={collapsed ? item.name : undefined}
                             >

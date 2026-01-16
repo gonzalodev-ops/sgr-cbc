@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SGR CBC - Sistema de Gestión de Resultados",
-  description: "Sistema de gestión de resultados y flujos de trabajo para despacho contable",
+  title: "SGR CBC - Calderón & Berges",
+  description: "Sistema de Gestión de Resultados para despacho contable",
+  icons: {
+    icon: [
+      { url: '/cb-logo-flat.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: '/logo.jpg',
+  },
+  themeColor: '#34588C',
 };
 
 export default function RootLayout({

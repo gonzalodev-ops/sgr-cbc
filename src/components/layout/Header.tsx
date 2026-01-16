@@ -270,7 +270,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    className="text-xs text-[#34588C] hover:text-[#264066] font-medium flex items-center gap-1"
                   >
                     <Check size={14} />
                     Marcar todas como leidas
@@ -339,7 +339,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
               <div className="p-3 border-t border-slate-200 bg-slate-50">
                 <Link
                   href="/dashboard/notificaciones"
-                  className="flex items-center justify-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="flex items-center justify-center gap-1 text-sm text-[#34588C] hover:text-[#264066] font-medium"
                   onClick={() => setShowDropdown(false)}
                 >
                   Ver todas las notificaciones
@@ -352,7 +352,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
 
         {/* User Menu */}
         <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-[#F19F53] to-[#34588C] rounded-full flex items-center justify-center text-white font-medium text-sm">
             {isLoading ? '...' : userInitials}
           </div>
           <div className="hidden md:block">
