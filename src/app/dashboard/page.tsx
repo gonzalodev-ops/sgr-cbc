@@ -53,14 +53,19 @@ export default function TMRPage() {
 
             interface TeamMemberData {
                 user_id: string
-                teams: { nombre: string } | null
+                teams: { nombre: string } | { nombre: string }[] | null
             }
 
             const userTeamMap: Record<string, string> = {}
             if (teamData) {
-                (teamData as TeamMemberData[]).forEach((tm) => {
-                    if (tm.user_id && tm.teams?.nombre) {
-                        userTeamMap[tm.user_id] = tm.teams.nombre
+                (teamData as unknown as TeamMemberData[]).forEach((tm) => {
+                    if (tm.user_id && tm.teams) {
+                        const teamNombre = Array.isArray(tm.teams)
+                            ? tm.teams[0]?.nombre
+                            : tm.teams.nombre
+                        if (teamNombre) {
+                            userTeamMap[tm.user_id] = teamNombre
+                        }
                     }
                 })
             }
@@ -148,7 +153,15 @@ export default function TMRPage() {
             }
 
             if (data) {
-                // Interfaces para el mapeo de datos
+                // Interfaces para el mapeo de datos (Supabase puede devolver arrays para relaciones)
+                interface ContribuyenteData {
+                    rfc: string
+                    razon_social: string
+                    nombre_comercial: string | null
+                    team_id: string | null
+                    equipo: { nombre: string } | { nombre: string }[] | null
+                }
+
                 interface TareaData {
                     tarea_id: string
                     cliente_id: string
@@ -156,19 +169,20 @@ export default function TMRPage() {
                     en_riesgo: boolean
                     id_obligacion: string
                     responsable_usuario_id: string | null
-                    contribuyente: {
-                        rfc: string
-                        razon_social: string
-                        nombre_comercial: string | null
-                        team_id: string | null
-                        equipo: { nombre: string } | null
-                    } | null
-                    cliente: { nombre_comercial: string } | null
-                    responsable: { nombre: string; rol_global: string } | null
-                    obligacion: { nombre_corto: string; periodicidad: string } | null
+                    fecha_limite_oficial: string | null
+                    contribuyente: ContribuyenteData | ContribuyenteData[] | null
+                    cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+                    responsable: { nombre: string; rol_global: string } | { nombre: string; rol_global: string }[] | null
+                    obligacion: { nombre_corto: string; periodicidad: string } | { nombre_corto: string; periodicidad: string }[] | null
                 }
 
-                const mappedData: Entregable[] = (data as TareaData[]).map((t) => {
+                // Helper to extract first element if array or return as-is
+                function first<T>(val: T | T[] | null | undefined): T | null {
+                    if (val == null) return null
+                    return Array.isArray(val) ? val[0] ?? null : val
+                }
+
+                const mappedData: Entregable[] = (data as unknown as TareaData[]).map((t) => {
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -179,16 +193,23 @@ export default function TMRPage() {
                         'EXTRA_GRANDE': 'XL'
                     }
 
+                    // Extraer datos de relaciones (pueden ser arrays)
+                    const contribuyente = first(t.contribuyente)
+                    const cliente = first(t.cliente)
+                    const responsable = first(t.responsable)
+                    const obligacion = first(t.obligacion)
+                    const equipoContribuyente = contribuyente ? first(contribuyente.equipo) : null
+
                     return {
                         id: t.tarea_id,
-                        rfc: t.contribuyente?.rfc || 'N/A',
-                        cliente: t.cliente?.nombre_comercial || t.contribuyente?.nombre_comercial || 'N/A',
-                        entregable: t.obligacion?.nombre_corto || t.id_obligacion,
+                        rfc: contribuyente?.rfc || 'N/A',
+                        cliente: cliente?.nombre_comercial || contribuyente?.nombre_comercial || 'N/A',
+                        entregable: obligacion?.nombre_corto || t.id_obligacion,
                         talla: (tallaMap[dbTalla] || 'M') as Entregable['talla'],
                         puntosBase: PUNTOS_BASE_DEFAULT, // Scoring engine pendiente de implementación
-                        responsable: t.responsable?.nombre || 'Sin asignar',
-                        rol: t.responsable?.rol_global || 'COLABORADOR',
-                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
+                        responsable: responsable?.nombre || 'Sin asignar',
+                        rol: responsable?.rol_global || 'COLABORADOR',
+                        tribu: equipoContribuyente?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         estadoOriginal: t.estado,
                         enRiesgo: t.en_riesgo || false,
