@@ -178,7 +178,7 @@ export async function reasignarTareasDeColaborador(
       }
 
       nuevoResponsableId = lider.user_id
-      nuevoResponsableNombre = liderUser.nombre
+      nuevoResponsableNombre = liderData?.nombre || 'Líder'
     }
 
     // 4. Reasignar cada tarea
