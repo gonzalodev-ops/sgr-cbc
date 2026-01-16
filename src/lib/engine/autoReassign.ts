@@ -167,8 +167,9 @@ export async function reasignarTareasDeColaborador(
         }
       }
 
-      const liderUser = lider.users as any
-      if (!liderUser.activo) {
+      const liderUser = lider.users as { nombre: string; activo: boolean } | { nombre: string; activo: boolean }[] | null
+      const liderData = Array.isArray(liderUser) ? liderUser[0] : liderUser
+      if (!liderData?.activo) {
         return {
           success: false,
           reasignadas: 0,
