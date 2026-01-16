@@ -257,6 +257,8 @@ export function Sidebar() {
                 <button
                     onClick={() => setCollapsed(!collapsed)}
                     className="p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                    aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'}
+                    aria-expanded={!collapsed}
                 >
                     {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                 </button>
