@@ -60,3 +60,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Asegurar que inputs/selects siempre tengan texto visible */
+/* Esto corrige el problema de contraste cuando el sistema está en modo oscuro */
+input,
+textarea,
+select {
+  color: #1e293b; /* slate-800 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+
+/* Inputs con fondo oscuro (como en login) deben tener texto claro */
+input.text-white,
+textarea.text-white {
+  color: #ffffff;
+}
+
+input.text-white::placeholder,
+textarea.text-white::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
