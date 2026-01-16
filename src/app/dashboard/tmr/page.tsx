@@ -150,12 +150,14 @@ export default function TMR2Page() {
     useEffect(() => {
         if (!supabase) return
 
+        const client = supabase // Local reference for TypeScript
+
         async function fetchTareas() {
             setLoading(true)
 
             try {
                 // Use the v_tarea_completa VIEW for efficient data loading
-                const { data, error } = await supabase
+                const { data, error } = await client
                     .from('v_tarea_completa')
                     .select('*')
                     .order('fecha_limite_oficial', { ascending: true })
@@ -164,7 +166,7 @@ export default function TMR2Page() {
                 if (error) {
                     console.error('Error fetching tareas:', error)
                     // Fallback to tarea table if view doesn't exist
-                    const { data: fallbackData, error: fallbackError } = await supabase
+                    const { data: fallbackData, error: fallbackError } = await client
                         .from('tarea')
                         .select(`
                             tarea_id,

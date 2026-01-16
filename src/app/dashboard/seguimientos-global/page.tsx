@@ -301,12 +301,14 @@ export default function SeguimientosGlobalPage() {
   useEffect(() => {
     if (!supabase || roleLoading) return
 
+    const client = supabase // Local reference for TypeScript
+
     async function fetchData() {
       setLoading(true)
 
       try {
         // Fetch teams
-        const { data: teamsData } = await supabase
+        const { data: teamsData } = await client
           .from('teams')
           .select('team_id, nombre')
           .eq('activo', true)
@@ -315,7 +317,7 @@ export default function SeguimientosGlobalPage() {
         setTeams(teamsData || [])
 
         // Fetch all seguimientos with related data
-        const { data: seguimientosData, error } = await supabase
+        const { data: seguimientosData, error } = await client
           .from('pendiente_seguimiento')
           .select(`
             id,

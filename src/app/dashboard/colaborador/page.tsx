@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { User, CheckCircle, Clock, AlertTriangle, ListTodo, RefreshCw, Ban } from 'lucide-react'
+import { User, Clock, AlertTriangle, ListTodo, RefreshCw, Ban } from 'lucide-react'
 import RetrabajoList from '@/components/colaborador/RetrabajoList'
 import BloqueosList from '@/components/colaborador/BloqueosList'
 

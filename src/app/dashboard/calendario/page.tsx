@@ -66,10 +66,10 @@ export default function CalendarioPage() {
     const [eventoEditar, setEventoEditar] = useState<Evento | null>(null)
     const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | undefined>(undefined)
 
-    const supabase = createBrowserClient(
+    const supabase = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    ), [])
 
     // Calcular rango de fechas según la vista
     const rangoFechas = useMemo(() => {
@@ -152,7 +152,7 @@ export default function CalendarioPage() {
         }
 
         fetchData()
-    }, [rangoFechas])
+    }, [rangoFechas, supabase])
 
     // Mapear estado de tarea a estado para visualización
     const mapearEstadoTarea = (estado: string): string => {

@@ -174,7 +174,7 @@ export function StatusBadge({
   const displayLabel = getLabel()
 
   const baseClasses = `inline-flex items-center ${config.gapClass} ${config.paddingClass} ${roundedClass} border font-medium ${config.textClass}`
-  const colorClasses = `${styleConfig.bgColor} ${styleConfig.textColor} ${styleConfig.borderColor || ''}`
+  const colorClasses = `${styleConfig.bgColor} ${styleConfig.textColor} ${'borderColor' in styleConfig ? styleConfig.borderColor : 'border-slate-200'}`
   const interactiveClasses = onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''
 
   return (

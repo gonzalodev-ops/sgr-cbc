@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { BarChart3, Calendar, Filter, TrendingDown } from 'lucide-react'
 import TiemposPorPaso from '@/components/analisis/TiemposPorPaso'
@@ -18,16 +18,12 @@ export default function AnalisisPage() {
     const [loading, setLoading] = useState(true)
     const [tabActivo, setTabActivo] = useState<'tiempos' | 'backlog'>('tiempos')
 
-    const supabase = createBrowserClient(
+    const supabase = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    ), [])
 
-    useEffect(() => {
-        cargarProcesos()
-    }, [])
-
-    async function cargarProcesos() {
+    const cargarProcesos = useCallback(async () => {
         setLoading(true)
         const { data } = await supabase
             .from('proceso_operativo')
@@ -37,16 +33,24 @@ export default function AnalisisPage() {
 
         if (data && data.length > 0) {
             setProcesos(data)
-            setProcesoSeleccionado(data[0].proceso_id) // Seleccionar el primero por defecto
+            setProcesoSeleccionado(data[0].proceso_id)
         }
         setLoading(false)
-    }
+    }, [supabase])
 
-    // Calcular fechas basadas en el rango seleccionado
-    const fechaFin = new Date().toISOString().split('T')[0]
-    const fechaInicio = new Date(Date.now() - rangoDias * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
+    useEffect(() => {
+        cargarProcesos()
+    }, [cargarProcesos])
+
+    // Calcular fechas basadas en el rango seleccionado (memoized to avoid hydration issues)
+    const { fechaFin, fechaInicio } = useMemo(() => {
+        const now = new Date()
+        const fin = now.toISOString().split('T')[0]
+        const inicio = new Date(now.getTime() - rangoDias * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0]
+        return { fechaFin: fin, fechaInicio: inicio }
+    }, [rangoDias])
 
     return (
         <div className="space-y-6">

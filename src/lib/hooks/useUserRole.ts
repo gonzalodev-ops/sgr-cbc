@@ -42,12 +42,14 @@ export function useUserRole(): UseUserRoleReturn {
       return
     }
 
+    const client = supabase // Create local reference to satisfy TypeScript
+
     async function fetchUserRole() {
       try {
         setIsLoading(true)
 
         // Get the authenticated user
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        const { data: { user }, error: authError } = await client.auth.getUser()
 
         if (authError || !user) {
           setRol(null)
@@ -60,7 +62,7 @@ export function useUserRole(): UseUserRoleReturn {
         setUserId(user.id)
 
         // Get user role from the users table
-        const { data: userData, error: userError } = await supabase
+        const { data: userData, error: userError } = await client
           .from('users')
           .select('rol_global, nombre')
           .eq('user_id', user.id)
@@ -85,7 +87,7 @@ export function useUserRole(): UseUserRoleReturn {
     fetchUserRole()
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
           setRol(null)
