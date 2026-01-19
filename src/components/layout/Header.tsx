@@ -73,7 +73,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
         // Try to fetch from notificaciones table
         // If table doesn't exist, we'll use mock data for now
         const { data, error } = await supabase
-          .from('notificaciones')
+          .from('notificacion')
           .select('*')
           .eq('usuario_id', userId)
           .order('created_at', { ascending: false })
@@ -104,7 +104,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
 
   // Raw event type from Supabase query
   interface TareaEventoRaw {
-    evento_id: string
+    tarea_evento_id: string
     tipo_evento: string
     occurred_at: string
     metadata_json: Record<string, unknown> | null
@@ -122,7 +122,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
     const { data: events } = await supabase
       .from('tarea_evento')
       .select(`
-        evento_id,
+        tarea_evento_id,
         tipo_evento,
         occurred_at,
         metadata_json,
@@ -165,7 +165,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
       }
 
       return {
-        notificacion_id: event.evento_id,
+        notificacion_id: event.tarea_evento_id,
         tipo,
         titulo,
         mensaje: `${cliente} - ${obligacion}`,
@@ -205,7 +205,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
     // Try to update in database
     try {
       await supabase
-        .from('notificaciones')
+        .from('notificacion')
         .update({ leida: true })
         .eq('notificacion_id', notificationId)
     } catch (error) {
@@ -223,7 +223,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
     // Try to update in database
     try {
       await supabase
-        .from('notificaciones')
+        .from('notificacion')
         .update({ leida: true })
         .eq('usuario_id', userId)
     } catch (error) {

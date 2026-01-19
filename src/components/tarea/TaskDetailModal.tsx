@@ -59,7 +59,7 @@ interface TareaDetalle {
 }
 
 interface TareaEvento {
-  evento_id: string
+  tarea_evento_id: string
   tipo_evento: string
   estado_anterior: string | null
   estado_nuevo: string | null
@@ -145,7 +145,7 @@ export default function TaskDetailModal({
       const { data: eventosData, error: eventosError } = await supabase
         .from('tarea_evento')
         .select(`
-          evento_id,
+          tarea_evento_id,
           tipo_evento,
           estado_anterior,
           estado_nuevo,
@@ -571,7 +571,7 @@ export default function TaskDetailModal({
                         {eventos.map((evento, index) => {
                           const IconComponent = getEventoIcon(evento.tipo_evento)
                           return (
-                            <div key={evento.evento_id} className="relative pl-14">
+                            <div key={evento.tarea_evento_id} className="relative pl-14">
                               {/* Punto en timeline */}
                               <div className="absolute left-4 top-2 w-4 h-4 bg-blue-600 rounded-full border-4 border-white shadow" />
 
