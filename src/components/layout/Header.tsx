@@ -131,7 +131,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
           obligacion:id_obligacion(nombre_corto)
         )
       `)
-      .in('tipo_evento', ['reasignacion', 'validacion', 'cambio_estado'])
+      .in('tipo_evento', ['reasignacion', 'validacion', 'cambio_estado', 'STATUS_CHANGE'])
       .order('occurred_at', { ascending: false })
       .limit(10)
 
@@ -157,6 +157,7 @@ export function Header({ title = 'SGR CBC' }: HeaderProps) {
           tipo = 'validacion'
           break
         case 'cambio_estado':
+        case 'STATUS_CHANGE':
           titulo = 'Estado actualizado'
           tipo = 'tarea'
           break
