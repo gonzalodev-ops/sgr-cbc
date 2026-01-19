@@ -46,9 +46,8 @@ interface TaskForValidation {
   documentos?: {
     documento_id: string
     nombre: string
-    tipo: string
-    url_storage: string
-    created_at: string
+    tipo_documento: string
+    url: string
   }[]
 }
 
@@ -168,13 +167,13 @@ function TaskDetailModal({ tarea, onClose, onApprove, onReject }: TaskDetailModa
                       <div>
                         <p className="font-medium text-sm text-slate-700">{doc.nombre}</p>
                         <p className="text-xs text-slate-500">
-                          {doc.tipo} - {formatearFechaHora(doc.created_at)}
+                          {doc.tipo_documento}
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
                       <a
-                        href={doc.url_storage}
+                        href={doc.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-500"
@@ -183,7 +182,7 @@ function TaskDetailModal({ tarea, onClose, onApprove, onReject }: TaskDetailModa
                         <ExternalLink size={16} />
                       </a>
                       <a
-                        href={doc.url_storage}
+                        href={doc.url}
                         download
                         className="p-2 hover:bg-slate-200 rounded-lg transition-colors text-slate-500"
                         title="Descargar"
@@ -353,18 +352,38 @@ export default function ValidacionesPage() {
           obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
         }))
 
-        // Get documents for each task
+        // Get documents for each task (join with documento table)
         const tareaIds = tareasTransformadas.map(t => t.tarea_id)
         if (tareaIds.length > 0) {
           const { data: documentos } = await supabase
             .from('tarea_documento')
-            .select('documento_id, tarea_id, nombre, tipo, url_storage, created_at')
+            .select(`
+              tarea_id,
+              documento:documento_id (
+                documento_id,
+                nombre,
+                tipo_documento,
+                url
+              )
+            `)
             .in('tarea_id', tareaIds)
-            .eq('tipo', 'EVIDENCIA')
 
-          // Attach documents to tasks
+          // Attach documents to tasks (flatten the joined structure)
+          interface DocResult {
+            tarea_id: string
+            documento: { documento_id: string; nombre: string; tipo_documento: string; url: string } |
+                       { documento_id: string; nombre: string; tipo_documento: string; url: string }[] | null
+          }
           tareasTransformadas.forEach(t => {
-            t.documentos = (documentos || []).filter((d: any) => d.tarea_id === t.tarea_id)
+            const taskDocs = (documentos as DocResult[] || [])
+              .filter(d => d.tarea_id === t.tarea_id)
+              .map(d => {
+                if (!d.documento) return null
+                // Supabase puede devolver objeto o array dependiendo de la relación
+                return Array.isArray(d.documento) ? d.documento[0] : d.documento
+              })
+              .filter((doc): doc is { documento_id: string; nombre: string; tipo_documento: string; url: string } => doc !== null)
+            t.documentos = taskDocs
           })
         }
 

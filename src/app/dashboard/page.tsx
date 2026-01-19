@@ -100,11 +100,10 @@ export default function TMRPage() {
                 })
             }
 
-            // 3. Traer evidencias existentes (resuelve TODO de tarea_documento)
+            // 3. Traer tareas que tienen documentos adjuntos (evidencia)
             const { data: evidenciaData } = await client
                 .from('tarea_documento')
                 .select('tarea_id')
-                .eq('tipo', 'EVIDENCIA')
                 .limit(QUERY_LIMIT)
 
             const tareasConEvidencia = new Set<string>()
