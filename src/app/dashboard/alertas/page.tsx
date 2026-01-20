@@ -93,7 +93,7 @@ export default function AlertasPage() {
               prioridad,
               cliente:cliente_id(cliente_id, nombre_comercial),
               obligacion:id_obligacion(nombre_corto),
-              responsable:users!responsable_usuario_id(user_id, nombre)
+              responsable:users!tarea_responsable_usuario_id_fkey(user_id, nombre)
             `)
             .in('estado', ['no_iniciado', 'en_curso', 'revision'])
             .order('fecha_limite_oficial', { ascending: true })
@@ -119,7 +119,7 @@ export default function AlertasPage() {
                 prioridad,
                 cliente:cliente_id(cliente_id, nombre_comercial),
                 obligacion:id_obligacion(nombre_corto),
-                responsable:users!responsable_usuario_id(user_id, nombre)
+                responsable:users!tarea_responsable_usuario_id_fkey(user_id, nombre)
               `)
               .in('contribuyente_id', contribuyenteIds)
               .in('estado', ['no_iniciado', 'en_curso', 'revision'])

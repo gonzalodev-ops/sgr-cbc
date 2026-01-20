@@ -117,7 +117,7 @@ export default function CalendarioPage() {
                     cliente:cliente_id(nombre_comercial),
                     contribuyente:contribuyente_id(rfc),
                     obligacion:id_obligacion(nombre_corto),
-                    responsable:users!responsable_usuario_id(nombre, user_id)
+                    responsable:users!tarea_responsable_usuario_id_fkey(nombre, user_id)
                 `)
                 .gte('fecha_limite_oficial', inicioStr)
                 .lte('fecha_limite_oficial', finStr)

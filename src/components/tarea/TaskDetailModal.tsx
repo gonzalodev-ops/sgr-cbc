@@ -126,7 +126,7 @@ export default function TaskDetailModal({
           cliente:cliente_id(nombre_comercial, rfc),
           contribuyente:contribuyente_id(rfc, razon_social),
           obligacion:id_obligacion(nombre_corto, nombre_largo),
-          responsable:users!responsable_usuario_id(nombre, email)
+          responsable:users!tarea_responsable_usuario_id_fkey(nombre, email)
         `)
         .eq('tarea_id', tareaId)
         .single()

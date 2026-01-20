@@ -335,7 +335,7 @@ export default function ValidacionesPage() {
             fecha_limite_oficial,
             prioridad,
             vobo_lider,
-            responsable:users!responsable_usuario_id(user_id, nombre),
+            responsable:users!tarea_responsable_usuario_id_fkey(user_id, nombre),
             cliente:cliente_id(cliente_id, nombre_comercial),
             obligacion:id_obligacion(nombre_corto, periodicidad)
           `)

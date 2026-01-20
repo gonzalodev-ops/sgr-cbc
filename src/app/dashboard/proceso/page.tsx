@@ -84,7 +84,7 @@ export default function ProcesoPage() {
                     cliente:cliente_id(nombre_comercial),
                     contribuyente:contribuyente_id(rfc),
                     obligacion:id_obligacion(nombre_corto),
-                    responsable:users!responsable_usuario_id(nombre)
+                    responsable:users!tarea_responsable_usuario_id_fkey(nombre)
                 `)
                 .in('id_obligacion', obligacionIds)
                 .order('fecha_limite_oficial', { ascending: true })
