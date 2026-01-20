@@ -99,22 +99,19 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
   test('4.1 Calendario muestra eventos', async ({ page }) => {
     await login(page);
 
-    // Navegar a Calendario
-    await page.click('text=Calendario');
+    // Navegar a Calendario usando el link del sidebar
+    await page.click('a[href="/dashboard/calendario"]');
     await page.waitForLoadState('networkidle');
 
     // Verificar que estamos en la página de calendario
     expect(page.url()).toContain('calendario');
-
-    // Verificar que el calendario se renderizó
-    await page.waitForTimeout(1000); // Dar tiempo al calendario para renderizar
   });
 
   test('5.1 Clientes muestra solo clientes del equipo', async ({ page }) => {
     await login(page);
 
-    // Navegar a Clientes
-    await page.click('text=Clientes');
+    // Navegar a Clientes usando el link del sidebar
+    await page.click('a[href="/dashboard/cliente"]');
     await page.waitForLoadState('networkidle');
 
     // Verificar que estamos en la página de clientes
