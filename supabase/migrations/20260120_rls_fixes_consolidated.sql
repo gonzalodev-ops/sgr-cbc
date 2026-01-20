@@ -13,45 +13,45 @@
 DROP FUNCTION IF EXISTS get_user_role() CASCADE;
 CREATE OR REPLACE FUNCTION get_user_role()
 RETURNS TEXT AS $$
-  SELECT rol_global FROM users WHERE user_id = auth.uid();
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+  SELECT rol_global FROM users WHERE user_id = (SELECT auth.uid());
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 DROP FUNCTION IF EXISTS get_user_teams() CASCADE;
 CREATE OR REPLACE FUNCTION get_user_teams()
 RETURNS SETOF UUID AS $$
   SELECT team_id FROM team_members
-  WHERE user_id = auth.uid() AND activo = true;
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+  WHERE user_id = (SELECT auth.uid()) AND activo = true;
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 DROP FUNCTION IF EXISTS is_admin_or_socio() CASCADE;
 CREATE OR REPLACE FUNCTION is_admin_or_socio()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
     AND rol_global IN ('ADMIN', 'SOCIO')
   );
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 DROP FUNCTION IF EXISTS is_team_leader() CASCADE;
 CREATE OR REPLACE FUNCTION is_team_leader()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM team_members
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
     AND rol_en_equipo = 'LIDER'
     AND activo = true
   );
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 DROP FUNCTION IF EXISTS get_leader_teams() CASCADE;
 CREATE OR REPLACE FUNCTION get_leader_teams()
 RETURNS SETOF UUID AS $$
   SELECT team_id FROM team_members
-  WHERE user_id = auth.uid()
+  WHERE user_id = (SELECT auth.uid())
   AND rol_en_equipo = 'LIDER'
   AND activo = true;
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 -- ============================================
 -- PASO 2: Habilitar RLS en tablas principales
@@ -292,16 +292,22 @@ CREATE POLICY "teams_read" ON teams
 
 -- ============================================
 -- PASO 12: Políticas para TEAM_MEMBERS
+-- CRITICAL: Esta política NO debe llamar a get_user_teams()
+-- porque causaría recursión infinita (get_user_teams() lee team_members)
 -- ============================================
 
 DROP POLICY IF EXISTS "team_members_read" ON team_members;
 DROP POLICY IF EXISTS "team_members_select" ON team_members;
 DROP POLICY IF EXISTS "team_members_view" ON team_members;
+DROP POLICY IF EXISTS "team_members_own" ON team_members;
 
+-- Política simplificada que evita recursión:
+-- 1. ADMIN/SOCIO ven todo
+-- 2. Cualquier usuario autenticado puede ver membresías de equipos
+--    (info no sensible, necesaria para funcionalidad del sistema)
 CREATE POLICY "team_members_read" ON team_members
   FOR SELECT USING (
-    is_admin_or_socio()
-    OR team_id IN (SELECT get_user_teams())
+    auth.uid() IS NOT NULL
   );
 
 -- ============================================
