@@ -77,49 +77,60 @@ export default function AlertasPage() {
           .eq('activo', true)
           .single()
 
-        // Get team members IDs (for filtering tasks)
-        let memberIds: string[] = []
-
-        if (teamMember?.team_id) {
-          const { data: membersData } = await supabase
-            .from('team_members')
-            .select('user_id')
-            .eq('team_id', teamMember.team_id)
-            .eq('activo', true)
-
-          memberIds = (membersData || []).map((m: { user_id: string }) => m.user_id)
-        }
-
         // For SOCIO/ADMIN, get all tasks; for LIDER, get only team tasks
         const isAdminOrSocio = rol === 'ADMIN' || rol === 'SOCIO'
 
-        // Build query for tasks
-        let tareasQuery = supabase
-          .from('tarea')
-          .select(`
-            tarea_id,
-            estado,
-            fecha_limite_oficial,
-            prioridad,
-            cliente:cliente_id(cliente_id, nombre_comercial),
-            obligacion:id_obligacion(nombre_corto),
-            responsable:users!responsable_usuario_id(user_id, nombre)
-          `)
-          .in('estado', ['no_iniciado', 'en_curso', 'revision'])
-          .order('fecha_limite_oficial', { ascending: true })
-          .limit(500)
+        let tareasData: any[] = []
 
-        // Filter by team members for non-admin roles
-        if (!isAdminOrSocio && memberIds.length > 0) {
-          tareasQuery = tareasQuery.in('responsable_usuario_id', memberIds)
+        if (isAdminOrSocio) {
+          // ADMIN/SOCIO: Get all tasks
+          const { data } = await supabase
+            .from('tarea')
+            .select(`
+              tarea_id,
+              estado,
+              fecha_limite_oficial,
+              prioridad,
+              cliente:cliente_id(cliente_id, nombre_comercial),
+              obligacion:id_obligacion(nombre_corto),
+              responsable:users!responsable_usuario_id(user_id, nombre)
+            `)
+            .in('estado', ['no_iniciado', 'en_curso', 'revision'])
+            .order('fecha_limite_oficial', { ascending: true })
+            .limit(500)
+
+          tareasData = data || []
+        } else if (teamMember?.team_id) {
+          // LIDER: Get tasks via contribuyente's team (same as Mi Dia)
+          const { data: contribuyentes } = await supabase
+            .from('contribuyente')
+            .select('contribuyente_id')
+            .eq('team_id', teamMember.team_id)
+
+          const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
+
+          if (contribuyenteIds.length > 0) {
+            const { data } = await supabase
+              .from('tarea')
+              .select(`
+                tarea_id,
+                estado,
+                fecha_limite_oficial,
+                prioridad,
+                cliente:cliente_id(cliente_id, nombre_comercial),
+                obligacion:id_obligacion(nombre_corto),
+                responsable:users!responsable_usuario_id(user_id, nombre)
+              `)
+              .in('contribuyente_id', contribuyenteIds)
+              .in('estado', ['no_iniciado', 'en_curso', 'revision'])
+              .order('fecha_limite_oficial', { ascending: true })
+              .limit(500)
+
+            tareasData = data || []
+          }
         }
 
-        const { data: tareasData } = await tareasQuery
-
         // Process tasks
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-
         const vencidas: TareaAlerta[] = []
         const porVencer: TareaAlerta[] = []
         const cargaPorColaborador = new Map<string, ColaboradorCarga>()
