@@ -158,11 +158,66 @@ BEGIN
         AND id_obligacion = v_obligacion_id
     );
 
+    -- ============================================
+    -- TAREAS PARA ALERTAS
+    -- ============================================
+
+    -- Tarea 4: VENCIDA (para que aparezca en Alertas como vencida)
+    INSERT INTO tarea (
+        cliente_id, contribuyente_id, id_obligacion,
+        estado, periodo_fiscal, fecha_limite_oficial,
+        responsable_usuario_id, prioridad
+    )
+    SELECT
+        v_cliente_id, v_contribuyente_id, v_obligacion_id,
+        'pendiente', '2025-12', CURRENT_DATE - INTERVAL '5 days',
+        v_lider_user_id, 'ALTA'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM tarea
+        WHERE cliente_id = v_cliente_id
+        AND periodo_fiscal = '2025-12'
+        AND id_obligacion = v_obligacion_id
+    );
+
+    -- Tarea 5: POR VENCER HOY (para que aparezca en Alertas)
+    INSERT INTO tarea (
+        cliente_id, contribuyente_id, id_obligacion,
+        estado, periodo_fiscal, fecha_limite_oficial,
+        responsable_usuario_id, prioridad
+    )
+    SELECT
+        v_cliente_id, v_contribuyente_id, v_obligacion_id,
+        'en_curso', '2026-01-HOY', CURRENT_DATE,
+        v_lider_user_id, 'ALTA'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM tarea
+        WHERE cliente_id = v_cliente_id
+        AND periodo_fiscal = '2026-01-HOY'
+        AND id_obligacion = v_obligacion_id
+    );
+
+    -- Tarea 6: POR VENCER EN 2 DIAS (para que aparezca en Alertas)
+    INSERT INTO tarea (
+        cliente_id, contribuyente_id, id_obligacion,
+        estado, periodo_fiscal, fecha_limite_oficial,
+        responsable_usuario_id, prioridad
+    )
+    SELECT
+        v_cliente_id, v_contribuyente_id, v_obligacion_id,
+        'pendiente', '2026-01-PROX', CURRENT_DATE + INTERVAL '2 days',
+        v_lider_user_id, 'MEDIA'
+    WHERE NOT EXISTS (
+        SELECT 1 FROM tarea
+        WHERE cliente_id = v_cliente_id
+        AND periodo_fiscal = '2026-01-PROX'
+        AND id_obligacion = v_obligacion_id
+    );
+
     RAISE NOTICE '✅ Seed completado para LIDER';
     RAISE NOTICE 'Usuario: lider.prueba@sgrcbc.test';
     RAISE NOTICE 'Equipo: ISIS (team_id: %)', v_team_id;
     RAISE NOTICE 'Cliente: Cliente Prueba LIDER';
-    RAISE NOTICE 'Tareas creadas: 3 (pendiente, en_curso, en_validacion)';
+    RAISE NOTICE 'Tareas creadas: 6 (pendiente, en_curso, en_validacion, vencida, por_vencer_hoy, por_vencer_2dias)';
 END $$;
 
 -- ============================================

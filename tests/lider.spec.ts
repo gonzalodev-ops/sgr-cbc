@@ -202,6 +202,25 @@ test.describe('LIDER - Suite de Pruebas', () => {
 
     // Verificar que estamos en la página de alertas
     expect(page.url()).toContain('alertas');
+
+    // Esperar a que termine de cargar
+    await expect(page.locator('text=Cargando alertas')).not.toBeVisible({ timeout: 15000 });
+
+    // VERIFICACION DE SEGURIDAD: LIDER NO debe ver "Acceso Restringido"
+    await expect(page.locator('text=Acceso Restringido')).not.toBeVisible();
+
+    // Verificar que la pagina muestra contenido valido:
+    // - Titulo "Alertas" visible
+    // - O muestra alertas (vencidas, por vencer, etc.)
+    // - O muestra "Sin Alertas" (si no hay alertas)
+    const hasTitle = await page.locator('h1:has-text("Alertas")').isVisible().catch(() => false);
+    const hasNoAlertas = await page.locator('text=Sin Alertas').isVisible().catch(() => false);
+    const hasVencidas = await page.locator('text=Tareas Vencidas').isVisible().catch(() => false);
+    const hasPorVencer = await page.locator('text=Proximas a Vencer').isVisible().catch(() => false);
+
+    console.log(`Alertas - Titulo: ${hasTitle}, Sin alertas: ${hasNoAlertas}, Vencidas: ${hasVencidas}, Por vencer: ${hasPorVencer}`);
+    expect(hasTitle).toBe(true);
+    expect(hasNoAlertas || hasVencidas || hasPorVencer).toBe(true);
   });
 
   test('9.1 Acceso denegado a rutas de SOCIO/ADMIN', async ({ page }) => {
