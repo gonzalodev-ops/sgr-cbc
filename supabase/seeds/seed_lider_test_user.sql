@@ -170,7 +170,7 @@ BEGIN
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'pendiente', '2025-12', CURRENT_DATE - INTERVAL '5 days',
+        'pendiente', '2025-12', CURRENT_DATE - INTERVAL '2 days',
         v_lider_user_id, 'ALTA'
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
