@@ -87,15 +87,20 @@ export default function EquipoPage() {
       setLoading(true)
 
       try {
+        console.log('🔍 DEBUG equipo - userId:', userId)
+
         // 1. Get user's team
-        const { data: teamMember } = await supabase
+        const { data: teamMember, error: teamError } = await supabase
           .from('team_members')
           .select('team_id, rol_en_equipo, teams:team_id(nombre)')
           .eq('user_id', userId)
           .eq('activo', true)
           .single()
 
+        console.log('🔍 DEBUG equipo - teamMember:', teamMember, 'error:', teamError)
+
         if (!teamMember?.team_id) {
+          console.log('🔍 DEBUG equipo - No team_id found, exiting')
           setLoading(false)
           return
         }
@@ -122,12 +127,15 @@ export default function EquipoPage() {
         const memberIds = membersData.map((m: any) => m.user_id).filter(Boolean)
 
         // 3. Get contribuyentes del equipo (filtro correcto por team_id)
-        const { data: contribuyentes } = await supabase
+        const { data: contribuyentes, error: contribError } = await supabase
           .from('contribuyente')
           .select('contribuyente_id')
           .eq('team_id', teamMember.team_id)
 
+        console.log('🔍 DEBUG equipo - contribuyentes:', contribuyentes, 'error:', contribError)
+
         const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
+        console.log('🔍 DEBUG equipo - contribuyenteIds:', contribuyenteIds)
 
         // 4. Get all tasks for the team via contribuyente.team_id
         let tareasData: any[] = []
@@ -148,6 +156,9 @@ export default function EquipoPage() {
             .order('fecha_limite_oficial', { ascending: true })
             .limit(500)
           tareasData = data || []
+          console.log('🔍 DEBUG equipo - tareas count:', tareasData.length)
+        } else {
+          console.log('🔍 DEBUG equipo - No contribuyenteIds, skipping tareas query')
         }
 
         // Transform tasks data (Supabase returns relations as arrays sometimes)
