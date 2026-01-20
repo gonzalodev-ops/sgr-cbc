@@ -4,14 +4,13 @@
 -- ============================================
 
 -- PASO 1: Verificar/Obtener el user_id del LIDER
--- Primero necesitamos saber el user_id del usuario lider.prueba@sgrcbc.test
 DO $$
 DECLARE
     v_lider_user_id UUID;
     v_team_id UUID;
     v_contribuyente_id UUID;
     v_cliente_id UUID;
-    v_obligacion_id TEXT;
+    v_obligacion_id TEXT;  -- TEXT, no UUID
 BEGIN
     -- Obtener el user_id del LIDER
     SELECT user_id INTO v_lider_user_id
@@ -37,7 +36,6 @@ BEGIN
     LIMIT 1;
 
     IF v_team_id IS NULL THEN
-        -- Crear el equipo si no existe
         INSERT INTO teams (nombre, descripcion, activo)
         VALUES ('Equipo ISIS', 'Equipo de pruebas para E2E', true)
         RETURNING team_id INTO v_team_id;
@@ -61,7 +59,6 @@ BEGIN
     LIMIT 1;
 
     IF v_contribuyente_id IS NULL THEN
-        -- Crear un contribuyente de prueba
         INSERT INTO contribuyente (rfc, razon_social, nombre_comercial, tipo_persona, team_id, activo)
         VALUES ('TEST123456ABC', 'Empresa de Prueba SA de CV', 'Empresa Prueba', 'PM', v_team_id, true)
         RETURNING contribuyente_id INTO v_contribuyente_id;
@@ -78,12 +75,10 @@ BEGIN
     LIMIT 1;
 
     IF v_cliente_id IS NULL THEN
-        -- Crear un cliente de prueba
         INSERT INTO cliente (nombre_comercial, estado)
         VALUES ('Cliente Prueba LIDER', 'ACTIVO')
         RETURNING cliente_id INTO v_cliente_id;
 
-        -- Vincular cliente con contribuyente
         INSERT INTO cliente_contribuyente (cliente_id, contribuyente_id)
         VALUES (v_cliente_id, v_contribuyente_id)
         ON CONFLICT DO NOTHING;
@@ -93,68 +88,79 @@ BEGIN
         RAISE NOTICE 'Cliente encontrado: %', v_cliente_id;
     END IF;
 
-    -- PASO 7: Obtener una obligación fiscal para crear tareas
+    -- PASO 7: Obtener una obligación fiscal existente
     SELECT id_obligacion INTO v_obligacion_id
     FROM obligacion_fiscal
     WHERE activo = true
     LIMIT 1;
 
     IF v_obligacion_id IS NULL THEN
-        RAISE NOTICE 'No hay obligaciones fiscales. Creando una de prueba...';
-        INSERT INTO obligacion_fiscal (id_obligacion, nombre_corto, nombre_largo, periodicidad, activo)
-        VALUES ('OBL-TEST-LIDER', 'ISR-PRUEBA', 'Impuesto Sobre la Renta - Prueba', 'MENSUAL', true)
+        -- Crear obligación con todos los campos requeridos
+        INSERT INTO obligacion_fiscal (
+            id_obligacion, nombre_corto, descripcion,
+            nivel, impuesto, periodicidad, activo
+        )
+        VALUES (
+            'OBL-TEST-LIDER', 'ISR Prueba', 'Obligación de prueba para E2E',
+            'FEDERAL', 'ISR', 'MENSUAL', true
+        )
         ON CONFLICT (id_obligacion) DO NOTHING;
         v_obligacion_id := 'OBL-TEST-LIDER';
+        RAISE NOTICE 'Obligación fiscal creada: %', v_obligacion_id;
+    ELSE
+        RAISE NOTICE 'Obligación fiscal encontrada: %', v_obligacion_id;
     END IF;
 
     -- PASO 8: Crear tareas de prueba para el equipo del LIDER
-    -- Tarea 1: Pendiente
+    -- Nota: prioridad es INTEGER, ejercicio es INTEGER requerido
+
+    -- Tarea 1: Pendiente (vence en 7 días)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'pendiente', '2026-01', CURRENT_DATE + INTERVAL '7 days',
-        v_lider_user_id, 'MEDIA'
+        2026, '2026-01', CURRENT_DATE + INTERVAL '7 days',
+        'pendiente', v_lider_user_id, 50
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2026-01'
         AND id_obligacion = v_obligacion_id
     );
 
-    -- Tarea 2: En curso
+    -- Tarea 2: En curso (vence en 14 días)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'en_curso', '2026-02', CURRENT_DATE + INTERVAL '14 days',
-        v_lider_user_id, 'ALTA'
+        2026, '2026-02', CURRENT_DATE + INTERVAL '14 days',
+        'en_curso', v_lider_user_id, 70
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2026-02'
         AND id_obligacion = v_obligacion_id
     );
 
-    -- Tarea 3: En validación (para que aparezca en Validaciones)
+    -- Tarea 3: En validación (para Validaciones)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'en_validacion', '2026-03', CURRENT_DATE + INTERVAL '5 days',
-        v_lider_user_id, 'ALTA'
+        2026, '2026-03', CURRENT_DATE + INTERVAL '5 days',
+        'en_validacion', v_lider_user_id, 80
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2026-03'
         AND id_obligacion = v_obligacion_id
     );
@@ -163,53 +169,53 @@ BEGIN
     -- TAREAS PARA ALERTAS
     -- ============================================
 
-    -- Tarea 4: VENCIDA (para que aparezca en Alertas como vencida)
+    -- Tarea 4: VENCIDA (2 días vencida - para Alertas)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'pendiente', '2025-12', CURRENT_DATE - INTERVAL '2 days',
-        v_lider_user_id, 'ALTA'
+        2025, '2025-12', CURRENT_DATE - INTERVAL '2 days',
+        'pendiente', v_lider_user_id, 90
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2025-12'
         AND id_obligacion = v_obligacion_id
     );
 
-    -- Tarea 5: POR VENCER HOY (para que aparezca en Alertas)
+    -- Tarea 5: VENCE HOY (para Alertas)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'en_curso', '2026-01-HOY', CURRENT_DATE,
-        v_lider_user_id, 'ALTA'
+        2026, '2026-01-HOY', CURRENT_DATE,
+        'en_curso', v_lider_user_id, 100
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2026-01-HOY'
         AND id_obligacion = v_obligacion_id
     );
 
-    -- Tarea 6: POR VENCER EN 2 DIAS (para que aparezca en Alertas)
+    -- Tarea 6: VENCE EN 2 DÍAS (para Alertas)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
-        estado, periodo_fiscal, fecha_limite_oficial,
-        responsable_usuario_id, prioridad
+        ejercicio, periodo_fiscal, fecha_limite_oficial,
+        estado, responsable_usuario_id, prioridad
     )
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
-        'pendiente', '2026-01-PROX', CURRENT_DATE + INTERVAL '2 days',
-        v_lider_user_id, 'MEDIA'
+        2026, '2026-01-PROX', CURRENT_DATE + INTERVAL '2 days',
+        'pendiente', v_lider_user_id, 85
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
-        WHERE cliente_id = v_cliente_id
+        WHERE contribuyente_id = v_contribuyente_id
         AND periodo_fiscal = '2026-01-PROX'
         AND id_obligacion = v_obligacion_id
     );
@@ -218,11 +224,12 @@ BEGIN
     RAISE NOTICE 'Usuario: lider.prueba@sgrcbc.test';
     RAISE NOTICE 'Equipo: ISIS (team_id: %)', v_team_id;
     RAISE NOTICE 'Cliente: Cliente Prueba LIDER';
-    RAISE NOTICE 'Tareas creadas: 6 (pendiente, en_curso, en_validacion, vencida, por_vencer_hoy, por_vencer_2dias)';
+    RAISE NOTICE 'Obligación: %', v_obligacion_id;
+    RAISE NOTICE 'Tareas creadas: 6';
 END $$;
 
 -- ============================================
--- VERIFICACIÓN: Ejecuta estas consultas para verificar
+-- VERIFICACIÓN
 -- ============================================
 
 -- Ver el usuario LIDER
@@ -237,12 +244,19 @@ JOIN teams t ON t.team_id = tm.team_id
 JOIN users u ON u.user_id = tm.user_id
 WHERE u.email = 'lider.prueba@sgrcbc.test';
 
--- Ver tareas del equipo del LIDER
-SELECT t.tarea_id, t.estado, t.periodo_fiscal, c.nombre_comercial as cliente
+-- Ver tareas creadas
+SELECT
+    t.tarea_id,
+    t.estado,
+    t.periodo_fiscal,
+    t.fecha_limite_oficial,
+    t.prioridad,
+    c.nombre_comercial as cliente
 FROM tarea t
 JOIN cliente c ON c.cliente_id = t.cliente_id
 JOIN contribuyente co ON co.contribuyente_id = t.contribuyente_id
 JOIN team_members tm ON tm.team_id = co.team_id
 JOIN users u ON u.user_id = tm.user_id
 WHERE u.email = 'lider.prueba@sgrcbc.test'
-AND tm.rol_en_equipo = 'LIDER';
+AND tm.rol_en_equipo = 'LIDER'
+ORDER BY t.fecha_limite_oficial;
