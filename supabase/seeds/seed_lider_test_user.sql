@@ -114,7 +114,7 @@ BEGIN
     -- PASO 8: Crear tareas de prueba para el equipo del LIDER
     -- Nota: prioridad es INTEGER, ejercicio es INTEGER requerido
 
-    -- Tarea 1: Pendiente (vence en 7 días)
+    -- Tarea 1: No iniciado (vence en 7 días)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
         ejercicio, periodo_fiscal, fecha_limite_oficial,
@@ -123,7 +123,7 @@ BEGIN
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
         2026, '2026-01', CURRENT_DATE + INTERVAL '7 days',
-        'pendiente', v_lider_user_id, 50
+        'no_iniciado', v_lider_user_id, 50
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
         WHERE contribuyente_id = v_contribuyente_id
@@ -148,7 +148,7 @@ BEGIN
         AND id_obligacion = v_obligacion_id
     );
 
-    -- Tarea 3: En validación (para Validaciones)
+    -- Tarea 3: En revisión (para Validaciones)
     INSERT INTO tarea (
         cliente_id, contribuyente_id, id_obligacion,
         ejercicio, periodo_fiscal, fecha_limite_oficial,
@@ -157,7 +157,7 @@ BEGIN
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
         2026, '2026-03', CURRENT_DATE + INTERVAL '5 days',
-        'en_validacion', v_lider_user_id, 80
+        'revision', v_lider_user_id, 80
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
         WHERE contribuyente_id = v_contribuyente_id
@@ -178,7 +178,7 @@ BEGIN
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
         2025, '2025-12', CURRENT_DATE - INTERVAL '2 days',
-        'pendiente', v_lider_user_id, 90
+        'no_iniciado', v_lider_user_id, 90
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
         WHERE contribuyente_id = v_contribuyente_id
@@ -212,7 +212,7 @@ BEGIN
     SELECT
         v_cliente_id, v_contribuyente_id, v_obligacion_id,
         2026, '2026-01-PROX', CURRENT_DATE + INTERVAL '2 days',
-        'pendiente', v_lider_user_id, 85
+        'no_iniciado', v_lider_user_id, 85
     WHERE NOT EXISTS (
         SELECT 1 FROM tarea
         WHERE contribuyente_id = v_contribuyente_id

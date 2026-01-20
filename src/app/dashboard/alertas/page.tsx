@@ -105,7 +105,7 @@ export default function AlertasPage() {
             obligacion:id_obligacion(nombre_corto),
             responsable:users!responsable_usuario_id(user_id, nombre)
           `)
-          .in('estado', ['pendiente', 'en_curso', 'en_validacion'])
+          .in('estado', ['no_iniciado', 'en_curso', 'revision'])
           .order('fecha_limite_oficial', { ascending: true })
           .limit(500)
 
