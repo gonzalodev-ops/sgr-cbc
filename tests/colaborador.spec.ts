@@ -42,8 +42,17 @@ async function login(page: Page) {
   // Click en botón de login
   await page.click('button:has-text("Entrar")');
 
-  // Esperar redirección al dashboard
+  // Esperar redirección al dashboard (primero va a /dashboard, luego redirige a /dashboard/mi-dia)
   await page.waitForURL(/dashboard/, { timeout: 15000 });
+
+  // Esperar a que el sidebar cargue (indica que la app está lista)
+  await expect(page.locator('text=Mi Dia').first()).toBeVisible({ timeout: 10000 });
+
+  // COLABORADOR será redirigido automáticamente a Mi Dia desde TMR
+  // Esperar la redirección si estamos en /dashboard exacto
+  if (page.url().endsWith('/dashboard') || page.url().endsWith('/dashboard/')) {
+    await page.waitForURL(/mi-dia/, { timeout: 10000 });
+  }
 }
 
 test.describe('COLABORADOR - Suite de Pruebas', () => {
@@ -56,8 +65,8 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
   test('1.1 Login exitoso con credenciales válidas', async ({ page }) => {
     await login(page);
 
-    // Verificar que estamos en el dashboard
-    expect(page.url()).toContain('dashboard');
+    // Verificar que COLABORADOR fue redirigido a Mi Dia (no TMR)
+    expect(page.url()).toContain('mi-dia');
 
     // Verificar que se muestra contenido del dashboard (sidebar visible)
     await expect(page.locator('text=Calendario').first()).toBeVisible({ timeout: 5000 });
@@ -80,10 +89,7 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
   test('2.1 Mi Dia muestra tareas asignadas', async ({ page }) => {
     await login(page);
 
-    // Navegar a Mi Dia (sin tilde)
-    await page.click('text=Mi Dia');
-    await page.waitForLoadState('networkidle');
-
+    // COLABORADOR ya está en Mi Dia después del login (redirect automático)
     // Verificar que la página de Mi Dia cargó
     await expect(page.locator('h1:has-text("Mi Dia")')).toBeVisible({ timeout: 5000 });
 
