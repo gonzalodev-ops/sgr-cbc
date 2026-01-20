@@ -2,10 +2,15 @@ name: Playwright E2E Tests
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, 'claude/**']
   pull_request:
     branches: [main, master, develop]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: false
+        default: 'claude/consolidated-fixes-6Ksdb'
 
 env:
   # URL de la aplicación para testing
