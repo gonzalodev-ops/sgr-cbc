@@ -87,20 +87,15 @@ export default function EquipoPage() {
       setLoading(true)
 
       try {
-        console.log('🔍 DEBUG equipo - userId:', userId)
-
         // 1. Get user's team
-        const { data: teamMember, error: teamError } = await supabase
+        const { data: teamMember } = await supabase
           .from('team_members')
           .select('team_id, rol_en_equipo, teams:team_id(nombre)')
           .eq('user_id', userId)
           .eq('activo', true)
           .single()
 
-        console.log('🔍 DEBUG equipo - teamMember:', teamMember, 'error:', teamError)
-
         if (!teamMember?.team_id) {
-          console.log('🔍 DEBUG equipo - No team_id found, exiting')
           setLoading(false)
           return
         }
@@ -127,21 +122,17 @@ export default function EquipoPage() {
         const memberIds = membersData.map((m: any) => m.user_id).filter(Boolean)
 
         // 3. Get contribuyentes del equipo (filtro correcto por team_id)
-        const { data: contribuyentes, error: contribError } = await supabase
+        const { data: contribuyentes } = await supabase
           .from('contribuyente')
           .select('contribuyente_id')
           .eq('team_id', teamMember.team_id)
 
-        console.log('🔍 DEBUG equipo - contribuyentes:', contribuyentes, 'error:', contribError)
-
         const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
-        console.log('🔍 DEBUG equipo - contribuyenteIds:', contribuyenteIds)
 
         // 4. Get all tasks for the team via contribuyente.team_id
         let tareasData: any[] = []
         if (contribuyenteIds.length > 0) {
-          console.log('🔍 DEBUG equipo - Querying tareas for contribuyenteIds:', contribuyenteIds)
-          const { data, error: tareasError } = await supabase
+          const { data } = await supabase
             .from('tarea')
             .select(`
               tarea_id,
@@ -158,16 +149,7 @@ export default function EquipoPage() {
             .order('fecha_limite_oficial', { ascending: true })
             .limit(500)
 
-          console.log('🔍 DEBUG equipo - tareas result:', { data, error: tareasError })
-          console.log('🔍 DEBUG equipo - tareas count:', data?.length || 0)
-
-          if (tareasError) {
-            console.error('🔍 DEBUG equipo - tareas ERROR:', tareasError)
-          }
-
           tareasData = data || []
-        } else {
-          console.log('🔍 DEBUG equipo - No contribuyenteIds, skipping tareas query')
         }
 
         // Transform tasks data (Supabase returns relations as arrays sometimes)
