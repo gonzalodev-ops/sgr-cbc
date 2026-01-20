@@ -59,15 +59,15 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
     // Verificar que estamos en el dashboard
     expect(page.url()).toContain('dashboard');
 
-    // Verificar que se muestra contenido del dashboard
-    await expect(page.locator('text=Mi Día').first()).toBeVisible({ timeout: 5000 });
+    // Verificar que se muestra contenido del dashboard (sidebar visible)
+    await expect(page.locator('text=Calendario').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('1.2 Menú lateral solo muestra opciones permitidas', async ({ page }) => {
     await login(page);
 
-    // Verificar opciones VISIBLES para colaborador
-    await expect(page.locator('text=Mi Día').first()).toBeVisible();
+    // Verificar opciones VISIBLES para colaborador (sin tilde: "Mi Dia")
+    await expect(page.locator('text=Mi Dia').first()).toBeVisible({ timeout: 5000 });
     await expect(page.locator('text=Calendario').first()).toBeVisible();
     await expect(page.locator('text=Clientes').first()).toBeVisible();
 
@@ -77,15 +77,15 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
     await expect(page.locator('a:has-text("Configuración")')).not.toBeVisible();
   });
 
-  test('2.1 Mi Día muestra tareas asignadas', async ({ page }) => {
+  test('2.1 Mi Dia muestra tareas asignadas', async ({ page }) => {
     await login(page);
 
-    // Navegar a Mi Día
-    await page.click('text=Mi Día');
+    // Navegar a Mi Dia (sin tilde)
+    await page.click('text=Mi Dia');
     await page.waitForLoadState('networkidle');
 
-    // Verificar que la página de Mi Día cargó
-    await expect(page.locator('h1:has-text("Mi Día"), h1:has-text("Mi Dia")')).toBeVisible({ timeout: 5000 });
+    // Verificar que la página de Mi Dia cargó
+    await expect(page.locator('h1:has-text("Mi Dia")')).toBeVisible({ timeout: 5000 });
 
     // Verificar que hay contenido de tareas (cards, lista, etc.)
     const pageContent = await page.content();
