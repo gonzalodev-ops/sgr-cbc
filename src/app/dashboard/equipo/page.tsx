@@ -150,7 +150,7 @@ export default function EquipoPage() {
               prioridad,
               en_riesgo,
               contribuyente_id,
-              responsable:users!responsable_usuario_id(user_id, nombre),
+              responsable:users!tarea_responsable_usuario_id_fkey(user_id, nombre),
               cliente:cliente_id(nombre_comercial),
               obligacion:id_obligacion(nombre_corto)
             `)
