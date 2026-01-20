@@ -138,7 +138,7 @@ export default function BloqueosList({ onCountChange }: BloqueosListProps) {
             tarea_id,
             estado,
             fecha_limite_oficial,
-            responsable:responsable_usuario_id(nombre),
+            responsable:users!responsable_usuario_id(nombre),
             cliente:cliente_id(nombre_comercial),
             contribuyente:contribuyente_id(rfc),
             obligacion:id_obligacion(nombre_corto)

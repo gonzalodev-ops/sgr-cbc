@@ -126,7 +126,7 @@ export default function TaskDetailModal({
           cliente:cliente_id(nombre_comercial, rfc),
           contribuyente:contribuyente_id(rfc, razon_social),
           obligacion:id_obligacion(nombre_corto, nombre_largo),
-          responsable:responsable_usuario_id(nombre, email)
+          responsable:users!responsable_usuario_id(nombre, email)
         `)
         .eq('tarea_id', tareaId)
         .single()
@@ -151,7 +151,7 @@ export default function TaskDetailModal({
           estado_nuevo,
           metadata_json,
           occurred_at,
-          actor:actor_usuario_id(nombre)
+          actor:users!actor_usuario_id(nombre)
         `)
         .eq('tarea_id', tareaId)
         .order('occurred_at', { ascending: false })
