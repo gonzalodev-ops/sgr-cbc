@@ -108,8 +108,20 @@ test.describe('LIDER - Suite de Pruebas', () => {
     // Verificar que estamos en la página de equipo
     expect(page.url()).toContain('equipo');
 
-    // Verificar que la página cargó (esperar a que termine de cargar)
-    await page.waitForLoadState('networkidle');
+    // Esperar a que termine de cargar (que desaparezca el loading)
+    await expect(page.locator('text=Cargando datos del equipo')).not.toBeVisible({ timeout: 15000 });
+
+    // VERIFICACIÓN DE SEGURIDAD: LIDER NO debe ver "Acceso Restringido"
+    await expect(page.locator('text=Acceso Restringido')).not.toBeVisible();
+
+    // Verificar que la página muestra contenido válido:
+    // - O muestra el equipo (con "miembros activos")
+    // - O muestra "Sin Equipo Asignado" (si el usuario no tiene equipo)
+    const hasTeamContent = await page.locator('text=miembros activos').isVisible().catch(() => false);
+    const hasNoTeam = await page.locator('text=Sin Equipo Asignado').isVisible().catch(() => false);
+
+    console.log(`Mi Equipo - Tiene contenido de equipo: ${hasTeamContent}, Sin equipo: ${hasNoTeam}`);
+    expect(hasTeamContent || hasNoTeam).toBe(true);
   });
 
   test('4.1 Validaciones permite revisar tareas del equipo', async ({ page }) => {
