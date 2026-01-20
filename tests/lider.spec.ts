@@ -96,8 +96,8 @@ test.describe('LIDER - Suite de Pruebas', () => {
   test('3.1 Mi Equipo muestra colaboradores del equipo', async ({ page }) => {
     await login(page);
 
-    // Navegar a Mi Equipo
-    const equipoLink = page.locator('a[href="/dashboard/equipo"]');
+    // Navegar a Mi Equipo (usar el link del sidebar, no el logo)
+    const equipoLink = page.locator('a[href="/dashboard/equipo"]:has-text("Mi Equipo")');
     await expect(equipoLink).toBeVisible({ timeout: 10000 });
 
     await Promise.all([
