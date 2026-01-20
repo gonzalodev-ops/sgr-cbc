@@ -119,36 +119,24 @@ export default function EquipoPage() {
           return
         }
 
-        const memberIds = membersData.map((m: any) => m.users?.user_id).filter(Boolean)
+        const memberIds = membersData.map((m: any) => m.user_id).filter(Boolean)
 
-        // 3. Get contribuyentes for the team
-        const { data: contribuyentes } = await supabase
-          .from('contribuyente')
-          .select('contribuyente_id')
-          .eq('team_id', teamMember.team_id)
-
-        const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
-
-        // 4. Get all tasks for the team via contribuyentes
-        let tareasData: any[] = []
-        if (contribuyenteIds.length > 0) {
-          const { data } = await supabase
-            .from('tarea')
-            .select(`
-              tarea_id,
-              estado,
-              fecha_limite_oficial,
-              prioridad,
-              en_riesgo,
-              responsable:users!responsable_usuario_id(user_id, nombre),
-              cliente:cliente_id(nombre_comercial),
-              obligacion:id_obligacion(nombre_corto)
-            `)
-            .in('contribuyente_id', contribuyenteIds)
-            .order('fecha_limite_oficial', { ascending: true })
-            .limit(500)
-          tareasData = data || []
-        }
+        // 3. Get all tasks for the team via responsable_usuario_id
+        const { data: tareasData } = await supabase
+          .from('tarea')
+          .select(`
+            tarea_id,
+            estado,
+            fecha_limite_oficial,
+            prioridad,
+            en_riesgo,
+            responsable:users!responsable_usuario_id(user_id, nombre),
+            cliente:cliente_id(nombre_comercial),
+            obligacion:id_obligacion(nombre_corto)
+          `)
+          .in('responsable_usuario_id', memberIds)
+          .order('fecha_limite_oficial', { ascending: true })
+          .limit(500)
 
         // Transform tasks data (Supabase returns relations as arrays sometimes)
         const tareasTransformadas: TeamTask[] = (tareasData || []).map((t: any) => ({

@@ -101,15 +101,16 @@ export default function AlertasPage() {
 
           tareasData = data || []
         } else if (teamMember?.team_id) {
-          // LIDER: Get tasks via contribuyente's team (same as Mi Dia)
-          const { data: contribuyentes } = await supabase
-            .from('contribuyente')
-            .select('contribuyente_id')
+          // LIDER: Get tasks via team members' responsable_usuario_id
+          const { data: membersData } = await supabase
+            .from('team_members')
+            .select('user_id')
             .eq('team_id', teamMember.team_id)
+            .eq('activo', true)
 
-          const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
+          const memberIds = (membersData || []).map((m: { user_id: string }) => m.user_id)
 
-          if (contribuyenteIds.length > 0) {
+          if (memberIds.length > 0) {
             const { data } = await supabase
               .from('tarea')
               .select(`
@@ -121,7 +122,7 @@ export default function AlertasPage() {
                 obligacion:id_obligacion(nombre_corto),
                 responsable:users!responsable_usuario_id(user_id, nombre)
               `)
-              .in('contribuyente_id', contribuyenteIds)
+              .in('responsable_usuario_id', memberIds)
               .in('estado', ['no_iniciado', 'en_curso', 'revision'])
               .order('fecha_limite_oficial', { ascending: true })
               .limit(500)
