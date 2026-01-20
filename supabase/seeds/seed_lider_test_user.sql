@@ -11,7 +11,7 @@ DECLARE
     v_team_id UUID;
     v_contribuyente_id UUID;
     v_cliente_id UUID;
-    v_obligacion_id UUID;
+    v_obligacion_id TEXT;
 BEGIN
     -- Obtener el user_id del LIDER
     SELECT user_id INTO v_lider_user_id
@@ -101,9 +101,10 @@ BEGIN
 
     IF v_obligacion_id IS NULL THEN
         RAISE NOTICE 'No hay obligaciones fiscales. Creando una de prueba...';
-        INSERT INTO obligacion_fiscal (nombre_corto, nombre_largo, periodicidad, activo)
-        VALUES ('ISR-PRUEBA', 'Impuesto Sobre la Renta - Prueba', 'MENSUAL', true)
-        RETURNING id_obligacion INTO v_obligacion_id;
+        INSERT INTO obligacion_fiscal (id_obligacion, nombre_corto, nombre_largo, periodicidad, activo)
+        VALUES ('OBL-TEST-LIDER', 'ISR-PRUEBA', 'Impuesto Sobre la Renta - Prueba', 'MENSUAL', true)
+        ON CONFLICT (id_obligacion) DO NOTHING;
+        v_obligacion_id := 'OBL-TEST-LIDER';
     END IF;
 
     -- PASO 8: Crear tareas de prueba para el equipo del LIDER
