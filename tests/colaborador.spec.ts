@@ -99,9 +99,15 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
   test('4.1 Calendario muestra eventos', async ({ page }) => {
     await login(page);
 
-    // Navegar a Calendario usando el link del sidebar
-    await page.click('a[href="/dashboard/calendario"]');
-    await page.waitForLoadState('networkidle');
+    // Esperar a que el sidebar cargue completamente (el link debe ser visible)
+    const calendarioLink = page.locator('a[href="/dashboard/calendario"]');
+    await expect(calendarioLink).toBeVisible({ timeout: 10000 });
+
+    // Click y esperar navegación simultáneamente
+    await Promise.all([
+      page.waitForURL(/calendario/, { timeout: 10000 }),
+      calendarioLink.click()
+    ]);
 
     // Verificar que estamos en la página de calendario
     expect(page.url()).toContain('calendario');
@@ -110,9 +116,15 @@ test.describe('COLABORADOR - Suite de Pruebas', () => {
   test('5.1 Clientes muestra solo clientes del equipo', async ({ page }) => {
     await login(page);
 
-    // Navegar a Clientes usando el link del sidebar
-    await page.click('a[href="/dashboard/cliente"]');
-    await page.waitForLoadState('networkidle');
+    // Esperar a que el sidebar cargue completamente (el link debe ser visible)
+    const clientesLink = page.locator('a[href="/dashboard/cliente"]');
+    await expect(clientesLink).toBeVisible({ timeout: 10000 });
+
+    // Click y esperar navegación simultáneamente
+    await Promise.all([
+      page.waitForURL(/cliente/, { timeout: 10000 }),
+      clientesLink.click()
+    ]);
 
     // Verificar que estamos en la página de clientes
     expect(page.url()).toContain('cliente');
