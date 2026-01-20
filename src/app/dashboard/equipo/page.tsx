@@ -121,22 +121,34 @@ export default function EquipoPage() {
 
         const memberIds = membersData.map((m: any) => m.users?.user_id).filter(Boolean)
 
-        // 3. Get all tasks for the team
-        const { data: tareasData } = await supabase
-          .from('tarea')
-          .select(`
-            tarea_id,
-            estado,
-            fecha_limite_oficial,
-            prioridad,
-            en_riesgo,
-            responsable:users!responsable_usuario_id(user_id, nombre),
-            cliente:cliente_id(nombre_comercial),
-            obligacion:id_obligacion(nombre_corto)
-          `)
-          .in('responsable_usuario_id', memberIds)
-          .order('fecha_limite_oficial', { ascending: true })
-          .limit(500)
+        // 3. Get contribuyentes for the team
+        const { data: contribuyentes } = await supabase
+          .from('contribuyente')
+          .select('contribuyente_id')
+          .eq('team_id', teamMember.team_id)
+
+        const contribuyenteIds = (contribuyentes || []).map((c: { contribuyente_id: string }) => c.contribuyente_id)
+
+        // 4. Get all tasks for the team via contribuyentes
+        let tareasData: any[] = []
+        if (contribuyenteIds.length > 0) {
+          const { data } = await supabase
+            .from('tarea')
+            .select(`
+              tarea_id,
+              estado,
+              fecha_limite_oficial,
+              prioridad,
+              en_riesgo,
+              responsable:users!responsable_usuario_id(user_id, nombre),
+              cliente:cliente_id(nombre_comercial),
+              obligacion:id_obligacion(nombre_corto)
+            `)
+            .in('contribuyente_id', contribuyenteIds)
+            .order('fecha_limite_oficial', { ascending: true })
+            .limit(500)
+          tareasData = data || []
+        }
 
         // Transform tasks data (Supabase returns relations as arrays sometimes)
         const tareasTransformadas: TeamTask[] = (tareasData || []).map((t: any) => ({
@@ -154,9 +166,9 @@ export default function EquipoPage() {
             (t) => t.responsable?.user_id === m.users?.user_id
           )
 
-          const pendientes = tareasUsuario.filter(t => t.estado === 'pendiente').length
+          const pendientes = tareasUsuario.filter(t => t.estado === 'no_iniciado').length
           const enCurso = tareasUsuario.filter(t =>
-            ['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)
+            ['en_curso', 'revision'].includes(t.estado)
           ).length
           const completadas = tareasUsuario.filter(t =>
             ['presentado', 'pagado', 'cerrado'].includes(t.estado)
@@ -199,7 +211,7 @@ export default function EquipoPage() {
     ).length
     const bloqueadas = tareas.filter(t => t.estado === 'bloqueado_cliente').length
     const pendientesValidacion = tareas.filter(t =>
-      ['en_validacion', 'presentado'].includes(t.estado)
+      ['revision', 'presentado'].includes(t.estado)
     ).length
 
     const tasaCompletado = totalTareas > 0
@@ -534,9 +546,9 @@ export default function EquipoPage() {
               className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Todos los estados</option>
-              <option value="pendiente">Pendiente</option>
+              <option value="no_iniciado">No Iniciado</option>
               <option value="en_curso">En Curso</option>
-              <option value="en_validacion">En Validacion</option>
+              <option value="revision">En Revision</option>
               <option value="bloqueado_cliente">Bloqueado</option>
               <option value="presentado">Presentado</option>
             </select>
