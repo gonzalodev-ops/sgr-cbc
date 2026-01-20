@@ -433,7 +433,7 @@ export default function SeguimientosPage() {
             tarea_id,
             cliente:cliente_id(nombre_comercial),
             obligacion:id_obligacion(nombre_corto),
-            responsable:responsable_usuario_id(nombre)
+            responsable:users!responsable_usuario_id(nombre)
           `)
           .in('responsable_usuario_id', memberIds)
           .not('estado', 'in', '("cerrado","pagado")')

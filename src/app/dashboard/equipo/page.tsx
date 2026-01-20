@@ -130,7 +130,7 @@ export default function EquipoPage() {
             fecha_limite_oficial,
             prioridad,
             en_riesgo,
-            responsable:responsable_usuario_id(user_id, nombre),
+            responsable:users!responsable_usuario_id(user_id, nombre),
             cliente:cliente_id(nombre_comercial),
             obligacion:id_obligacion(nombre_corto)
           `)
