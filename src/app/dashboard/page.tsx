@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import {
     ESTADO_CONFIG,
@@ -12,6 +13,7 @@ import {
 } from '@/lib/data/mockData'
 import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar, AlertTriangle } from 'lucide-react'
 import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
+import { useUserRole } from '@/lib/hooks/useUserRole'
 
 // Constantes
 const QUERY_LIMIT = 500
@@ -37,9 +39,20 @@ export default function TMRPage() {
     const [entregables, setEntregables] = useState<EntregableExtended[]>([])
     const [loading, setLoading] = useState(true)
     const [modalAjusteFecha, setModalAjusteFecha] = useState<{ tareaId: string; fechaActual: string } | null>(null)
+    const router = useRouter()
 
     // Lazy initialization - only creates client on client-side
     const supabase = useMemo(() => getSupabaseClient(), [])
+
+    // Get user role and redirect COLABORADOR to their home page
+    const { rol, isLoading: isRoleLoading } = useUserRole()
+
+    useEffect(() => {
+        // Redirect COLABORADOR to Mi Dia - TMR is only for SOCIO, ADMIN, AUDITOR
+        if (!isRoleLoading && rol === 'COLABORADOR') {
+            router.replace('/dashboard/mi-dia')
+        }
+    }, [rol, isRoleLoading, router])
 
     // Cargar datos de Supabase
     useEffect(() => {
@@ -384,6 +397,16 @@ export default function TMRPage() {
             case 'pendiente': return <Shield className="text-yellow-500" size={18} />
             default: return <span className="text-slate-300">-</span>
         }
+    }
+
+    // Show loading while checking role or if COLABORADOR (will redirect)
+    if (isRoleLoading || rol === 'COLABORADOR') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-slate-700 font-medium">Cargando...</p>
+            </div>
+        )
     }
 
     return (
