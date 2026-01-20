@@ -140,7 +140,8 @@ export default function EquipoPage() {
         // 4. Get all tasks for the team via contribuyente.team_id
         let tareasData: any[] = []
         if (contribuyenteIds.length > 0) {
-          const { data } = await supabase
+          console.log('🔍 DEBUG equipo - Querying tareas for contribuyenteIds:', contribuyenteIds)
+          const { data, error: tareasError } = await supabase
             .from('tarea')
             .select(`
               tarea_id,
@@ -148,6 +149,7 @@ export default function EquipoPage() {
               fecha_limite_oficial,
               prioridad,
               en_riesgo,
+              contribuyente_id,
               responsable:users!responsable_usuario_id(user_id, nombre),
               cliente:cliente_id(nombre_comercial),
               obligacion:id_obligacion(nombre_corto)
@@ -155,8 +157,15 @@ export default function EquipoPage() {
             .in('contribuyente_id', contribuyenteIds)
             .order('fecha_limite_oficial', { ascending: true })
             .limit(500)
+
+          console.log('🔍 DEBUG equipo - tareas result:', { data, error: tareasError })
+          console.log('🔍 DEBUG equipo - tareas count:', data?.length || 0)
+
+          if (tareasError) {
+            console.error('🔍 DEBUG equipo - tareas ERROR:', tareasError)
+          }
+
           tareasData = data || []
-          console.log('🔍 DEBUG equipo - tareas count:', tareasData.length)
         } else {
           console.log('🔍 DEBUG equipo - No contribuyenteIds, skipping tareas query')
         }
