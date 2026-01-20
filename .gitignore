@@ -52,3 +52,6 @@ next-env.d.ts
 
 # MCP server config (contains secrets)
 .mcp.json
+
+# Playwright test results
+test-results/

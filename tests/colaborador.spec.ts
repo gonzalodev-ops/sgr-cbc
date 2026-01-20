@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Configuración
-const BASE_URL = 'https://sgr-247p2myay-gonzalos-projects-c2b87390.vercel.app';
+const BASE_URL = 'https://sgr-cbc-git-claude-consolidat-da85f8-gonzalos-projects-c2b87390.vercel.app';
 const COLABORADOR_EMAIL = 'colaborador.prueba@sgrcbc.test';
 const COLABORADOR_PASSWORD = 'Test1234!';
 
