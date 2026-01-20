@@ -175,9 +175,17 @@ export default function EquipoPage() {
           const completadas = tareasUsuario.filter(t =>
             ['presentado', 'pagado', 'cerrado'].includes(t.estado)
           ).length
-          const enRiesgo = tareasUsuario.filter(t =>
-            t.en_riesgo || ['bloqueado_cliente', 'rechazado'].includes(t.estado)
-          ).length
+
+          // En Riesgo por colaborador: vencidas, flag en_riesgo, bloqueadas o rechazadas
+          const hoy = new Date()
+          hoy.setHours(0, 0, 0, 0)
+          const enRiesgo = tareasUsuario.filter(t => {
+            const fechaLimite = t.fecha_limite_oficial ? new Date(t.fecha_limite_oficial) : null
+            const estaVencida = fechaLimite ? fechaLimite < hoy : false
+            return t.en_riesgo ||
+                   estaVencida ||
+                   ['bloqueado_cliente', 'rechazado'].includes(t.estado)
+          }).length
 
           return {
             user_id: m.users?.user_id,
@@ -204,13 +212,23 @@ export default function EquipoPage() {
 
   // Calculate team KPIs
   const kpis = useMemo(() => {
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+
     const totalTareas = tareas.length
     const completadas = tareas.filter(t =>
       ['presentado', 'pagado', 'cerrado'].includes(t.estado)
     ).length
-    const enRiesgo = tareas.filter(t =>
-      t.en_riesgo || ['bloqueado_cliente', 'rechazado'].includes(t.estado)
-    ).length
+
+    // En Riesgo: tareas vencidas, con flag en_riesgo, bloqueadas o rechazadas
+    const enRiesgo = tareas.filter(t => {
+      const fechaLimite = t.fecha_limite_oficial ? new Date(t.fecha_limite_oficial) : null
+      const estaVencida = fechaLimite ? fechaLimite < hoy : false
+      return t.en_riesgo ||
+             estaVencida ||
+             ['bloqueado_cliente', 'rechazado'].includes(t.estado)
+    }).length
+
     const bloqueadas = tareas.filter(t => t.estado === 'bloqueado_cliente').length
     const pendientesValidacion = tareas.filter(t =>
       ['revision', 'presentado'].includes(t.estado)
