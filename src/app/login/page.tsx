@@ -32,7 +32,7 @@ export default function LoginPage() {
         setError(null)
         setLoading(true)
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         })
@@ -43,7 +43,15 @@ export default function LoginPage() {
             return
         }
 
-        router.push('/dashboard')
+        // Obtener rol del usuario para redirigir a la ruta correcta
+        const { data: userData } = await supabase
+            .from('users')
+            .select('rol_global')
+            .eq('user_id', data.user.id)
+            .single()
+
+        const { getHomeRouteByRole } = await import('@/lib/utils/getHomeRoute')
+        router.push(getHomeRouteByRole(userData?.rol_global))
         router.refresh()
     }
 

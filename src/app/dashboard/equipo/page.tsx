@@ -5,20 +5,17 @@ import { createBrowserClient } from '@supabase/ssr'
 import {
   Users,
   CheckCircle,
-  Clock,
   AlertTriangle,
-  Target,
   ArrowRightLeft,
   Calendar,
   Shield,
-  Ban,
   RefreshCw,
   Filter,
-  ChevronRight,
-  BarChart3
+  ChevronDown,
+  ChevronUp,
+  ListTodo
 } from 'lucide-react'
 import { useUserRole } from '@/lib/hooks/useUserRole'
-import { KPICard, KPICardGrid } from '@/components/common/KPICard'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { EstadoTarea, ESTADO_TAREA_CONFIG } from '@/lib/constants/enums'
 import { calcularDiasRestantes, formatearFecha, formatearFechaRelativa } from '@/lib/utils/dateCalculations'
@@ -70,6 +67,8 @@ export default function EquipoPage() {
   const [filtroEstado, setFiltroEstado] = useState<string>('all')
   const [tareaSeleccionada, setTareaSeleccionada] = useState<TeamTask | null>(null)
   const [showReasignarModal, setShowReasignarModal] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [showAllTasks, setShowAllTasks] = useState(false)
 
   const supabase = useMemo(() => {
     if (typeof window === 'undefined') return null
@@ -220,19 +219,16 @@ export default function EquipoPage() {
       ['presentado', 'pagado', 'cerrado'].includes(t.estado)
     ).length
 
-    // En Riesgo: tareas vencidas, con flag en_riesgo, bloqueadas o rechazadas
-    const enRiesgo = tareas.filter(t => {
+    // Tareas vencidas (fecha limite pasada)
+    const vencidas = tareas.filter(t => {
       const fechaLimite = t.fecha_limite_oficial ? new Date(t.fecha_limite_oficial) : null
-      const estaVencida = fechaLimite ? fechaLimite < hoy : false
-      return t.en_riesgo ||
-             estaVencida ||
-             ['bloqueado_cliente', 'rechazado'].includes(t.estado)
+      return fechaLimite ? fechaLimite < hoy : false
     }).length
 
     const bloqueadas = tareas.filter(t => t.estado === 'bloqueado_cliente').length
-    const pendientesValidacion = tareas.filter(t =>
-      ['revision', 'presentado'].includes(t.estado)
-    ).length
+
+    // En Riesgo combinado: vencidas + bloqueadas (para mostrar en KPI compacto)
+    const enRiesgoTotal = vencidas + bloqueadas
 
     const tasaCompletado = totalTareas > 0
       ? Math.round((completadas / totalTareas) * 100)
@@ -241,13 +237,12 @@ export default function EquipoPage() {
     return {
       totalTareas,
       completadas,
-      enRiesgo,
+      enRiesgoTotal,
+      vencidas,
       bloqueadas,
-      pendientesValidacion,
-      tasaCompletado,
-      puntosEquipo: miembros.reduce((sum, m) => sum + m.puntosAcumulados, 0)
+      tasaCompletado
     }
-  }, [tareas, miembros])
+  }, [tareas])
 
   // Filter tasks
   const tareasFiltradas = useMemo(() => {
@@ -350,126 +345,175 @@ export default function EquipoPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-        <div className="flex justify-between items-center">
+      {/* Header Compacto + KPIs Inline */}
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+          {/* Header izquierda */}
           <div className="flex items-center gap-3">
             <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-lg">
               <Users size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-800">{teamName}</h1>
-              <p className="text-slate-500">{miembros.length} miembros activos</p>
+              <h1 className="text-xl font-bold text-slate-800">{teamName}</h1>
+              <p className="text-sm text-slate-500">{miembros.length} miembros activos</p>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
             <button
               onClick={() => window.location.reload()}
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500"
+              className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-400 ml-2"
               title="Actualizar datos"
             >
-              <RefreshCw size={20} />
+              <RefreshCw size={18} />
             </button>
+          </div>
+
+          {/* KPIs compactos a la derecha */}
+          <div className="flex items-center gap-6 lg:gap-8">
+            {/* Total Tareas */}
+            <div className="text-center">
+              <p className="text-2xl font-bold text-slate-800">{kpis.totalTareas}</p>
+              <p className="text-xs text-slate-500">Tareas</p>
+            </div>
+
+            {/* Avance % */}
+            <div className="text-center">
+              <p className={`text-2xl font-bold ${
+                kpis.tasaCompletado >= 70 ? 'text-green-600' :
+                kpis.tasaCompletado >= 50 ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {kpis.tasaCompletado}%
+              </p>
+              <p className="text-xs text-slate-500">Avance</p>
+            </div>
+
+            {/* En Atencion (vencidas + bloqueadas) */}
+            <div className="text-center relative group">
+              <p className={`text-2xl font-bold ${
+                kpis.enRiesgoTotal > 0 ? 'text-red-600' : 'text-green-600'
+              }`}>
+                {kpis.enRiesgoTotal}
+              </p>
+              <p className="text-xs text-slate-500 flex items-center justify-center gap-1">
+                <AlertTriangle size={10} />
+                Atencion
+              </p>
+              {/* Tooltip con desglose */}
+              {kpis.enRiesgoTotal > 0 && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  <p>{kpis.vencidas} vencidas</p>
+                  <p>{kpis.bloqueadas} bloqueadas</p>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <KPICardGrid columns={4}>
-        <KPICard
-          title="Tareas Totales"
-          value={kpis.totalTareas}
-          subtitle={`${kpis.completadas} completadas`}
-          icon={<BarChart3 size={20} />}
-          progress={kpis.tasaCompletado}
-        />
-        <KPICard
-          title="Tasa Completado"
-          value={kpis.tasaCompletado}
-          valueIsPercent
-          subtitle="Del total de tareas"
-          icon={<CheckCircle size={20} />}
-          variant={kpis.tasaCompletado >= 70 ? 'success' : kpis.tasaCompletado >= 50 ? 'warning' : 'danger'}
-        />
-        <KPICard
-          title="En Riesgo"
-          value={kpis.enRiesgo}
-          subtitle={`${kpis.bloqueadas} bloqueadas por cliente`}
-          icon={<AlertTriangle size={20} />}
-          variant={kpis.enRiesgo > 0 ? 'danger' : 'success'}
-        />
-        <KPICard
-          title="Puntos Equipo"
-          value={kpis.puntosEquipo}
-          subtitle="Acumulados este periodo"
-          icon={<Target size={20} />}
-          variant="success"
-        />
-      </KPICardGrid>
+      {/* Carga de Trabajo por Colaborador */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <Users size={18} className="text-blue-500" />
+            Carga de Trabajo por Colaborador
+          </h2>
+        </div>
+        <div className="p-4">
+          <div className="space-y-3">
+            {miembros.map(miembro => {
+              const totalActivas = miembro.tareasPendientes + miembro.tareasEnCurso
+              const maxTareas = Math.max(...miembros.map(m => m.tareasPendientes + m.tareasEnCurso), 1)
+              const percentage = (totalActivas / maxTareas) * 100
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Workload by Member */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-200">
-            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <Users size={18} className="text-blue-500" />
-              Carga de Trabajo por Colaborador
-            </h2>
-          </div>
-          <div className="p-4">
-            <div className="space-y-3">
-              {miembros.map(miembro => {
-                const totalActivas = miembro.tareasPendientes + miembro.tareasEnCurso
-                const maxTareas = Math.max(...miembros.map(m => m.tareasPendientes + m.tareasEnCurso), 1)
-                const percentage = (totalActivas / maxTareas) * 100
-
-                return (
-                  <div
-                    key={miembro.user_id}
-                    className="p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                    onClick={() => setFiltroMiembro(
-                      filtroMiembro === miembro.user_id ? 'all' : miembro.user_id
-                    )}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          miembro.tareasEnRiesgo > 0 ? 'bg-red-500 animate-pulse' : 'bg-green-500'
-                        }`} />
-                        <span className="font-medium text-slate-700">{miembro.nombre}</span>
-                        <span className="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded">
-                          {miembro.rol_en_equipo}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-slate-500">{miembro.tareasPendientes} pend.</span>
-                        <span className="text-blue-600">{miembro.tareasEnCurso} en curso</span>
-                        <span className="text-green-600 font-medium">{miembro.puntosAcumulados} pts</span>
-                      </div>
+              return (
+                <div
+                  key={miembro.user_id}
+                  className="p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => setFiltroMiembro(
+                    filtroMiembro === miembro.user_id ? 'all' : miembro.user_id
+                  )}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${
+                        miembro.tareasEnRiesgo > 0 ? 'bg-red-500 animate-pulse' : 'bg-green-500'
+                      }`} />
+                      <span className="font-medium text-slate-700">{miembro.nombre}</span>
+                      <span className="text-xs px-2 py-0.5 bg-slate-200 text-slate-600 rounded">
+                        {miembro.rol_en_equipo}
+                      </span>
                     </div>
-                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${
-                          percentage > 80 ? 'bg-red-500' : percentage > 50 ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${percentage}%` }}
-                      />
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-slate-500">{miembro.tareasPendientes} pend.</span>
+                      <span className="text-blue-600">{miembro.tareasEnCurso} en curso</span>
+                      <span className="text-green-600 font-medium">{miembro.puntosAcumulados} pts</span>
                     </div>
-                    {miembro.tareasEnRiesgo > 0 && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                        <AlertTriangle size={12} />
-                        {miembro.tareasEnRiesgo} tarea{miembro.tareasEnRiesgo > 1 ? 's' : ''} en riesgo
-                      </p>
-                    )}
                   </div>
-                )
-              })}
-            </div>
+                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        percentage > 80 ? 'bg-red-500' : percentage > 50 ? 'bg-yellow-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  {miembro.tareasEnRiesgo > 0 && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <AlertTriangle size={12} />
+                      {miembro.tareasEnRiesgo} tarea{miembro.tareasEnRiesgo > 1 ? 's' : ''} en riesgo
+                    </p>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
+      </div>
 
-        {/* Team Calendar / Deadlines */}
+      {/* Botones toggle para secciones colapsables */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => setShowCalendar(!showCalendar)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
+            showCalendar
+              ? 'bg-purple-50 border-purple-300 text-purple-700'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Calendar size={18} />
+          <span className="font-medium">Proximos vencimientos</span>
+          {showCalendar ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {deadlines.length > 0 && (
+            <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
+              showCalendar ? 'bg-purple-200 text-purple-800' : 'bg-slate-200 text-slate-600'
+            }`}>
+              {deadlines.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setShowAllTasks(!showAllTasks)}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
+            showAllTasks
+              ? 'bg-green-50 border-green-300 text-green-700'
+              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <ListTodo size={18} />
+          <span className="font-medium">Ver todas las tareas</span>
+          {showAllTasks ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          {tareasFiltradas.length > 0 && (
+            <span className={`ml-1 px-2 py-0.5 text-xs rounded-full ${
+              showAllTasks ? 'bg-green-200 text-green-800' : 'bg-slate-200 text-slate-600'
+            }`}>
+              {tareasFiltradas.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Calendario de Vencimientos (colapsable) */}
+      {showCalendar && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-4 border-b border-slate-200">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -477,9 +521,9 @@ export default function EquipoPage() {
               Proximos Vencimientos
             </h2>
           </div>
-          <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
+          <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
             {deadlines.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
+              <div className="col-span-full text-center py-8 text-slate-400">
                 <CheckCircle size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No hay vencimientos proximos</p>
               </div>
@@ -538,174 +582,123 @@ export default function EquipoPage() {
             )}
           </div>
         </div>
-      </div>
-
-      {/* Quick Actions & Active Tasks */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-4 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <ArrowRightLeft size={18} className="text-green-500" />
-            Tareas Activas del Equipo
-          </h2>
-          <div className="flex items-center gap-3">
-            {/* Filter by Member */}
-            <select
-              value={filtroMiembro}
-              onChange={(e) => setFiltroMiembro(e.target.value)}
-              className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Todos los miembros</option>
-              {miembros.map(m => (
-                <option key={m.user_id} value={m.user_id}>{m.nombre}</option>
-              ))}
-            </select>
-            {/* Filter by Status */}
-            <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
-              className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">Todos los estados</option>
-              <option value="no_iniciado">No Iniciado</option>
-              <option value="en_curso">En Curso</option>
-              <option value="revision">En Revision</option>
-              <option value="bloqueado_cliente">Bloqueado</option>
-              <option value="presentado">Presentado</option>
-            </select>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 text-left">Cliente</th>
-                <th className="px-4 py-3 text-left">Obligacion</th>
-                <th className="px-4 py-3 text-center">Responsable</th>
-                <th className="px-4 py-3 text-center">Estado</th>
-                <th className="px-4 py-3 text-center">Vencimiento</th>
-                <th className="px-4 py-3 text-center">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {tareasFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                    <Filter size={32} className="mx-auto mb-2 opacity-50" />
-                    <p>No hay tareas con estos filtros</p>
-                  </td>
-                </tr>
-              ) : (
-                tareasFiltradas.slice(0, 20).map(tarea => {
-                  const diasRestantes = calcularDiasRestantes(tarea.fecha_limite_oficial)
-                  const isOverdue = diasRestantes < 0
-                  const isUrgent = diasRestantes >= 0 && diasRestantes <= 3
-
-                  return (
-                    <tr key={tarea.tarea_id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-700 text-sm">
-                          {tarea.cliente?.nombre_comercial || 'N/A'}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-600">
-                        {tarea.obligacion?.nombre_corto || 'N/A'}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm text-slate-600">
-                          {tarea.responsable?.nombre || 'Sin asignar'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <StatusBadge
-                          status={tarea.estado as EstadoTarea}
-                          type="estado"
-                          size="sm"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-sm px-2 py-1 rounded ${
-                          isOverdue ? 'bg-red-100 text-red-700' :
-                          isUrgent ? 'bg-orange-100 text-orange-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>
-                          {formatearFecha(tarea.fecha_limite_oficial, 'corto')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => {
-                            setTareaSeleccionada(tarea)
-                            setShowReasignarModal(true)
-                          }}
-                          className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1 mx-auto"
-                        >
-                          <ArrowRightLeft size={12} />
-                          Reasignar
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-          {tareasFiltradas.length > 20 && (
-            <div className="px-4 py-3 text-center text-sm text-slate-500 border-t border-slate-100">
-              Mostrando 20 de {tareasFiltradas.length} tareas
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Blocked Tasks Alert */}
-      {kpis.bloqueadas > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Ban className="text-red-500 mt-0.5" size={20} />
-            <div className="flex-1">
-              <h3 className="font-bold text-red-700">
-                {kpis.bloqueadas} Tarea{kpis.bloqueadas > 1 ? 's' : ''} Bloqueada{kpis.bloqueadas > 1 ? 's' : ''} por Cliente
-              </h3>
-              <p className="text-sm text-red-600 mt-1">
-                Estas tareas requieren accion del cliente para continuar.
-                Considera contactar al cliente o reasignar si es necesario.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => setFiltroEstado('bloqueado_cliente')}
-                  className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
-                >
-                  Ver bloqueadas
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
       )}
 
-      {/* Pending Validation Alert */}
-      {kpis.pendientesValidacion > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <Clock className="text-yellow-500 mt-0.5" size={20} />
-            <div className="flex-1">
-              <h3 className="font-bold text-yellow-700">
-                {kpis.pendientesValidacion} Tarea{kpis.pendientesValidacion > 1 ? 's' : ''} Pendiente{kpis.pendientesValidacion > 1 ? 's' : ''} de Validacion
-              </h3>
-              <p className="text-sm text-yellow-600 mt-1">
-                Tu equipo tiene tareas esperando tu visto bueno.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <a
-                  href="/dashboard/validaciones"
-                  className="px-3 py-1.5 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-1"
-                >
-                  Ir a Validaciones
-                  <ChevronRight size={14} />
-                </a>
-              </div>
+      {/* Tabla de Tareas Activas (colapsable) */}
+      {showAllTasks && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-4 border-b border-slate-200 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <ArrowRightLeft size={18} className="text-green-500" />
+              Tareas Activas del Equipo
+            </h2>
+            <div className="flex items-center gap-3">
+              {/* Filter by Member */}
+              <select
+                value={filtroMiembro}
+                onChange={(e) => setFiltroMiembro(e.target.value)}
+                className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Todos los miembros</option>
+                {miembros.map(m => (
+                  <option key={m.user_id} value={m.user_id}>{m.nombre}</option>
+                ))}
+              </select>
+              {/* Filter by Status */}
+              <select
+                value={filtroEstado}
+                onChange={(e) => setFiltroEstado(e.target.value)}
+                className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="no_iniciado">No Iniciado</option>
+                <option value="en_curso">En Curso</option>
+                <option value="revision">En Revision</option>
+                <option value="bloqueado_cliente">Bloqueado</option>
+                <option value="presentado">Presentado</option>
+              </select>
             </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 text-left">Cliente</th>
+                  <th className="px-4 py-3 text-left">Obligacion</th>
+                  <th className="px-4 py-3 text-center">Responsable</th>
+                  <th className="px-4 py-3 text-center">Estado</th>
+                  <th className="px-4 py-3 text-center">Vencimiento</th>
+                  <th className="px-4 py-3 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tareasFiltradas.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
+                      <Filter size={32} className="mx-auto mb-2 opacity-50" />
+                      <p>No hay tareas con estos filtros</p>
+                    </td>
+                  </tr>
+                ) : (
+                  tareasFiltradas.slice(0, 20).map(tarea => {
+                    const diasRestantes = calcularDiasRestantes(tarea.fecha_limite_oficial)
+                    const isOverdue = diasRestantes < 0
+                    const isUrgent = diasRestantes >= 0 && diasRestantes <= 3
+
+                    return (
+                      <tr key={tarea.tarea_id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-slate-700 text-sm">
+                            {tarea.cliente?.nombre_comercial || 'N/A'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-600">
+                          {tarea.obligacion?.nombre_corto || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="text-sm text-slate-600">
+                            {tarea.responsable?.nombre || 'Sin asignar'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <StatusBadge
+                            status={tarea.estado as EstadoTarea}
+                            type="estado"
+                            size="sm"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`text-sm px-2 py-1 rounded ${
+                            isOverdue ? 'bg-red-100 text-red-700' :
+                            isUrgent ? 'bg-orange-100 text-orange-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {formatearFecha(tarea.fecha_limite_oficial, 'corto')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => {
+                              setTareaSeleccionada(tarea)
+                              setShowReasignarModal(true)
+                            }}
+                            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1 mx-auto"
+                          >
+                            <ArrowRightLeft size={12} />
+                            Reasignar
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+            {tareasFiltradas.length > 20 && (
+              <div className="px-4 py-3 text-center text-sm text-slate-500 border-t border-slate-100">
+                Mostrando 20 de {tareasFiltradas.length} tareas
+              </div>
+            )}
           </div>
         </div>
       )}

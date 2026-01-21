@@ -51,9 +51,9 @@ const allNavigation: NavItem[] = [
         icon: LayoutDashboard,
         roles: ['SOCIO', 'ADMIN', 'AUDITOR']
     },
-    // TMR 2.0 - Centro de Control for SOCIO, ADMIN, LIDER
+    // Panel de Control for SOCIO, ADMIN, LIDER
     {
-        name: 'TMR 2.0',
+        name: 'Panel de Control',
         href: '/dashboard/tmr',
         icon: TrendingUp,
         roles: ['SOCIO', 'ADMIN', 'LIDER']
@@ -174,13 +174,13 @@ function getHomeRoute(rol: UserRole): string {
         case 'COLABORADOR':
             return '/dashboard/mi-dia'
         case 'LIDER':
-            return '/dashboard/equipo'
+            return '/dashboard/tmr'
         case 'AUDITOR':
             return '/dashboard/auditor'
         case 'SOCIO':
         case 'ADMIN':
         default:
-            return '/dashboard'
+            return '/dashboard/tmr'
     }
 }
 
