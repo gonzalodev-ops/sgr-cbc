@@ -54,6 +54,20 @@ RETURNS SETOF UUID AS $$
 $$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public;
 
 -- ============================================
+-- PASO 1b: Asegurar que las funciones sean propiedad de postgres
+-- para que SECURITY DEFINER pueda bypassear RLS
+-- ============================================
+
+ALTER FUNCTION get_user_role() OWNER TO postgres;
+ALTER FUNCTION get_user_teams() OWNER TO postgres;
+ALTER FUNCTION is_admin_or_socio() OWNER TO postgres;
+ALTER FUNCTION is_team_leader() OWNER TO postgres;
+ALTER FUNCTION get_leader_teams() OWNER TO postgres;
+
+-- Verificar que el owner sea correcto (opcional, para debug)
+-- SELECT proname, proowner::regrole FROM pg_proc WHERE proname IN ('get_user_teams', 'is_admin_or_socio');
+
+-- ============================================
 -- PASO 2: Habilitar RLS en tablas principales
 -- ============================================
 
