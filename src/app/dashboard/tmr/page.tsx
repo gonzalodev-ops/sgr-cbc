@@ -122,7 +122,7 @@ function sinVoBo(tarea: TareaCompleta): boolean {
 
 export default function TMR2Page() {
     // Hooks
-    const { isSocio, isAdmin, isLoading: isLoadingRole, rol } = useUserRole()
+    const { isSocio, isAdmin, isLider, isLoading: isLoadingRole, rol } = useUserRole()
     const { periodoSeleccionado, getPeriodoLabel, getPeriodoRange } = usePeriodo()
 
     // State
@@ -464,7 +464,7 @@ export default function TMR2Page() {
     }
 
     // Access Control
-    if (!isSocio && !isAdmin) {
+    if (!isSocio && !isAdmin && !isLider) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="bg-red-100 p-6 rounded-full">
@@ -472,7 +472,7 @@ export default function TMR2Page() {
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800">Acceso Denegado</h2>
                 <p className="text-slate-600 text-center max-w-md">
-                    El Centro de Control TMR 2.0 es exclusivo para Socios y Administradores.
+                    El Centro de Control TMR 2.0 es exclusivo para Socios, Administradores y Lideres.
                     <br />
                     Tu rol actual: <span className="font-semibold">{rol || 'No definido'}</span>
                 </p>
