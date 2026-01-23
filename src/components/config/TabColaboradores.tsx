@@ -97,12 +97,36 @@ export default function TabColaboradores() {
             if (!result.success) return alert('Error: ' + result.error)
             alert(result.mensaje || 'Usuario creado exitosamente')
         } else {
-            await supabase.from('users').update({ nombre: userForm.nombre, rol_global: userForm.rol_global }).eq('user_id', editingUser.user_id)
+            // Actualizar usuario con manejo de errores
+            const { error: updateError } = await supabase
+                .from('users')
+                .update({ nombre: userForm.nombre, rol_global: userForm.rol_global })
+                .eq('user_id', editingUser.user_id)
+
+            if (updateError) {
+                console.error('Error actualizando usuario:', updateError)
+                alert('Error al actualizar: ' + updateError.message)
+                return
+            }
+
             // Actualizar equipo si cambió
             if (userForm.equipo_id) {
-                await supabase.from('team_members').delete().eq('user_id', editingUser.user_id)
-                await supabase.from('team_members').insert({ team_id: userForm.equipo_id, user_id: editingUser.user_id, rol_en_equipo: userForm.rol_en_equipo || 'AUXILIAR_C', activo: true })
+                const { error: deleteError } = await supabase.from('team_members').delete().eq('user_id', editingUser.user_id)
+                if (deleteError) console.error('Error eliminando equipo anterior:', deleteError)
+
+                const { error: insertError } = await supabase.from('team_members').insert({
+                    team_id: userForm.equipo_id,
+                    user_id: editingUser.user_id,
+                    rol_en_equipo: userForm.rol_en_equipo || 'AUXILIAR_C',
+                    activo: true
+                })
+                if (insertError) {
+                    console.error('Error asignando equipo:', insertError)
+                    alert('Usuario actualizado, pero error asignando equipo: ' + insertError.message)
+                }
             }
+
+            alert('Usuario actualizado correctamente')
         }
         resetUserForm()
         // Pequeño delay para asegurar que la BD se actualizó
