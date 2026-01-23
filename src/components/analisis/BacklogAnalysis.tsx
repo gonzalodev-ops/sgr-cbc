@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { AlertTriangle, Clock, TrendingDown, Users } from 'lucide-react'
 
@@ -19,21 +19,27 @@ interface BacklogPorEntidad {
     cantidad: number
 }
 
+interface TareaQueryRecord {
+    tarea_id: string
+    periodo_fiscal: number
+    ejercicio: number
+    fecha_limite_oficial: string
+    estado: string
+    cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+    obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+}
+
 export default function BacklogAnalysis() {
     const [backlogTareas, setBacklogTareas] = useState<BacklogTarea[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const supabase = createBrowserClient(
+    const supabase = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    ), [])
 
-    useEffect(() => {
-        cargarBacklog()
-    }, [])
-
-    async function cargarBacklog() {
+    const cargarBacklog = useCallback(async () => {
         setLoading(true)
         setError(null)
 
@@ -62,8 +68,12 @@ export default function BacklogAnalysis() {
             if (backlogError) throw backlogError
 
             // Transformar arrays de Supabase a objetos
-            const transformedData = (data || []).map((t: any) => ({
-                ...t,
+            const transformedData: BacklogTarea[] = (data || []).map((t: TareaQueryRecord) => ({
+                tarea_id: t.tarea_id,
+                periodo_fiscal: t.periodo_fiscal,
+                ejercicio: t.ejercicio,
+                fecha_limite_oficial: t.fecha_limite_oficial,
+                estado: t.estado,
                 cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
                 obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion
             }))
@@ -74,7 +84,11 @@ export default function BacklogAnalysis() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [supabase])
+
+    useEffect(() => {
+        cargarBacklog()
+    }, [cargarBacklog])
 
     function calcularAntiguedadPromedio(): number {
         if (backlogTareas.length === 0) return 0

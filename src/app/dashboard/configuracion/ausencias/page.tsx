@@ -2,19 +2,17 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   Plus,
   Calendar,
   User,
   Filter,
-  X,
   CheckCircle,
   XCircle,
   Clock,
   ArrowRightLeft,
-  Pencil,
   Trash2
 } from 'lucide-react'
 import AusenciaForm from '@/components/config/AusenciaForm'
@@ -61,16 +59,12 @@ export default function AusenciasPage() {
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>('TODAS')
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('TODAS')
 
-  const supabase = createBrowserClient(
+  const supabase = useMemo(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  ), [])
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       // Cargar colaboradores
@@ -103,7 +97,11 @@ export default function AusenciasPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   async function guardarAusencia(data: Omit<Ausencia, 'ausencia_id' | 'created_at' | 'created_by' | 'activo' | 'colaborador' | 'suplente'>) {
     try {
@@ -173,7 +171,11 @@ export default function AusenciasPage() {
         throw new Error(result.error || 'Error en la reasignación')
       }
 
-      alert(result.mensaje + (result.detalles ? `\n\nDetalles:\n${result.detalles.map((d: any) => `- ${d.obligacionNombre} (${d.clienteNombre})`).join('\n')}` : ''))
+      interface DetalleReasignacion {
+        obligacionNombre: string
+        clienteNombre: string
+      }
+      alert(result.mensaje + (result.detalles ? `\n\nDetalles:\n${(result.detalles as DetalleReasignacion[]).map((d) => `- ${d.obligacionNombre} (${d.clienteNombre})`).join('\n')}` : ''))
     } catch (error) {
       console.error('Error reasignando tareas:', error)
       alert('Error al reasignar tareas: ' + (error as Error).message)

@@ -3,11 +3,47 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Brand Colors - Calderón & Berges */
+  --brand-orange: #F19F53;
+  --brand-orange-light: #F7BE8A;
+  --brand-orange-dark: #D88A3D;
+  --brand-blue: #34588C;
+  --brand-blue-light: #4A6FA3;
+  --brand-blue-dark: #264066;
+
+  /* Semantic Colors */
+  --primary: var(--brand-orange);
+  --primary-foreground: #ffffff;
+  --secondary: var(--brand-blue);
+  --secondary-foreground: #ffffff;
+  --accent: var(--brand-orange-light);
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+
+  /* Status Colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: var(--brand-blue);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-blue: var(--brand-blue);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -23,4 +59,28 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Asegurar que inputs/selects siempre tengan texto visible */
+/* Esto corrige el problema de contraste cuando el sistema está en modo oscuro */
+input,
+textarea,
+select {
+  color: #1e293b; /* slate-800 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+
+/* Inputs con fondo oscuro (como en login) deben tener texto claro */
+input.text-white,
+textarea.text-white {
+  color: #ffffff;
+}
+
+input.text-white::placeholder,
+textarea.text-white::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }

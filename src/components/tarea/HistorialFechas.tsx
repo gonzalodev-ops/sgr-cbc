@@ -17,7 +17,17 @@ interface AjusteFecha {
   usuario: {
     nombre: string
     email?: string
-  }
+  } | null
+}
+
+// Raw type from Supabase where relations may come as arrays
+interface AjusteFechaRaw {
+  log_id: string
+  fecha_anterior: string
+  fecha_nueva: string
+  motivo: string
+  created_at: string
+  usuario: { nombre: string; email?: string } | { nombre: string; email?: string }[] | null
 }
 
 export default function HistorialFechas({ tareaId }: HistorialFechasProps) {
@@ -55,7 +65,7 @@ export default function HistorialFechas({ tareaId }: HistorialFechasProps) {
         if (fetchError) throw fetchError
 
         // Transformar arrays de Supabase a objetos
-        const transformedData = (data || []).map((h: any) => ({
+        const transformedData = (data || []).map((h: AjusteFechaRaw) => ({
           ...h,
           usuario: Array.isArray(h.usuario) ? h.usuario[0] : h.usuario
         }))

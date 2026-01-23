@@ -36,6 +36,53 @@ interface ClienteCompleto {
     tareasPresentadas: TareaPresentada[]
 }
 
+// Supabase query result types
+interface ServicioRecord {
+    servicio_id: string
+    nombre: string
+}
+
+interface ContribuyenteData {
+    contribuyente_id: string
+    rfc: string
+    razon_social: string
+    tipo_persona: string
+}
+
+interface ClienteContribuyenteData {
+    contribuyente: ContribuyenteData | ContribuyenteData[] | null
+}
+
+interface ClienteData {
+    cliente_id: string
+    nombre_comercial: string
+    estado: string
+    cliente_contribuyente: ClienteContribuyenteData[] | null
+}
+
+interface ClienteServicioData {
+    cliente_id: string
+    servicio_id: string
+}
+
+interface ObligacionData {
+    nombre_corto: string
+    periodicidad: string
+}
+
+interface TareaData {
+    tarea_id: string
+    cliente_id: string
+    estado: string
+    periodo_fiscal: string | null
+    fecha_limite_oficial: string | null
+    obligacion: ObligacionData | ObligacionData[] | null
+}
+
+interface ServicioObligacionData {
+    servicio_id: string
+}
+
 export default function ClientesPage() {
     const [clientes, setClientes] = useState<ClienteCompleto[]>([])
     const [loading, setLoading] = useState(true)
@@ -80,7 +127,7 @@ export default function ClientesPage() {
 
             // Crear mapa de servicio_id -> nombre
             const servicioNombreMap = new Map<string, string>()
-            ;(serviciosInfo || []).forEach((s: any) => {
+            ;((serviciosInfo || []) as ServicioRecord[]).forEach((s) => {
                 servicioNombreMap.set(s.servicio_id, s.nombre)
             })
 
@@ -105,48 +152,54 @@ export default function ClientesPage() {
                 .select('servicio_id')
 
             // Construir clientes completos
-            const clientesCompletos: ClienteCompleto[] = (clientesData || []).map((c: any) => {
+            const clientesCompletos: ClienteCompleto[] = ((clientesData || []) as ClienteData[]).map((c) => {
                 const rfcs = (c.cliente_contribuyente || [])
-                    .map((cc: any) => cc.contribuyente)
-                    .filter(Boolean)
-                    .map((contrib: any) => ({
+                    .map((cc) => {
+                        const contrib = cc.contribuyente
+                        return Array.isArray(contrib) ? contrib[0] : contrib
+                    })
+                    .filter((contrib): contrib is ContribuyenteData => contrib !== null && contrib !== undefined)
+                    .map((contrib) => ({
                         contribuyente_id: contrib.contribuyente_id,
                         rfc: contrib.rfc,
                         razon_social: contrib.razon_social,
                         tipo_persona: contrib.tipo_persona
                     }))
 
-                const serviciosClienteIds = (serviciosData || [])
-                    .filter((s: any) => s.cliente_id === c.cliente_id)
-                    .map((s: any) => s.servicio_id)
+                const serviciosClienteIds = ((serviciosData || []) as ClienteServicioData[])
+                    .filter((s) => s.cliente_id === c.cliente_id)
+                    .map((s) => s.servicio_id)
 
                 const serviciosCliente: ServicioInfo[] = serviciosClienteIds.map((id: string) => ({
                     servicio_id: id,
                     nombre: servicioNombreMap.get(id) || id
                 }))
 
-                const tareas = (tareasData || []).filter((t: any) => t.cliente_id === c.cliente_id)
-                const tareasActivas = tareas.filter((t: any) =>
+                const tareas = ((tareasData || []) as TareaData[]).filter((t) => t.cliente_id === c.cliente_id)
+                const tareasActivas = tareas.filter((t) =>
                     !['presentado', 'pagado', 'cerrado'].includes(t.estado)
                 ).length
-                const tareasCompletadas = tareas.filter((t: any) =>
+                const tareasCompletadas = tareas.filter((t) =>
                     ['presentado', 'pagado', 'cerrado'].includes(t.estado)
                 ).length
 
                 // Tareas presentadas sin pago
                 const tareasPresentadas: TareaPresentada[] = tareas
-                    .filter((t: any) => t.estado === 'presentado')
-                    .map((t: any) => ({
-                        tarea_id: t.tarea_id,
-                        periodo_fiscal: t.periodo_fiscal || 'N/A',
-                        fecha_limite_oficial: t.fecha_limite_oficial || '',
-                        nombre_corto: t.obligacion?.nombre_corto || 'N/A',
-                        periodicidad: t.obligacion?.periodicidad || 'N/A'
-                    }))
+                    .filter((t) => t.estado === 'presentado')
+                    .map((t) => {
+                        const oblig = Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion
+                        return {
+                            tarea_id: t.tarea_id,
+                            periodo_fiscal: t.periodo_fiscal || 'N/A',
+                            fecha_limite_oficial: t.fecha_limite_oficial || '',
+                            nombre_corto: oblig?.nombre_corto || 'N/A',
+                            periodicidad: oblig?.periodicidad || 'N/A'
+                        }
+                    })
 
                 // Obligaciones cubiertas por los servicios
-                const obligCubiertas = (servicioOblig || [])
-                    .filter((so: any) => serviciosClienteIds.includes(so.servicio_id)).length
+                const obligCubiertas = ((servicioOblig || []) as ServicioObligacionData[])
+                    .filter((so) => serviciosClienteIds.includes(so.servicio_id)).length
 
                 return {
                     cliente_id: c.cliente_id,

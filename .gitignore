@@ -49,3 +49,9 @@ next-env.d.ts
 # Allow SQL files in supabase directory (migrations, schema, etc.)
 !supabase/**/*.sql
 !supabase/*.sql
+
+# MCP server config (contains secrets)
+.mcp.json
+
+# Playwright test results
+test-results/

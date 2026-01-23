@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import Image from 'next/image'
 
 // Helper to create client only on client-side
 function getSupabaseClient() {
@@ -82,12 +83,21 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-[#1e293b] via-[#34588C] to-[#264066] flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">SGR CBC</h1>
-                    <p className="text-blue-200">Sistema de Gestión de Resultados</p>
+                    <div className="flex justify-center mb-4">
+                        <Image
+                            src="/cb-logo-flat.svg"
+                            alt="Calderón & Berges"
+                            width={200}
+                            height={60}
+                            className="brightness-0 invert"
+                            priority
+                        />
+                    </div>
+                    <p className="text-[#F7BE8A]">Sistema de Gestión de Resultados</p>
                 </div>
 
                 {/* Login/Register Card */}
@@ -117,7 +127,7 @@ export default function LoginPage() {
                                     onChange={(e) => setNombre(e.target.value)}
                                     placeholder="Juan Pérez"
                                     required={isRegister}
-                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#F19F53] focus:border-transparent transition-all"
                                 />
                             </div>
                         )}
@@ -132,7 +142,7 @@ export default function LoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="tu@email.com"
                                 required
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#F19F53] focus:border-transparent transition-all"
                             />
                         </div>
 
@@ -147,14 +157,14 @@ export default function LoginPage() {
                                 placeholder="••••••••"
                                 required
                                 minLength={6}
-                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#F19F53] focus:border-transparent transition-all"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-600/50 text-white font-medium rounded-lg transition-colors shadow-lg shadow-blue-600/30"
+                            className="w-full py-3 bg-[#F19F53] hover:bg-[#D88A3D] disabled:bg-[#F19F53]/50 text-white font-medium rounded-lg transition-colors shadow-lg shadow-[#F19F53]/30"
                         >
                             {loading ? 'Procesando...' : (isRegister ? 'Registrarse' : 'Entrar')}
                         </button>
@@ -168,7 +178,7 @@ export default function LoginPage() {
                                 setIsRegister(!isRegister)
                                 setError(null)
                             }}
-                            className="text-sm text-blue-300 hover:text-blue-200 transition-colors"
+                            className="text-sm text-[#F7BE8A] hover:text-[#F19F53] transition-colors"
                         >
                             {isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Crear una'}
                         </button>

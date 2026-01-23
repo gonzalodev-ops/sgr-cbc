@@ -167,8 +167,9 @@ export async function reasignarTareasDeColaborador(
         }
       }
 
-      const liderUser = lider.users as any
-      if (!liderUser.activo) {
+      const liderUser = lider.users as { nombre: string; activo: boolean } | { nombre: string; activo: boolean }[] | null
+      const liderData = Array.isArray(liderUser) ? liderUser[0] : liderUser
+      if (!liderData?.activo) {
         return {
           success: false,
           reasignadas: 0,
@@ -177,7 +178,7 @@ export async function reasignarTareasDeColaborador(
       }
 
       nuevoResponsableId = lider.user_id
-      nuevoResponsableNombre = liderUser.nombre
+      nuevoResponsableNombre = liderData?.nombre || 'Líder'
     }
 
     // 4. Reasignar cada tarea
@@ -193,8 +194,12 @@ export async function reasignarTareasDeColaborador(
           .eq('tarea_id', tarea.tarea_id)
 
         if (updateError) {
+          const obligacionRaw = tarea.obligacion_fiscal as unknown
+          const obligacionData = Array.isArray(obligacionRaw)
+            ? (obligacionRaw[0] as { nombre_corto: string } | undefined)
+            : (obligacionRaw as { nombre_corto: string } | null)
           errores.push(
-            `Error al reasignar tarea ${tarea.tarea_id} (${(tarea.obligacion_fiscal as any)?.nombre_corto}): ${updateError.message}`
+            `Error al reasignar tarea ${tarea.tarea_id} (${obligacionData?.nombre_corto}): ${updateError.message}`
           )
           continue
         }
@@ -224,10 +229,18 @@ export async function reasignarTareasDeColaborador(
         }
 
         reasignadas++
+        const clienteRaw = tarea.cliente as unknown
+        const clienteData = Array.isArray(clienteRaw)
+          ? (clienteRaw[0] as { nombre_comercial: string } | undefined)
+          : (clienteRaw as { nombre_comercial: string } | null)
+        const obligacionFiscalRaw = tarea.obligacion_fiscal as unknown
+        const obligacionFiscalData = Array.isArray(obligacionFiscalRaw)
+          ? (obligacionFiscalRaw[0] as { nombre_corto: string } | undefined)
+          : (obligacionFiscalRaw as { nombre_corto: string } | null)
         detalles.push({
           tareaId: tarea.tarea_id,
-          clienteNombre: (tarea.cliente as any)?.nombre_comercial || 'N/A',
-          obligacionNombre: (tarea.obligacion_fiscal as any)?.nombre_corto || 'N/A',
+          clienteNombre: clienteData?.nombre_comercial || 'N/A',
+          obligacionNombre: obligacionFiscalData?.nombre_corto || 'N/A',
           nuevoResponsable: nuevoResponsableNombre
         })
 
@@ -329,8 +342,12 @@ export async function procesarAusenciasActivas(
           ausenciasProcesadas++
           totalReasignadas += resultado.reasignadas
         } else {
+          const ausenciaUserRaw = ausencia.users as unknown
+          const ausenciaUserData = Array.isArray(ausenciaUserRaw)
+            ? (ausenciaUserRaw[0] as { nombre: string } | undefined)
+            : (ausenciaUserRaw as { nombre: string } | null)
           errores.push(
-            `Ausencia de ${(ausencia.users as any)?.nombre}: ${resultado.errores.join(', ')}`
+            `Ausencia de ${ausenciaUserData?.nombre}: ${resultado.errores.join(', ')}`
           )
         }
       } catch (error) {

@@ -3,8 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState } from 'react'
-import { ExcelImport } from '@/components/import/ExcelImport'
-import { Download, Building2, Users, FileText, Settings, Package, Database, AlertCircle, Clock, Calendar } from 'lucide-react'
+import { Building2, Users, FileText, Settings, Package, Database, Clock, Calendar } from 'lucide-react'
 import dynamicImport from 'next/dynamic'
 
 // Importar componentes dinámicamente para evitar problemas de SSR

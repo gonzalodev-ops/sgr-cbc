@@ -10,14 +10,35 @@ import {
   Play,
   Ban,
   Building2,
-  FileText
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+  Search,
+  LayoutGrid,
+  Users
 } from 'lucide-react'
+import { usePeriodo } from '@/lib/context/PeriodoContext'
+import {
+  calcularDiasRestantes,
+  formatearFecha,
+  obtenerPeriodoActual,
+  obtenerPeriodoAnterior,
+  obtenerNombrePeriodo,
+  obtenerCategoriaPrioridad,
+  obtenerOrdenPrioridad,
+  CategoriaPrioridadFecha
+} from '@/lib/utils/dateCalculations'
+import { normalizeRelation } from '@/lib/utils/dataTransformers'
+import QuickActions from '@/components/tarea/QuickActions'
+import TaskDetailModal from '@/components/tarea/TaskDetailModal'
 
 interface TareaMiDia {
   tarea_id: string
   estado: string
   fecha_limite_oficial: string
   prioridad: string
+  periodo_fiscal: string
   cliente: {
     nombre_comercial: string
   }
@@ -36,11 +57,32 @@ interface ColaboradorInfo {
 
 type PrioridadCategoria = 'vencidas' | 'hoy' | 'proximos3dias' | 'bloqueadas' | 'resto'
 
+interface TareaConCategoria extends TareaMiDia {
+  categoria: PrioridadCategoria
+  ordenPrioridad: number
+  fechaLimiteDate: Date
+  periodoTipo: 'conclusion' | 'corriente'
+}
+
 export default function MiDiaPage() {
   const [tareas, setTareas] = useState<TareaMiDia[]>([])
   const [colaboradorInfo, setColaboradorInfo] = useState<ColaboradorInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [actualizando, setActualizando] = useState<string | null>(null)
+  const [seccionConclusionExpandida, setSeccionConclusionExpandida] = useState(true)
+  const [seccionCorrienteExpandida, setSeccionCorrienteExpandida] = useState(true)
+  const [selectedTareaId, setSelectedTareaId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  // MEJORA-002: Toggle grouping (urgencia vs cliente)
+  const [groupBy, setGroupBy] = useState<'urgencia' | 'cliente'>('urgencia')
+  // MEJORA-003: Quick search by RFC or cliente
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { periodoEnConclusion, periodoCorriente, getPeriodoLabel } = usePeriodo()
+
+  // Fallback para periodos si el contexto aun no esta listo
+  const periodoAnterior = periodoEnConclusion || obtenerPeriodoAnterior()
+  const periodoActual = periodoCorriente || obtenerPeriodoActual()
 
   useEffect(() => {
     loadDatos()
@@ -93,6 +135,7 @@ export default function MiDiaPage() {
           estado,
           fecha_limite_oficial,
           prioridad,
+          periodo_fiscal,
           cliente:cliente_id(nombre_comercial),
           contribuyente:contribuyente_id(rfc),
           obligacion:id_obligacion(nombre_corto)
@@ -107,9 +150,9 @@ export default function MiDiaPage() {
         // Transformar datos de Supabase (relaciones vienen como arrays)
         setTareas(tareasData?.map((t: any) => ({
           ...t,
-          cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
-          contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
-          obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
+          cliente: normalizeRelation(t.cliente),
+          contribuyente: normalizeRelation(t.contribuyente),
+          obligacion: normalizeRelation(t.obligacion),
         })) || [])
       }
 
@@ -120,59 +163,102 @@ export default function MiDiaPage() {
     }
   }
 
-  // Algoritmo de priorización
-  const tareasOrdenadas = useMemo(() => {
+  // MEJORA-003: Filter tasks by search term
+  const tareasFiltradas = useMemo(() => {
+    if (!searchTerm.trim()) return tareas
+    const term = searchTerm.toLowerCase().trim()
+    return tareas.filter(t =>
+      t.contribuyente?.rfc?.toLowerCase().includes(term) ||
+      t.cliente?.nombre_comercial?.toLowerCase().includes(term)
+    )
+  }, [tareas, searchTerm])
+
+  // Algoritmo de priorización y agrupación por periodo
+  const { tareasConclusion, tareasCorriente, contadores } = useMemo(() => {
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
-    const en3Dias = new Date(hoy)
-    en3Dias.setDate(en3Dias.getDate() + 3)
 
-    // Clasificar tareas
-    const categorizadas = tareas.map(tarea => {
+    // Clasificar tareas por periodo y prioridad (usando tareas filtradas)
+    const categorizadas: TareaConCategoria[] = tareasFiltradas.map(tarea => {
       const fechaLimite = new Date(tarea.fecha_limite_oficial)
       fechaLimite.setHours(0, 0, 0, 0)
 
-      let categoria: PrioridadCategoria
-      let ordenPrioridad: number
+      const estaBloqueada = tarea.estado === 'bloqueado_cliente'
+      const categoria = obtenerCategoriaPrioridad(fechaLimite, estaBloqueada)
+      const ordenPrioridad = obtenerOrdenPrioridad(categoria)
 
-      if (tarea.estado === 'bloqueado_cliente') {
-        // Las bloqueadas tienen prioridad 4
-        categoria = 'bloqueadas'
-        ordenPrioridad = 4
-      } else if (fechaLimite < hoy) {
-        // Prioridad 1: Tareas vencidas
-        categoria = 'vencidas'
-        ordenPrioridad = 1
-      } else if (fechaLimite.getTime() === hoy.getTime()) {
-        // Prioridad 2: Tareas que vencen hoy
-        categoria = 'hoy'
-        ordenPrioridad = 2
-      } else if (fechaLimite <= en3Dias) {
-        // Prioridad 3: Tareas que vencen en próximos 3 días
-        categoria = 'proximos3dias'
-        ordenPrioridad = 3
-      } else {
-        // Prioridad 5: Resto por fecha de deadline ascendente
-        categoria = 'resto'
-        ordenPrioridad = 5
-      }
+      // Determinar si es del periodo anterior o actual basandose en periodo_fiscal
+      const periodoTipo: 'conclusion' | 'corriente' =
+        tarea.periodo_fiscal && tarea.periodo_fiscal < periodoActual
+          ? 'conclusion'
+          : 'corriente'
 
       return {
         ...tarea,
         categoria,
         ordenPrioridad,
-        fechaLimiteDate: fechaLimite
+        fechaLimiteDate: fechaLimite,
+        periodoTipo
       }
     })
 
-    // Ordenar por prioridad y luego por fecha
-    return categorizadas.sort((a, b) => {
-      if (a.ordenPrioridad !== b.ordenPrioridad) {
-        return a.ordenPrioridad - b.ordenPrioridad
+    // Separar tareas por periodo
+    // BUG-001 FIX: Tareas vencidas van SIEMPRE a conclusión (URGENTE), no a corriente
+    const tareasConclusion = categorizadas
+      .filter(t => t.periodoTipo === 'conclusion' || t.categoria === 'vencidas')
+      .sort((a, b) => {
+        if (a.ordenPrioridad !== b.ordenPrioridad) {
+          return a.ordenPrioridad - b.ordenPrioridad
+        }
+        return a.fechaLimiteDate.getTime() - b.fechaLimiteDate.getTime()
+      })
+
+    const tareasCorriente = categorizadas
+      .filter(t => t.periodoTipo === 'corriente' && t.categoria !== 'vencidas')
+      .sort((a, b) => {
+        if (a.ordenPrioridad !== b.ordenPrioridad) {
+          return a.ordenPrioridad - b.ordenPrioridad
+        }
+        return a.fechaLimiteDate.getTime() - b.fechaLimiteDate.getTime()
+      })
+
+    // Contadores generales
+    const contadores = {
+      vencidas: categorizadas.filter(t => t.categoria === 'vencidas').length,
+      hoy: categorizadas.filter(t => t.categoria === 'hoy').length,
+      proximos3dias: categorizadas.filter(t => t.categoria === 'proximos3dias').length,
+      bloqueadas: categorizadas.filter(t => t.categoria === 'bloqueadas').length,
+      totalConclusion: tareasConclusion.length,
+      totalCorriente: tareasCorriente.length,
+      total: categorizadas.length
+    }
+
+    return { tareasConclusion, tareasCorriente, contadores }
+  }, [tareasFiltradas, periodoActual])
+
+  // MEJORA-002: Group tasks by client when groupBy is 'cliente'
+  const tareasPorCliente = useMemo(() => {
+    if (groupBy !== 'cliente') return null
+
+    const allTareas = [...tareasConclusion, ...tareasCorriente]
+    const grouped = new Map<string, TareaConCategoria[]>()
+
+    allTareas.forEach(tarea => {
+      const clienteNombre = tarea.cliente?.nombre_comercial || 'Sin Cliente'
+      if (!grouped.has(clienteNombre)) {
+        grouped.set(clienteNombre, [])
       }
-      return a.fechaLimiteDate.getTime() - b.fechaLimiteDate.getTime()
+      grouped.get(clienteNombre)!.push(tarea)
     })
-  }, [tareas])
+
+    // Sort clients by number of tasks (descending) and sort tasks within each client by priority
+    return Array.from(grouped.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cliente, tareas]) => ({
+        cliente,
+        tareas: tareas.sort((a, b) => a.ordenPrioridad - b.ordenPrioridad)
+      }))
+  }, [tareasConclusion, tareasCorriente, groupBy])
 
   // Cambiar estado de tarea
   async function cambiarEstado(tareaId: string, nuevoEstado: string) {
@@ -227,17 +313,34 @@ export default function MiDiaPage() {
     }
   }
 
+  function handleComplete(tareaId: string) {
+    const tarea = tareas.find(t => t.tarea_id === tareaId)
+    if (!tarea) return
+
+    // Determinar siguiente estado basado en el actual
+    if (tarea.estado === 'pendiente') {
+      cambiarEstado(tareaId, 'en_curso')
+    } else if (tarea.estado === 'en_curso') {
+      cambiarEstado(tareaId, 'pendiente_evidencia')
+    } else if (tarea.estado === 'pendiente_evidencia' || tarea.estado === 'rechazado') {
+      cambiarEstado(tareaId, 'en_validacion')
+    }
+  }
+
+  function handleViewDetail(tareaId: string) {
+    setSelectedTareaId(tareaId)
+    setIsModalOpen(true)
+  }
+
   function getIndicadorUrgencia(categoria: PrioridadCategoria, fechaLimite: string) {
-    const hoy = new Date()
-    const limite = new Date(fechaLimite)
-    const diffDias = Math.ceil((limite.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+    const diasRestantes = calcularDiasRestantes(fechaLimite)
 
     switch (categoria) {
       case 'vencidas':
         return (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 border border-red-300 text-red-700 rounded-lg">
             <AlertTriangle size={16} className="flex-shrink-0" />
-            <span className="font-bold text-sm">VENCIDA ({Math.abs(diffDias)}d)</span>
+            <span className="font-bold text-sm">VENCIDA ({Math.abs(diasRestantes)}d)</span>
           </div>
         )
       case 'hoy':
@@ -251,7 +354,7 @@ export default function MiDiaPage() {
         return (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 border border-yellow-300 text-yellow-700 rounded-lg">
             <Clock size={16} className="flex-shrink-0" />
-            <span className="font-bold text-sm">{diffDias} DIA{diffDias > 1 ? 'S' : ''}</span>
+            <span className="font-bold text-sm">{diasRestantes} DIA{diasRestantes > 1 ? 'S' : ''}</span>
           </div>
         )
       case 'bloqueadas':
@@ -265,7 +368,7 @@ export default function MiDiaPage() {
         return (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-300 text-slate-600 rounded-lg">
             <CalendarDays size={16} className="flex-shrink-0" />
-            <span className="font-medium text-sm">{diffDias}d</span>
+            <span className="font-medium text-sm">{diasRestantes}d</span>
           </div>
         )
     }
@@ -300,16 +403,66 @@ export default function MiDiaPage() {
     }
   }
 
-  // Contadores por categoria
-  const contadores = useMemo(() => {
-    return {
-      vencidas: tareasOrdenadas.filter(t => t.categoria === 'vencidas').length,
-      hoy: tareasOrdenadas.filter(t => t.categoria === 'hoy').length,
-      proximos3dias: tareasOrdenadas.filter(t => t.categoria === 'proximos3dias').length,
-      bloqueadas: tareasOrdenadas.filter(t => t.categoria === 'bloqueadas').length,
-      total: tareasOrdenadas.length
-    }
-  }, [tareasOrdenadas])
+  // Renderizar lista de tareas
+  function renderTareasList(tareas: TareaConCategoria[], startIndex: number = 1) {
+    return tareas.map((tarea, index) => (
+      <div
+        key={tarea.tarea_id}
+        className={`p-4 hover:bg-slate-50 transition-colors ${getBorderColor(tarea.categoria)}`}
+      >
+        <div className="flex items-center gap-4">
+          {/* Numero de orden */}
+          <div className="flex-shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+            <span className="text-sm font-bold text-slate-600">{startIndex + index}</span>
+          </div>
+
+          {/* Informacion de la tarea */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 size={14} className="text-slate-400 flex-shrink-0" />
+              <span className="font-semibold text-slate-800 truncate">
+                {tarea.cliente?.nombre_comercial || 'Sin cliente'}
+              </span>
+              <span className="text-slate-400">-</span>
+              <span className="text-sm text-slate-600 font-mono truncate">
+                {tarea.contribuyente?.rfc || 'Sin RFC'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">
+                {tarea.obligacion?.nombre_corto || 'Sin obligacion'}
+              </span>
+              <span className="text-slate-300">|</span>
+              <span className="text-xs text-slate-500">
+                Vence: {formatearFecha(tarea.fecha_limite_oficial, 'corto')}
+              </span>
+            </div>
+          </div>
+
+          {/* Estado actual */}
+          <div className="flex-shrink-0">
+            {getEstadoBadge(tarea.estado)}
+          </div>
+
+          {/* Indicador de urgencia */}
+          <div className="flex-shrink-0">
+            {getIndicadorUrgencia(tarea.categoria, tarea.fecha_limite_oficial)}
+          </div>
+
+          {/* Acciones rapidas */}
+          <div className="flex-shrink-0">
+            <QuickActions
+              tareaId={tarea.tarea_id}
+              estadoActual={tarea.estado}
+              onComplete={handleComplete}
+              onViewDetail={handleViewDetail}
+              isLoading={actualizando === tarea.tarea_id}
+            />
+          </div>
+        </div>
+      </div>
+    ))
+  }
 
   if (loading) {
     return (
@@ -400,125 +553,174 @@ export default function MiDiaPage() {
         </div>
       </div>
 
-      {/* Lista de tareas priorizada */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <FileText size={20} className="text-slate-600" />
-            <h2 className="text-lg font-bold text-slate-800">Agenda Priorizada</h2>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">Tareas ordenadas por urgencia y prioridad</p>
+      {/* MEJORA-002 & MEJORA-003: Toolbar with search and grouping toggle */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        {/* Search input */}
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por RFC o cliente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
 
-        {tareasOrdenadas.length === 0 ? (
-          <div className="p-12 text-center">
-            <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
-            <h3 className="text-lg font-medium text-slate-800 mb-2">No tienes tareas pendientes</h3>
-            <p className="text-slate-500">Todas tus tareas estan completadas o no tienes tareas asignadas.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {tareasOrdenadas.map((tarea, index) => (
-              <div
-                key={tarea.tarea_id}
-                className={`p-4 hover:bg-slate-50 transition-colors ${getBorderColor(tarea.categoria)}`}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Numero de orden */}
-                  <div className="flex-shrink-0 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-slate-600">{index + 1}</span>
-                  </div>
+        {/* Grouping toggle */}
+        <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+          <button
+            onClick={() => setGroupBy('urgencia')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              groupBy === 'urgencia'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <LayoutGrid size={16} />
+            <span>Por Urgencia</span>
+          </button>
+          <button
+            onClick={() => setGroupBy('cliente')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              groupBy === 'cliente'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Users size={16} />
+            <span>Por Cliente</span>
+          </button>
+        </div>
+      </div>
 
-                  {/* Informacion de la tarea */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Building2 size={14} className="text-slate-400 flex-shrink-0" />
-                      <span className="font-semibold text-slate-800 truncate">
-                        {tarea.cliente?.nombre_comercial || 'Sin cliente'}
-                      </span>
-                      <span className="text-slate-400">-</span>
-                      <span className="text-sm text-slate-600 font-mono truncate">
-                        {tarea.contribuyente?.rfc || 'Sin RFC'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-600">
-                        {tarea.obligacion?.nombre_corto || 'Sin obligacion'}
-                      </span>
-                      <span className="text-slate-300">|</span>
-                      <span className="text-xs text-slate-500">
-                        Vence: {new Date(tarea.fecha_limite_oficial).toLocaleDateString('es-MX', {
-                          day: '2-digit',
-                          month: 'short'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Estado actual */}
-                  <div className="flex-shrink-0">
-                    {getEstadoBadge(tarea.estado)}
-                  </div>
-
-                  {/* Indicador de urgencia */}
-                  <div className="flex-shrink-0">
-                    {getIndicadorUrgencia(tarea.categoria, tarea.fecha_limite_oficial)}
-                  </div>
-
-                  {/* Acciones rapidas */}
-                  <div className="flex-shrink-0 flex items-center gap-2">
-                    {tarea.estado === 'pendiente' && (
-                      <button
-                        onClick={() => cambiarEstado(tarea.tarea_id, 'en_curso')}
-                        disabled={actualizando === tarea.tarea_id}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-medium transition-colors"
-                        title="Iniciar tarea"
-                      >
-                        {actualizando === tarea.tarea_id ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                          <Play size={14} />
-                        )}
-                        <span>Iniciar</span>
-                      </button>
-                    )}
-                    {tarea.estado === 'en_curso' && (
-                      <button
-                        onClick={() => cambiarEstado(tarea.tarea_id, 'pendiente_evidencia')}
-                        disabled={actualizando === tarea.tarea_id}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-medium transition-colors"
-                        title="Marcar para evidencia"
-                      >
-                        {actualizando === tarea.tarea_id ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                          <FileText size={14} />
-                        )}
-                        <span>Evidencia</span>
-                      </button>
-                    )}
-                    {(tarea.estado === 'pendiente_evidencia' || tarea.estado === 'rechazado') && (
-                      <button
-                        onClick={() => cambiarEstado(tarea.tarea_id, 'en_validacion')}
-                        disabled={actualizando === tarea.tarea_id}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-medium transition-colors"
-                        title="Enviar a validacion"
-                      >
-                        {actualizando === tarea.tarea_id ? (
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                          <CheckCircle size={14} />
-                        )}
-                        <span>Validar</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
+      {/* Conditional rendering based on groupBy */}
+      {groupBy === 'urgencia' ? (
+        <>
+          {/* Seccion EN CONCLUSION - Mes anterior */}
+      {contadores.totalConclusion > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 overflow-hidden">
+          <button
+            onClick={() => setSeccionConclusionExpandida(!seccionConclusionExpandida)}
+            className="w-full px-6 py-4 bg-red-50 border-b border-red-200 flex items-center justify-between hover:bg-red-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500 text-white rounded-lg">
+                <AlertCircle size={20} />
               </div>
-            ))}
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-red-800">
+                  URGENTE: EN CONCLUSION ({getPeriodoLabel ? getPeriodoLabel(periodoAnterior) : obtenerNombrePeriodo(periodoAnterior)})
+                </h2>
+                <p className="text-sm text-red-600">
+                  Tareas del mes anterior que deben cerrarse ESTA SEMANA
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-bold">
+                {contadores.totalConclusion} tareas
+              </span>
+              {seccionConclusionExpandida ? (
+                <ChevronUp size={20} className="text-red-600" />
+              ) : (
+                <ChevronDown size={20} className="text-red-600" />
+              )}
+            </div>
+          </button>
+
+          {seccionConclusionExpandida && (
+            <div className="divide-y divide-slate-100">
+              {tareasConclusion.length === 0 ? (
+                <div className="p-8 text-center">
+                  <CheckCircle className="mx-auto mb-4 text-green-500" size={40} />
+                  <p className="text-slate-600">Todas las tareas del mes anterior estan cerradas</p>
+                </div>
+              ) : (
+                renderTareasList(tareasConclusion, 1)
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Seccion CORRIENTE - Mes actual */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <button
+          onClick={() => setSeccionCorrienteExpandida(!seccionCorrienteExpandida)}
+          className="w-full px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between hover:bg-slate-100 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500 text-white rounded-lg">
+              <FileText size={20} />
+            </div>
+            <div className="text-left">
+              <h2 className="text-lg font-bold text-slate-800">
+                CORRIENTE ({getPeriodoLabel ? getPeriodoLabel(periodoActual) : obtenerNombrePeriodo(periodoActual)})
+              </h2>
+              <p className="text-sm text-slate-500">
+                Tareas del mes actual ordenadas por prioridad
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-bold">
+              {contadores.totalCorriente} tareas
+            </span>
+            {seccionCorrienteExpandida ? (
+              <ChevronUp size={20} className="text-slate-600" />
+            ) : (
+              <ChevronDown size={20} className="text-slate-600" />
+            )}
+          </div>
+        </button>
+
+        {seccionCorrienteExpandida && (
+          <div className="divide-y divide-slate-100">
+            {tareasCorriente.length === 0 ? (
+              <div className="p-12 text-center">
+                <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+                <h3 className="text-lg font-medium text-slate-800 mb-2">No tienes tareas pendientes</h3>
+                <p className="text-slate-500">Todas tus tareas estan completadas o no tienes tareas asignadas.</p>
+              </div>
+            ) : (
+              renderTareasList(tareasCorriente, contadores.totalConclusion + 1)
+            )}
           </div>
         )}
       </div>
+        </>
+      ) : (
+        /* MEJORA-002: Client grouping view */
+        <div className="space-y-4">
+          {tareasPorCliente && tareasPorCliente.length > 0 ? (
+            tareasPorCliente.map(({ cliente, tareas }) => (
+              <div key={cliente} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-500 text-white rounded-lg">
+                      <Building2 size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-800">{cliente}</h2>
+                      <p className="text-sm text-slate-500">{tareas.length} tarea{tareas.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {renderTareasList(tareas, 1)}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+              <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+              <h3 className="text-lg font-medium text-slate-800 mb-2">No hay tareas</h3>
+              <p className="text-slate-500">No se encontraron tareas con los filtros actuales.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Leyenda */}
       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
@@ -546,6 +748,17 @@ export default function MiDiaPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de detalle de tarea */}
+      <TaskDetailModal
+        tareaId={selectedTareaId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedTareaId(null)
+        }}
+        onStateChange={loadDatos}
+      />
     </div>
   )
 }

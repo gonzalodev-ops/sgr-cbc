@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { User, CheckCircle, Clock, AlertTriangle, ListTodo, RefreshCw, Ban } from 'lucide-react'
+import { User, Clock, AlertTriangle, ListTodo, RefreshCw, Ban } from 'lucide-react'
 import RetrabajoList from '@/components/colaborador/RetrabajoList'
 import BloqueosList from '@/components/colaborador/BloqueosList'
 
@@ -14,16 +14,16 @@ interface TareaData {
   prioridad: string
   cliente: {
     nombre_comercial: string
-  }
+  } | null
   contribuyente: {
     rfc: string
-  }
+  } | null
   obligacion: {
     nombre_corto: string
-  }
+  } | null
   periodicidad: {
     nombre: string
-  }
+  } | null
 }
 
 interface ColaboradorInfo {
@@ -79,7 +79,7 @@ export default function AgendaColaboradorPage() {
 
       if (userData) {
         // teams puede venir como array de Supabase
-        const teamsData = userData.team_members?.[0]?.teams as any
+        const teamsData = userData.team_members?.[0]?.teams as { nombre: string } | { nombre: string }[] | null
         const equipoNombre = Array.isArray(teamsData) ? teamsData[0]?.nombre : teamsData?.nombre
         setColaboradorInfo({
           nombre: userData.nombre,
@@ -110,13 +110,29 @@ export default function AgendaColaboradorPage() {
         console.error('Error cargando tareas:', tareasError)
       } else {
         // Transformar datos de Supabase (relaciones vienen como arrays)
-        setTareas(tareasData?.map((t: any) => ({
-          ...t,
+        interface TareaSupabaseRow {
+          tarea_id: string
+          estado: string
+          fecha_limite_oficial: string
+          fecha_presentacion_estimada: string
+          prioridad: string
+          cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+          contribuyente: { rfc: string } | { rfc: string }[] | null
+          obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+          periodicidad: { nombre: string } | { nombre: string }[] | null
+        }
+        const mappedTareas: TareaData[] = ((tareasData as unknown as TareaSupabaseRow[] | null) ?? []).map((t) => ({
+          tarea_id: t.tarea_id,
+          estado: t.estado,
+          fecha_limite_oficial: t.fecha_limite_oficial,
+          fecha_presentacion_estimada: t.fecha_presentacion_estimada,
+          prioridad: t.prioridad,
           cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
           contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
           obligacion: Array.isArray(t.obligacion) ? t.obligacion[0] : t.obligacion,
           periodicidad: Array.isArray(t.periodicidad) ? t.periodicidad[0] : t.periodicidad,
-        })) || [])
+        }))
+        setTareas(mappedTareas)
       }
 
       // 4. Cargar cantidad de retrabajos pendientes

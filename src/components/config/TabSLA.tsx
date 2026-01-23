@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Save, Clock, Pause, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { Clock, Pause, CheckCircle, XCircle } from 'lucide-react'
 
 interface SlaConfig {
     sla_config_id: string

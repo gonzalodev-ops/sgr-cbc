@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2, Users, Tag, FileCheck } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Save, ChevronDown, ChevronUp, Building2, Tag, FileCheck } from 'lucide-react'
 
 interface Cliente {
     cliente_id: string

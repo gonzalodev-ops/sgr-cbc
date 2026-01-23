@@ -12,11 +12,6 @@ interface TareaEnRiesgo {
     en_riesgo: boolean
 }
 
-interface TareaConDocumento {
-    tarea_id: string
-    tiene_comprobante_pago: boolean
-}
-
 interface ConfigRiesgo {
     dias_sin_pago_para_riesgo: number
     habilitado: boolean
@@ -234,23 +229,33 @@ export async function obtenerTareasEnRiesgoDetalle(
             contribuyente_id: string
             id_obligacion: string
             fecha_estado_presentado: string
-            cliente: { nombre_comercial: string } | null
-            contribuyente: { rfc: string } | null
-            obligacion: { nombre_corto: string } | null
+            cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+            contribuyente: { rfc: string } | { rfc: string }[] | null
+            obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
         }
 
-        const tareasDetalle: TareaRiesgoDetalle[] = (tareas as TareaRaw[] || []).map(t => {
+        // Helper to extract first element if array
+        function first<T>(val: T | T[] | null | undefined): T | null {
+            if (val == null) return null
+            return Array.isArray(val) ? val[0] ?? null : val
+        }
+
+        const tareasDetalle: TareaRiesgoDetalle[] = ((tareas ?? []) as unknown as TareaRaw[]).map(t => {
             const fechaPresentado = new Date(t.fecha_estado_presentado)
             const diasSinPago = Math.floor((Date.now() - fechaPresentado.getTime()) / (1000 * 60 * 60 * 24))
+
+            const cliente = first(t.cliente)
+            const contribuyente = first(t.contribuyente)
+            const obligacion = first(t.obligacion)
 
             return {
                 tarea_id: t.tarea_id,
                 cliente_id: t.cliente_id,
-                cliente_nombre: t.cliente?.nombre_comercial || 'Sin cliente',
+                cliente_nombre: cliente?.nombre_comercial || 'Sin cliente',
                 contribuyente_id: t.contribuyente_id,
-                rfc: t.contribuyente?.rfc || 'N/A',
+                rfc: contribuyente?.rfc || 'N/A',
                 id_obligacion: t.id_obligacion,
-                obligacion_nombre: t.obligacion?.nombre_corto || t.id_obligacion,
+                obligacion_nombre: obligacion?.nombre_corto || t.id_obligacion,
                 fecha_estado_presentado: t.fecha_estado_presentado,
                 dias_sin_pago: diasSinPago
             }
@@ -399,15 +404,22 @@ export async function obtenerConteoRiesgoPorCliente(
 
         interface TareaClienteRaw {
             cliente_id: string
-            cliente: { nombre_comercial: string } | null
+            cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+        }
+
+        // Helper to extract first element if array
+        function firstEl<T>(val: T | T[] | null | undefined): T | null {
+            if (val == null) return null
+            return Array.isArray(val) ? val[0] ?? null : val
         }
 
         // Agrupar por cliente
         const conteoPorCliente = new Map<string, { nombre: string; count: number }>()
 
-        for (const t of data as TareaClienteRaw[]) {
+        for (const t of (data as unknown as TareaClienteRaw[])) {
             const clienteId = t.cliente_id
-            const nombreCliente = t.cliente?.nombre_comercial || 'Sin nombre'
+            const cliente = firstEl(t.cliente)
+            const nombreCliente = cliente?.nombre_comercial || 'Sin nombre'
 
             if (conteoPorCliente.has(clienteId)) {
                 conteoPorCliente.get(clienteId)!.count++

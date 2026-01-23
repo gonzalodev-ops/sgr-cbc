@@ -44,9 +44,13 @@ export default function EventoForm({
         if (evento) {
             setFormData(evento)
         } else if (fechaSeleccionada) {
+            // Usar métodos locales para evitar desplazamiento por zona horaria
+            const year = fechaSeleccionada.getFullYear()
+            const month = String(fechaSeleccionada.getMonth() + 1).padStart(2, '0')
+            const day = String(fechaSeleccionada.getDate()).padStart(2, '0')
             setFormData(prev => ({
                 ...prev,
-                fecha: fechaSeleccionada.toISOString().split('T')[0]
+                fecha: `${year}-${month}-${day}`
             }))
         }
     }, [evento, fechaSeleccionada])
@@ -162,7 +166,7 @@ export default function EventoForm({
                         </label>
                         <select
                             value={formData.tipo}
-                            onChange={(e) => setFormData({ ...formData, tipo: e.target.value as any })}
+                            onChange={(e) => setFormData({ ...formData, tipo: e.target.value as Evento['tipo'] })}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="REUNION">Reunión</option>

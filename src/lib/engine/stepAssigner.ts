@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import logger from '@/lib/utils/logger'
 
 /**
  * Motor de asignación de pasos
@@ -17,17 +16,6 @@ interface ProcesoPaso {
     evidencia_requerida: boolean
 }
 
-interface TareaStep {
-    tarea_id: string
-    proceso_paso_id: string
-    titulo: string
-    orden: number
-    peso_pct: number
-    tipo_colaborador: string | null
-    completado: boolean
-    completado_at: string | null
-    responsable_usuario_id: string | null
-}
 
 interface UserInfo {
     nombre: string

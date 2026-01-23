@@ -66,10 +66,10 @@ export default function CalendarioPage() {
     const [eventoEditar, setEventoEditar] = useState<Evento | null>(null)
     const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | undefined>(undefined)
 
-    const supabase = createBrowserClient(
+    const supabase = useMemo(() => createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    ), [])
 
     // Calcular rango de fechas según la vista
     const rangoFechas = useMemo(() => {
@@ -96,8 +96,15 @@ export default function CalendarioPage() {
             setLoading(true)
 
             const { inicio, fin } = rangoFechas
-            const inicioStr = inicio.toISOString().split('T')[0]
-            const finStr = fin.toISOString().split('T')[0]
+            // Formatear fecha local para evitar desplazamiento por zona horaria
+            const formatFechaLocal = (d: Date) => {
+                const year = d.getFullYear()
+                const month = String(d.getMonth() + 1).padStart(2, '0')
+                const day = String(d.getDate()).padStart(2, '0')
+                return `${year}-${month}-${day}`
+            }
+            const inicioStr = formatFechaLocal(inicio)
+            const finStr = formatFechaLocal(fin)
 
             // Cargar tareas
             const { data: tareasData } = await supabase
@@ -110,7 +117,7 @@ export default function CalendarioPage() {
                     cliente:cliente_id(nombre_comercial),
                     contribuyente:contribuyente_id(rfc),
                     obligacion:id_obligacion(nombre_corto),
-                    responsable:responsable_usuario_id(nombre, user_id)
+                    responsable:users!responsable_usuario_id(nombre, user_id)
                 `)
                 .gte('fecha_limite_oficial', inicioStr)
                 .lte('fecha_limite_oficial', finStr)
@@ -132,7 +139,17 @@ export default function CalendarioPage() {
                 .eq('activo', true)
 
             // Transformar datos de Supabase (relaciones vienen como arrays)
-            setTareas(tareasData?.map((t: any) => ({
+            interface TareaSupabaseRow {
+                tarea_id: string
+                fecha_limite_oficial: string
+                estado: string
+                periodo_fiscal: string
+                cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+                contribuyente: { rfc: string } | { rfc: string }[] | null
+                obligacion: { nombre_corto: string } | { nombre_corto: string }[] | null
+                responsable: { nombre: string; user_id: string } | { nombre: string; user_id: string }[] | null
+            }
+            setTareas((tareasData as TareaSupabaseRow[] | null)?.map((t) => ({
                 ...t,
                 cliente: Array.isArray(t.cliente) ? t.cliente[0] : t.cliente,
                 contribuyente: Array.isArray(t.contribuyente) ? t.contribuyente[0] : t.contribuyente,
@@ -145,7 +162,7 @@ export default function CalendarioPage() {
         }
 
         fetchData()
-    }, [rangoFechas])
+    }, [rangoFechas, supabase])
 
     // Mapear estado de tarea a estado para visualización
     const mapearEstadoTarea = (estado: string): string => {
@@ -242,7 +259,17 @@ export default function CalendarioPage() {
         setMostrarFormEvento(true)
     }
 
-    const handleSaveEvento = async (eventoData: any) => {
+    interface EventoFormData {
+        evento_id?: string
+        titulo: string
+        descripcion: string
+        fecha: string
+        hora?: string | null
+        tipo: 'REUNION' | 'RECORDATORIO' | 'OTRO'
+        equipo_id?: string | null
+    }
+
+    const handleSaveEvento = async (eventoData: EventoFormData) => {
         const { data: userData } = await supabase.auth.getUser()
         const userId = userData?.user?.id
 
@@ -287,11 +314,12 @@ export default function CalendarioPage() {
 
         // Recargar eventos
         const { inicio, fin } = rangoFechas
+        const formatLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         const { data: eventosData } = await supabase
             .from('evento_calendario')
             .select('*')
-            .gte('fecha', inicio.toISOString().split('T')[0])
-            .lte('fecha', fin.toISOString().split('T')[0])
+            .gte('fecha', formatLocal(inicio))
+            .lte('fecha', formatLocal(fin))
             .eq('activo', true)
             .order('fecha')
 
@@ -311,11 +339,12 @@ export default function CalendarioPage() {
 
         // Recargar eventos
         const { inicio, fin } = rangoFechas
+        const formatLocal = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
         const { data: eventosData } = await supabase
             .from('evento_calendario')
             .select('*')
-            .gte('fecha', inicio.toISOString().split('T')[0])
-            .lte('fecha', fin.toISOString().split('T')[0])
+            .gte('fecha', formatLocal(inicio))
+            .lte('fecha', formatLocal(fin))
             .eq('activo', true)
             .order('fecha')
 

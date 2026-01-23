@@ -57,8 +57,12 @@ export default function CalendarioMensual({
         itemsPorFecha[fechaKey].push(item)
     })
 
+    // Formatear fecha usando métodos locales para evitar desplazamiento por zona horaria
     const formatearFecha = (fecha: Date) => {
-        return fecha.toISOString().split('T')[0]
+        const year = fecha.getFullYear()
+        const month = String(fecha.getMonth() + 1).padStart(2, '0')
+        const day = String(fecha.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
     }
 
     const esHoy = (fecha: Date) => {

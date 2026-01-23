@@ -1,0 +1,120 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: [main, master, develop, 'claude/**']
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: false
+        default: 'claude/consolidated-fixes-6Ksdb'
+      base_url:
+        description: 'Base URL to test against'
+        required: false
+        default: ''
+
+env:
+  # URL de la aplicación para testing (puede ser sobreescrita por input)
+  BASE_URL: ${{ inputs.base_url || 'https://sgr-cbc-git-claude-consolidat-da85f8-gonzalos-projects-c2b87390.vercel.app' }}
+
+jobs:
+  test-colaborador:
+    name: Tests E2E - COLABORADOR
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Check URL accessibility
+        run: |
+          echo "Testing URL: $BASE_URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/login" || echo "000")
+          echo "HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "401" ]; then
+            echo "::warning::URL returns 401 - Vercel Deployment Protection may be enabled"
+            echo "To fix: Disable Deployment Protection in Vercel Settings or add VERCEL_AUTOMATION_BYPASS_SECRET"
+          fi
+
+      - name: Run Playwright tests - COLABORADOR
+        run: npx playwright test tests/colaborador.spec.ts --reporter=html
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+          # Si tienes Vercel Automation Bypass configurado, añade el secret:
+          # VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-colaborador
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-screenshots-colaborador
+          path: test-results/
+          retention-days: 7
+
+  test-lider:
+    name: Tests E2E - LIDER
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Playwright tests - LIDER
+        run: npx playwright test tests/lider.spec.ts --reporter=html
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-lider
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload test screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-screenshots-lider
+          path: test-results/
+          retention-days: 7

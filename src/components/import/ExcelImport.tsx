@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, X } from 'lucide-react'
 
 interface ImportResult {
@@ -49,14 +49,88 @@ export function ExcelImport({ onImport, tipo }: ExcelImportProps) {
         setPreview(null)
 
         try {
-            const buffer = await file.arrayBuffer()
-            const workbook = XLSX.read(buffer, { type: 'array' })
+            let rawData: Record<string, unknown>[] = []
+            let headers: string[] = []
 
-            const sheetName = workbook.SheetNames[0]
-            const sheet = workbook.Sheets[sheetName]
+            if (file.name.endsWith('.csv')) {
+                // Parse CSV manually
+                const text = await file.text()
+                const lines = text.split(/\r?\n/).filter(line => line.trim())
 
-            // Convertir a JSON usando los headers del archivo
-            const rawData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet)
+                if (lines.length === 0) {
+                    setResult({
+                        success: false,
+                        message: 'El archivo está vacío',
+                        errors: ['No se encontraron datos']
+                    })
+                    setLoading(false)
+                    return
+                }
+
+                // Parse CSV header
+                headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''))
+
+                // Parse CSV rows
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''))
+                    const rowData: Record<string, unknown> = {}
+                    headers.forEach((header, index) => {
+                        if (header && values[index] !== undefined) {
+                            rowData[header] = values[index]
+                        }
+                    })
+                    if (Object.keys(rowData).length > 0) {
+                        rawData.push(rowData)
+                    }
+                }
+            } else {
+                // Parse Excel files with ExcelJS
+                const buffer = await file.arrayBuffer()
+                const workbook = new ExcelJS.Workbook()
+                await workbook.xlsx.load(buffer)
+
+                const worksheet = workbook.worksheets[0]
+                if (!worksheet || worksheet.rowCount === 0) {
+                    setResult({
+                        success: false,
+                        message: 'El archivo está vacío',
+                        errors: ['No se encontraron datos en la primera hoja']
+                    })
+                    setLoading(false)
+                    return
+                }
+
+                // Get headers from first row
+                const headerRow = worksheet.getRow(1)
+                headerRow.eachCell((cell, colNumber) => {
+                    headers[colNumber - 1] = String(cell.value || '')
+                })
+
+                // Convert rows to JSON
+                worksheet.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) return // Skip header row
+                    const rowData: Record<string, unknown> = {}
+                    row.eachCell((cell, colNumber) => {
+                        const header = headers[colNumber - 1]
+                        if (header) {
+                            rowData[header] = cell.value
+                        }
+                    })
+                    if (Object.keys(rowData).length > 0) {
+                        rawData.push(rowData)
+                    }
+                })
+            }
+
+            if (headers.length === 0) {
+                setResult({
+                    success: false,
+                    message: 'El archivo está vacío',
+                    errors: ['No se encontraron encabezados']
+                })
+                setLoading(false)
+                return
+            }
 
             if (rawData.length === 0) {
                 setResult({
@@ -69,7 +143,7 @@ export function ExcelImport({ onImport, tipo }: ExcelImportProps) {
             }
 
             // Validar headers
-            const fileHeaders = Object.keys(rawData[0])
+            const fileHeaders = headers
             const missingHeaders = expectedHeaders.filter(h => !fileHeaders.includes(h))
 
             if (missingHeaders.length > 0) {

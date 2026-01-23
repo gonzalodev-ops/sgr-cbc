@@ -20,6 +20,15 @@ interface DistribucionProceso {
     cantidad: number
 }
 
+// Supabase query result type
+interface TareaDistribucionRow {
+    tarea_id: string
+    cliente_id: string
+    proceso_id: string
+    cliente: { cliente_id: string; nombre_comercial: string } | { cliente_id: string; nombre_comercial: string }[] | null
+    proceso: { proceso_id: string; nombre: string } | { proceso_id: string; nombre: string }[] | null
+}
+
 export default function DistribucionTrabajo({ userId }: DistribucionTrabajoProps) {
     const [distribucionClientes, setDistribucionClientes] = useState<DistribucionCliente[]>([])
     const [distribucionProcesos, setDistribucionProcesos] = useState<DistribucionProceso[]>([])
@@ -66,7 +75,7 @@ export default function DistribucionTrabajo({ userId }: DistribucionTrabajoProps
 
                 // 2. Agrupar por cliente
                 const clientesMap = new Map<string, DistribucionCliente>()
-                tareasData.forEach((tarea: any) => {
+                ;(tareasData as TareaDistribucionRow[]).forEach((tarea: TareaDistribucionRow) => {
                     const cliente = Array.isArray(tarea.cliente) ? tarea.cliente[0] : tarea.cliente
                     if (cliente?.cliente_id) {
                         const clienteId = cliente.cliente_id
@@ -85,7 +94,7 @@ export default function DistribucionTrabajo({ userId }: DistribucionTrabajoProps
 
                 // 3. Agrupar por proceso
                 const procesosMap = new Map<string, DistribucionProceso>()
-                tareasData.forEach((tarea: any) => {
+                ;(tareasData as TareaDistribucionRow[]).forEach((tarea: TareaDistribucionRow) => {
                     const proceso = Array.isArray(tarea.proceso) ? tarea.proceso[0] : tarea.proceso
                     if (proceso?.proceso_id) {
                         const procesoId = proceso.proceso_id
@@ -110,9 +119,9 @@ export default function DistribucionTrabajo({ userId }: DistribucionTrabajoProps
 
                 setDistribucionClientes(clientes)
                 setDistribucionProcesos(procesos)
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error al cargar distribución:', err)
-                setError(err.message || 'Error al cargar distribución de trabajo')
+                setError(err instanceof Error ? err.message : 'Error al cargar distribución de trabajo')
             } finally {
                 setLoading(false)
             }

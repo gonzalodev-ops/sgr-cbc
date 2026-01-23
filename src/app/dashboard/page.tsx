@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
 import {
     ESTADO_CONFIG,
@@ -12,10 +13,18 @@ import {
 } from '@/lib/data/mockData'
 import { Link, CheckCircle, Shield, AlertCircle, RotateCcw, Filter, Calendar, AlertTriangle } from 'lucide-react'
 import AjusteFechaModal from '@/components/tarea/AjusteFechaModal'
+import { useUserRole } from '@/lib/hooks/useUserRole'
 
 // Constantes
 const QUERY_LIMIT = 500
 const PUNTOS_BASE_DEFAULT = 50
+
+// Extended Entregable with DB-specific fields
+interface EntregableExtended extends Entregable {
+    estadoOriginal: string
+    enRiesgo: boolean
+    fechaLimite: string | null
+}
 
 // Helper to create client only on client-side
 function getSupabaseClient() {
@@ -27,12 +36,30 @@ function getSupabaseClient() {
 }
 
 export default function TMRPage() {
-    const [entregables, setEntregables] = useState<Entregable[]>([])
+    const [entregables, setEntregables] = useState<EntregableExtended[]>([])
     const [loading, setLoading] = useState(true)
     const [modalAjusteFecha, setModalAjusteFecha] = useState<{ tareaId: string; fechaActual: string } | null>(null)
+    const router = useRouter()
 
     // Lazy initialization - only creates client on client-side
     const supabase = useMemo(() => getSupabaseClient(), [])
+
+    // Get user role and redirect COLABORADOR to their home page
+    const { rol, isLoading: isRoleLoading } = useUserRole()
+
+    useEffect(() => {
+        // Redirect non-allowed roles - TMR is only for SOCIO, ADMIN, AUDITOR
+        if (!isRoleLoading && rol) {
+            const tmrAllowedRoles = ['SOCIO', 'ADMIN', 'AUDITOR']
+            if (!tmrAllowedRoles.includes(rol)) {
+                const homePages: Record<string, string> = {
+                    'COLABORADOR': '/dashboard/mi-dia',
+                    'LIDER': '/dashboard/equipo',
+                }
+                router.replace(homePages[rol] || '/dashboard/mi-dia')
+            }
+        }
+    }, [rol, isRoleLoading, router])
 
     // Cargar datos de Supabase
     useEffect(() => {
@@ -53,14 +80,19 @@ export default function TMRPage() {
 
             interface TeamMemberData {
                 user_id: string
-                teams: { nombre: string } | null
+                teams: { nombre: string } | { nombre: string }[] | null
             }
 
             const userTeamMap: Record<string, string> = {}
             if (teamData) {
-                (teamData as TeamMemberData[]).forEach((tm) => {
-                    if (tm.user_id && tm.teams?.nombre) {
-                        userTeamMap[tm.user_id] = tm.teams.nombre
+                (teamData as unknown as TeamMemberData[]).forEach((tm) => {
+                    if (tm.user_id && tm.teams) {
+                        const teamNombre = Array.isArray(tm.teams)
+                            ? tm.teams[0]?.nombre
+                            : tm.teams.nombre
+                        if (teamNombre) {
+                            userTeamMap[tm.user_id] = teamNombre
+                        }
                     }
                 })
             }
@@ -88,11 +120,10 @@ export default function TMRPage() {
                 })
             }
 
-            // 3. Traer evidencias existentes (resuelve TODO de tarea_documento)
+            // 3. Traer tareas que tienen documentos adjuntos (evidencia)
             const { data: evidenciaData } = await client
                 .from('tarea_documento')
                 .select('tarea_id')
-                .eq('tipo', 'EVIDENCIA')
                 .limit(QUERY_LIMIT)
 
             const tareasConEvidencia = new Set<string>()
@@ -148,7 +179,15 @@ export default function TMRPage() {
             }
 
             if (data) {
-                // Interfaces para el mapeo de datos
+                // Interfaces para el mapeo de datos (Supabase puede devolver arrays para relaciones)
+                interface ContribuyenteData {
+                    rfc: string
+                    razon_social: string
+                    nombre_comercial: string | null
+                    team_id: string | null
+                    equipo: { nombre: string } | { nombre: string }[] | null
+                }
+
                 interface TareaData {
                     tarea_id: string
                     cliente_id: string
@@ -156,19 +195,20 @@ export default function TMRPage() {
                     en_riesgo: boolean
                     id_obligacion: string
                     responsable_usuario_id: string | null
-                    contribuyente: {
-                        rfc: string
-                        razon_social: string
-                        nombre_comercial: string | null
-                        team_id: string | null
-                        equipo: { nombre: string } | null
-                    } | null
-                    cliente: { nombre_comercial: string } | null
-                    responsable: { nombre: string; rol_global: string } | null
-                    obligacion: { nombre_corto: string; periodicidad: string } | null
+                    fecha_limite_oficial: string | null
+                    contribuyente: ContribuyenteData | ContribuyenteData[] | null
+                    cliente: { nombre_comercial: string } | { nombre_comercial: string }[] | null
+                    responsable: { nombre: string; rol_global: string } | { nombre: string; rol_global: string }[] | null
+                    obligacion: { nombre_corto: string; periodicidad: string } | { nombre_corto: string; periodicidad: string }[] | null
                 }
 
-                const mappedData: Entregable[] = (data as TareaData[]).map((t) => {
+                // Helper to extract first element if array or return as-is
+                function first<T>(val: T | T[] | null | undefined): T | null {
+                    if (val == null) return null
+                    return Array.isArray(val) ? val[0] ?? null : val
+                }
+
+                const mappedData: EntregableExtended[] = (data as unknown as TareaData[]).map((t) => {
                     // Mapear talla de BD a formato TMR
                     const dbTalla = clienteTallaMap[t.cliente_id] || 'MEDIANA'
                     const tallaMap: Record<string, string> = {
@@ -179,16 +219,23 @@ export default function TMRPage() {
                         'EXTRA_GRANDE': 'XL'
                     }
 
+                    // Extraer datos de relaciones (pueden ser arrays)
+                    const contribuyente = first(t.contribuyente)
+                    const cliente = first(t.cliente)
+                    const responsable = first(t.responsable)
+                    const obligacion = first(t.obligacion)
+                    const equipoContribuyente = contribuyente ? first(contribuyente.equipo) : null
+
                     return {
                         id: t.tarea_id,
-                        rfc: t.contribuyente?.rfc || 'N/A',
-                        cliente: t.cliente?.nombre_comercial || t.contribuyente?.nombre_comercial || 'N/A',
-                        entregable: t.obligacion?.nombre_corto || t.id_obligacion,
+                        rfc: contribuyente?.rfc || 'N/A',
+                        cliente: cliente?.nombre_comercial || contribuyente?.nombre_comercial || 'N/A',
+                        entregable: obligacion?.nombre_corto || t.id_obligacion,
                         talla: (tallaMap[dbTalla] || 'M') as Entregable['talla'],
                         puntosBase: PUNTOS_BASE_DEFAULT, // Scoring engine pendiente de implementación
-                        responsable: t.responsable?.nombre || 'Sin asignar',
-                        rol: t.responsable?.rol_global || 'COLABORADOR',
-                        tribu: t.contribuyente?.equipo?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
+                        responsable: responsable?.nombre || 'Sin asignar',
+                        rol: responsable?.rol_global || 'COLABORADOR',
+                        tribu: equipoContribuyente?.nombre || userTeamMap[t.responsable_usuario_id || ''] || 'Sin equipo',
                         estado: mapEstado(t.estado),
                         estadoOriginal: t.estado,
                         enRiesgo: t.en_riesgo || false,
@@ -258,11 +305,11 @@ export default function TMRPage() {
         , [entregablesFiltrados])
 
     const tareasEsperandoPago = useMemo(() =>
-        entregables.filter(e => (e as any).estadoOriginal === 'presentado').length
+        entregables.filter(e => e.estadoOriginal === 'presentado').length
         , [entregables])
 
     const tareasEnRiesgo = useMemo(() =>
-        entregables.filter(e => (e as any).enRiesgo === true).length
+        entregables.filter(e => e.enRiesgo === true).length
         , [entregables])
 
     const hayFiltrosActivos = filtroRFC !== 'all' || filtroTribu !== 'all' || filtroEntregable !== 'all' || filtroResponsable !== 'all'
@@ -357,6 +404,16 @@ export default function TMRPage() {
             case 'pendiente': return <Shield className="text-yellow-500" size={18} />
             default: return <span className="text-slate-300">-</span>
         }
+    }
+
+    // Show loading while checking role or if non-allowed role (will redirect)
+    if (isRoleLoading || (rol && !['SOCIO', 'ADMIN', 'AUDITOR'].includes(rol))) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-slate-700 font-medium">Cargando...</p>
+            </div>
+        )
     }
 
     return (
@@ -554,7 +611,7 @@ export default function TMRPage() {
                                                         >
                                                             {estadoConfig.label}
                                                         </button>
-                                                        {(e as any).enRiesgo && (
+                                                        {e.enRiesgo && (
                                                             <div className="relative group">
                                                                 <span className="px-2 py-0.5 bg-orange-100 text-orange-700 border border-orange-300 rounded text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 animate-pulse">
                                                                     <AlertTriangle size={10} /> RIESGO
@@ -564,7 +621,7 @@ export default function TMRPage() {
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {(e as any).estadoOriginal === 'presentado' && !(e as any).enRiesgo && (
+                                                        {e.estadoOriginal === 'presentado' && !e.enRiesgo && (
                                                             <div className="relative group">
                                                                 <span className="px-2 py-0.5 bg-red-100 text-red-700 border border-red-300 rounded text-[9px] font-bold uppercase tracking-wide">
                                                                     SIN PAGO
@@ -578,7 +635,7 @@ export default function TMRPage() {
                                                 </td>
                                                 <td
                                                     className="p-4 text-center bg-purple-50/20 border-l border-slate-100 cursor-pointer hover:bg-purple-100/50 transition-colors"
-                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: (e as any).fechaLimite })}
+                                                    onClick={() => setModalAjusteFecha({ tareaId: e.id, fechaActual: e.fechaLimite || '' })}
                                                 >
                                                     <Calendar className="text-purple-600 mx-auto" size={16} />
                                                 </td>

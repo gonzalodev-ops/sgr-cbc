@@ -24,6 +24,19 @@ interface ObligacionInfo {
     cubierta: boolean
 }
 
+// Supabase query result types
+interface ClienteContribuyenteRow {
+    contribuyente_id: string
+}
+
+interface ServicioObligacionRow {
+    id_obligacion: string
+}
+
+interface ContribuyenteRegimenRow {
+    c_regimen: string
+}
+
 export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProps) {
     const [rfcsObligaciones, setRfcsObligaciones] = useState<RFCObligaciones[]>([])
     const [loading, setLoading] = useState(true)
@@ -55,7 +68,7 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                 }
 
                 // Extraer IDs de contribuyentes
-                const contribuyenteIds = clienteContribData.map((cc: any) => cc.contribuyente_id).filter(Boolean)
+                const contribuyenteIds = clienteContribData.map((cc: ClienteContribuyenteRow) => cc.contribuyente_id).filter(Boolean)
 
                 if (contribuyenteIds.length === 0) {
                     setRfcsObligaciones([])
@@ -102,14 +115,15 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
 
                 // Construir set de obligaciones cubiertas
                 const obligacionesCubiertas = new Set<string>()
-                ;(serviciosData || []).forEach((cs: any) => {
-                    const servicio = cs.servicio
+                ;(serviciosData || []).forEach((cs) => {
+                    const servicioData = cs.servicio
+                    const servicio = Array.isArray(servicioData) ? servicioData[0] : servicioData
                     if (servicio) {
                         const servicioObligaciones = Array.isArray(servicio.servicio_obligacion)
                             ? servicio.servicio_obligacion
                             : (servicio.servicio_obligacion ? [servicio.servicio_obligacion] : [])
 
-                        servicioObligaciones.forEach((so: any) => {
+                        servicioObligaciones.forEach((so: ServicioObligacionRow) => {
                             if (so?.id_obligacion) {
                                 obligacionesCubiertas.add(so.id_obligacion)
                             }
@@ -129,7 +143,7 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                         : (contrib.contribuyente_regimen ? [contrib.contribuyente_regimen] : [])
 
                     const regimenesIds = regimenes
-                        .map((cr: any) => cr.c_regimen)
+                        .map((cr: ContribuyenteRegimenRow) => cr.c_regimen)
                         .filter(Boolean)
 
                     if (regimenesIds.length === 0) {
@@ -166,8 +180,9 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                     // Construir lista de obligaciones con estado de cobertura
                     const obligacionesMap = new Map<string, ObligacionInfo>()
 
-                    ;(obligacionesData || []).forEach((ro: any) => {
-                        const oblig = ro.obligacion_fiscal
+                    ;(obligacionesData || []).forEach((ro) => {
+                        const obligData = ro.obligacion_fiscal
+                        const oblig = Array.isArray(obligData) ? obligData[0] : obligData
                         if (oblig) {
                             obligacionesMap.set(oblig.id_obligacion, {
                                 idObligacion: oblig.id_obligacion,
@@ -190,9 +205,9 @@ export default function MatrizObligaciones({ clienteId }: MatrizObligacionesProp
                 }
 
                 setRfcsObligaciones(resultado)
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error al cargar matriz:', err)
-                setError(err.message || 'Error al cargar la matriz de obligaciones')
+                setError(err instanceof Error ? err.message : 'Error al cargar la matriz de obligaciones')
             } finally {
                 setLoading(false)
             }
