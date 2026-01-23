@@ -48,9 +48,16 @@ export default function TMRPage() {
     const { rol, isLoading: isRoleLoading } = useUserRole()
 
     useEffect(() => {
-        // Redirect COLABORADOR to Mi Dia - TMR is only for SOCIO, ADMIN, AUDITOR
-        if (!isRoleLoading && rol === 'COLABORADOR') {
-            router.replace('/dashboard/mi-dia')
+        // Redirect non-allowed roles - TMR is only for SOCIO, ADMIN, AUDITOR
+        if (!isRoleLoading && rol) {
+            const tmrAllowedRoles = ['SOCIO', 'ADMIN', 'AUDITOR']
+            if (!tmrAllowedRoles.includes(rol)) {
+                const homePages: Record<string, string> = {
+                    'COLABORADOR': '/dashboard/mi-dia',
+                    'LIDER': '/dashboard/equipo',
+                }
+                router.replace(homePages[rol] || '/dashboard/mi-dia')
+            }
         }
     }, [rol, isRoleLoading, router])
 
@@ -399,8 +406,8 @@ export default function TMRPage() {
         }
     }
 
-    // Show loading while checking role or if COLABORADOR (will redirect)
-    if (isRoleLoading || rol === 'COLABORADOR') {
+    // Show loading while checking role or if non-allowed role (will redirect)
+    if (isRoleLoading || (rol && !['SOCIO', 'ADMIN', 'AUDITOR'].includes(rol))) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
