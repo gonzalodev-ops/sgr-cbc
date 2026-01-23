@@ -13,7 +13,10 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
-  AlertCircle
+  AlertCircle,
+  Search,
+  LayoutGrid,
+  Users
 } from 'lucide-react'
 import { usePeriodo } from '@/lib/context/PeriodoContext'
 import {
@@ -70,6 +73,10 @@ export default function MiDiaPage() {
   const [seccionCorrienteExpandida, setSeccionCorrienteExpandida] = useState(true)
   const [selectedTareaId, setSelectedTareaId] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  // MEJORA-002: Toggle grouping (urgencia vs cliente)
+  const [groupBy, setGroupBy] = useState<'urgencia' | 'cliente'>('urgencia')
+  // MEJORA-003: Quick search by RFC or cliente
+  const [searchTerm, setSearchTerm] = useState('')
 
   const { periodoEnConclusion, periodoCorriente, getPeriodoLabel } = usePeriodo()
 
@@ -156,13 +163,23 @@ export default function MiDiaPage() {
     }
   }
 
+  // MEJORA-003: Filter tasks by search term
+  const tareasFiltradas = useMemo(() => {
+    if (!searchTerm.trim()) return tareas
+    const term = searchTerm.toLowerCase().trim()
+    return tareas.filter(t =>
+      t.contribuyente?.rfc?.toLowerCase().includes(term) ||
+      t.cliente?.nombre_comercial?.toLowerCase().includes(term)
+    )
+  }, [tareas, searchTerm])
+
   // Algoritmo de priorización y agrupación por periodo
   const { tareasConclusion, tareasCorriente, contadores } = useMemo(() => {
     const hoy = new Date()
     hoy.setHours(0, 0, 0, 0)
 
-    // Clasificar tareas por periodo y prioridad
-    const categorizadas: TareaConCategoria[] = tareas.map(tarea => {
+    // Clasificar tareas por periodo y prioridad (usando tareas filtradas)
+    const categorizadas: TareaConCategoria[] = tareasFiltradas.map(tarea => {
       const fechaLimite = new Date(tarea.fecha_limite_oficial)
       fechaLimite.setHours(0, 0, 0, 0)
 
@@ -217,7 +234,31 @@ export default function MiDiaPage() {
     }
 
     return { tareasConclusion, tareasCorriente, contadores }
-  }, [tareas, periodoActual])
+  }, [tareasFiltradas, periodoActual])
+
+  // MEJORA-002: Group tasks by client when groupBy is 'cliente'
+  const tareasPorCliente = useMemo(() => {
+    if (groupBy !== 'cliente') return null
+
+    const allTareas = [...tareasConclusion, ...tareasCorriente]
+    const grouped = new Map<string, TareaConCategoria[]>()
+
+    allTareas.forEach(tarea => {
+      const clienteNombre = tarea.cliente?.nombre_comercial || 'Sin Cliente'
+      if (!grouped.has(clienteNombre)) {
+        grouped.set(clienteNombre, [])
+      }
+      grouped.get(clienteNombre)!.push(tarea)
+    })
+
+    // Sort clients by number of tasks (descending) and sort tasks within each client by priority
+    return Array.from(grouped.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cliente, tareas]) => ({
+        cliente,
+        tareas: tareas.sort((a, b) => a.ordenPrioridad - b.ordenPrioridad)
+      }))
+  }, [tareasConclusion, tareasCorriente, groupBy])
 
   // Cambiar estado de tarea
   async function cambiarEstado(tareaId: string, nuevoEstado: string) {
@@ -512,7 +553,51 @@ export default function MiDiaPage() {
         </div>
       </div>
 
-      {/* Seccion EN CONCLUSION - Mes anterior */}
+      {/* MEJORA-002 & MEJORA-003: Toolbar with search and grouping toggle */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+        {/* Search input */}
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por RFC o cliente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        {/* Grouping toggle */}
+        <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+          <button
+            onClick={() => setGroupBy('urgencia')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              groupBy === 'urgencia'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <LayoutGrid size={16} />
+            <span>Por Urgencia</span>
+          </button>
+          <button
+            onClick={() => setGroupBy('cliente')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              groupBy === 'cliente'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Users size={16} />
+            <span>Por Cliente</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Conditional rendering based on groupBy */}
+      {groupBy === 'urgencia' ? (
+        <>
+          {/* Seccion EN CONCLUSION - Mes anterior */}
       {contadores.totalConclusion > 0 && (
         <div className="bg-white rounded-xl shadow-sm border-2 border-red-200 overflow-hidden">
           <button
@@ -604,6 +689,38 @@ export default function MiDiaPage() {
           </div>
         )}
       </div>
+        </>
+      ) : (
+        /* MEJORA-002: Client grouping view */
+        <div className="space-y-4">
+          {tareasPorCliente && tareasPorCliente.length > 0 ? (
+            tareasPorCliente.map(({ cliente, tareas }) => (
+              <div key={cliente} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-500 text-white rounded-lg">
+                      <Building2 size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-slate-800">{cliente}</h2>
+                      <p className="text-sm text-slate-500">{tareas.length} tarea{tareas.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {renderTareasList(tareas, 1)}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+              <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+              <h3 className="text-lg font-medium text-slate-800 mb-2">No hay tareas</h3>
+              <p className="text-slate-500">No se encontraron tareas con los filtros actuales.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Leyenda */}
       <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
