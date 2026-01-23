@@ -70,6 +70,19 @@ interface TeamPerformance {
     porcentaje: number
 }
 
+// BUG-003 FIX: Interface para desglose por colaborador
+interface ColaboradorPerformance {
+    responsable_id: string
+    nombre: string
+    email: string
+    equipo: string
+    total: number
+    completadas: number
+    enProgreso: number
+    vencidas: number
+    porcentaje: number
+}
+
 type ViewMode = 'resumen' | 'detalle' | 'critico'
 type AlertFilter = 'all' | 'vencidas' | 'riesgo' | 'seguimiento' | 'semana'
 type SortField = 'cliente' | 'obligacion' | 'responsable' | 'estado' | 'fecha' | 'dias'
@@ -387,6 +400,52 @@ export default function TMR2Page() {
             .sort((a, b) => b.porcentaje - a.porcentaje)
     }, [tareas])
 
+    // BUG-003 FIX: Colaborador Performance for Resumen mode (desglose individual)
+    const colaboradorPerformance = useMemo((): ColaboradorPerformance[] => {
+        const colaboradorMap = new Map<string, ColaboradorPerformance>()
+
+        tareas.forEach(t => {
+            const responsableId = t.responsable_usuario_id || 'sin-asignar'
+            const responsableNombre = t.responsable_nombre || 'Sin Asignar'
+            const responsableEmail = t.responsable_email || ''
+            const equipoNombre = t.equipo_nombre || 'Sin Equipo'
+
+            if (!colaboradorMap.has(responsableId)) {
+                colaboradorMap.set(responsableId, {
+                    responsable_id: responsableId,
+                    nombre: responsableNombre,
+                    email: responsableEmail,
+                    equipo: equipoNombre,
+                    total: 0,
+                    completadas: 0,
+                    enProgreso: 0,
+                    vencidas: 0,
+                    porcentaje: 0
+                })
+            }
+
+            const colaborador = colaboradorMap.get(responsableId)!
+            colaborador.total++
+
+            if (['presentado', 'pagado', 'cerrado'].includes(t.estado)) {
+                colaborador.completadas++
+            } else if (['en_curso', 'pendiente_evidencia', 'en_validacion'].includes(t.estado)) {
+                colaborador.enProgreso++
+            }
+
+            if (isVencida(t)) {
+                colaborador.vencidas++
+            }
+        })
+
+        return Array.from(colaboradorMap.values())
+            .map(c => ({
+                ...c,
+                porcentaje: c.total > 0 ? Math.round((c.completadas / c.total) * 100) : 0
+            }))
+            .sort((a, b) => b.vencidas - a.vencidas || b.total - a.total) // Ordenar por vencidas primero
+    }, [tareas])
+
     // Critico Mode Categories
     const tareasCriticas = useMemo(() => {
         const vencidas = tareas.filter(isVencida)
@@ -679,86 +738,84 @@ export default function TMR2Page() {
                                 />
                             </KPICardGrid>
 
-                            {/* Team Performance */}
+                            {/* BUG-003 FIX: Rendimiento por Colaborador (no por equipo para evitar duplicación) */}
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                                         <Users className="text-blue-600" size={20} />
-                                        Rendimiento por Equipo
+                                        Rendimiento por Colaborador
                                     </h3>
-                                    <span className="text-sm text-slate-500">{teamPerformance.length} equipos</span>
+                                    <span className="text-sm text-slate-500">{colaboradorPerformance.length} colaboradores</span>
                                 </div>
 
-                                <div className="space-y-4">
-                                    {teamPerformance.map(team => (
-                                        <div key={team.team_id} className="border border-slate-200 rounded-lg overflow-hidden">
-                                            <div
-                                                className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                                                onClick={() => toggleTeamExpand(team.team_id)}
-                                            >
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-semibold text-slate-800">{team.nombre}</span>
-                                                        {team.vencidas > 0 && (
-                                                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-bold">
-                                                                {team.vencidas} vencidas
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className={`text-lg font-bold ${
-                                                            team.porcentaje >= 80 ? 'text-green-600' :
-                                                            team.porcentaje >= 50 ? 'text-yellow-600' : 'text-red-600'
-                                                        }`}>
-                                                            {team.porcentaje}%
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-slate-200 text-left">
+                                                <th className="pb-3 font-semibold text-slate-600">Colaborador</th>
+                                                <th className="pb-3 font-semibold text-slate-600">Equipo</th>
+                                                <th className="pb-3 font-semibold text-slate-600 text-center">Total</th>
+                                                <th className="pb-3 font-semibold text-slate-600 text-center">En Progreso</th>
+                                                <th className="pb-3 font-semibold text-slate-600 text-center">Completadas</th>
+                                                <th className="pb-3 font-semibold text-slate-600 text-center">Vencidas</th>
+                                                <th className="pb-3 font-semibold text-slate-600 text-center">Avance</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {colaboradorPerformance.map(col => (
+                                                <tr key={col.responsable_id} className="border-b border-slate-100 hover:bg-slate-50">
+                                                    <td className="py-3">
+                                                        <div>
+                                                            <p className="font-medium text-slate-800">{col.nombre}</p>
+                                                            {col.email && (
+                                                                <p className="text-xs text-slate-500">{col.email}</p>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 text-slate-600">{col.equipo}</td>
+                                                    <td className="py-3 text-center font-medium text-slate-800">{col.total}</td>
+                                                    <td className="py-3 text-center">
+                                                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                                                            {col.enProgreso}
                                                         </span>
-                                                        {expandedTeams.has(team.team_id) ? (
-                                                            <ChevronUp size={16} className="text-slate-400" />
+                                                    </td>
+                                                    <td className="py-3 text-center">
+                                                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                                                            {col.completadas}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3 text-center">
+                                                        {col.vencidas > 0 ? (
+                                                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+                                                                {col.vencidas}
+                                                            </span>
                                                         ) : (
-                                                            <ChevronDown size={16} className="text-slate-400" />
+                                                            <span className="text-slate-400">0</span>
                                                         )}
-                                                    </div>
-                                                </div>
-                                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={`h-full transition-all duration-500 rounded-full ${
-                                                            team.porcentaje >= 80 ? 'bg-green-500' :
-                                                            team.porcentaje >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                                        }`}
-                                                        style={{ width: `${team.porcentaje}%` }}
-                                                    />
-                                                </div>
-                                                <div className="flex gap-4 mt-2 text-xs text-slate-500">
-                                                    <span>Total: {team.total}</span>
-                                                    <span>Completadas: {team.completadas}</span>
-                                                    <span>En Progreso: {team.enProgreso}</span>
-                                                </div>
-                                            </div>
-
-                                            {expandedTeams.has(team.team_id) && (
-                                                <div className="bg-slate-50 p-4 border-t border-slate-200">
-                                                    <div className="grid grid-cols-4 gap-4 text-center">
-                                                        <div>
-                                                            <p className="text-2xl font-bold text-slate-800">{team.total}</p>
-                                                            <p className="text-xs text-slate-500 uppercase">Total</p>
+                                                    </td>
+                                                    <td className="py-3 text-center">
+                                                        <div className="flex items-center gap-2 justify-center">
+                                                            <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full transition-all duration-500 rounded-full ${
+                                                                        col.porcentaje >= 80 ? 'bg-green-500' :
+                                                                        col.porcentaje >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                    }`}
+                                                                    style={{ width: `${col.porcentaje}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className={`text-xs font-bold ${
+                                                                col.porcentaje >= 80 ? 'text-green-600' :
+                                                                col.porcentaje >= 50 ? 'text-yellow-600' : 'text-red-600'
+                                                            }`}>
+                                                                {col.porcentaje}%
+                                                            </span>
                                                         </div>
-                                                        <div>
-                                                            <p className="text-2xl font-bold text-green-600">{team.completadas}</p>
-                                                            <p className="text-xs text-slate-500 uppercase">Completadas</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-2xl font-bold text-blue-600">{team.enProgreso}</p>
-                                                            <p className="text-xs text-slate-500 uppercase">En Progreso</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-2xl font-bold text-red-600">{team.vencidas}</p>
-                                                            <p className="text-xs text-slate-500 uppercase">Vencidas</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
