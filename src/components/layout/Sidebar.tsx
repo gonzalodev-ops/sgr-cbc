@@ -91,7 +91,14 @@ const allNavigation: NavItem[] = [
         name: 'Seguimientos',
         href: '/dashboard/seguimientos',
         icon: TrendingUp,
-        roles: ['LIDER', 'SOCIO', 'ADMIN']
+        roles: ['LIDER']
+    },
+    // Seguimientos Global - Global view for SOCIO and ADMIN (read-only)
+    {
+        name: 'Seguimientos',
+        href: '/dashboard/seguimientos-global',
+        icon: TrendingUp,
+        roles: ['SOCIO', 'ADMIN']
     },
     // Auditorias - Audit view for AUDITOR
     {

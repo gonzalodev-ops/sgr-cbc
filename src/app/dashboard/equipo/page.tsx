@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useCascadeFilters, CascadeFilterConfig } from '@/lib/hooks/useCascadeFilters'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   Users,
@@ -66,8 +67,6 @@ export default function EquipoPage() {
   const [miembros, setMiembros] = useState<TeamMember[]>([])
   const [tareas, setTareas] = useState<TeamTask[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtroMiembro, setFiltroMiembro] = useState<string>('all')
-  const [filtroEstado, setFiltroEstado] = useState<string>('all')
   const [tareaSeleccionada, setTareaSeleccionada] = useState<TeamTask | null>(null)
   const [showReasignarModal, setShowReasignarModal] = useState(false)
 
@@ -188,6 +187,25 @@ export default function EquipoPage() {
     fetchTeamData()
   }, [supabase, userId, roleLoading])
 
+  // Cascade filter config for team tasks
+  const cascadeConfig: CascadeFilterConfig<TeamTask> = useMemo(() => ({
+    getEquipo: () => teamId,
+    getEquipoLabel: () => teamName,
+    getColaborador: (t) => t.responsable?.user_id || null,
+    getColaboradorLabel: (t) => t.responsable?.nombre || null,
+    getCliente: () => null,
+    getClienteLabel: () => null,
+    getEstado: (t) => t.estado,
+    getEstadoLabel: (t) => ESTADO_TAREA_CONFIG[t.estado as EstadoTarea]?.label || t.estado
+  }), [teamId, teamName])
+
+  const {
+    filters: cascadeFilters,
+    setFilter: setCascadeFilter,
+    options: cascadeOptions,
+    filteredData: tareasPorCascada
+  } = useCascadeFilters(tareas, cascadeConfig)
+
   // Calculate team KPIs
   const kpis = useMemo(() => {
     const totalTareas = tareas.length
@@ -217,16 +235,14 @@ export default function EquipoPage() {
     }
   }, [tareas, miembros])
 
-  // Filter tasks
+  // Filter tasks using cascade data
   const tareasFiltradas = useMemo(() => {
-    return tareas.filter(t => {
-      const matchMiembro = filtroMiembro === 'all' || t.responsable?.user_id === filtroMiembro
-      const matchEstado = filtroEstado === 'all' || t.estado === filtroEstado
+    return tareasPorCascada.filter(t => {
       // Only show active tasks (not closed)
       const isActive = !['cerrado', 'pagado'].includes(t.estado)
-      return matchMiembro && matchEstado && isActive
+      return isActive
     })
-  }, [tareas, filtroMiembro, filtroEstado])
+  }, [tareasPorCascada])
 
   // Group tasks by deadline for calendar view
   const deadlines = useMemo(() => {
@@ -396,8 +412,8 @@ export default function EquipoPage() {
                   <div
                     key={miembro.user_id}
                     className="p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                    onClick={() => setFiltroMiembro(
-                      filtroMiembro === miembro.user_id ? 'all' : miembro.user_id
+                    onClick={() => setCascadeFilter('colaborador',
+                      cascadeFilters.colaborador === miembro.user_id ? 'all' : miembro.user_id
                     )}
                   >
                     <div className="flex justify-between items-center mb-2">
@@ -516,29 +532,27 @@ export default function EquipoPage() {
             Tareas Activas del Equipo
           </h2>
           <div className="flex items-center gap-3">
-            {/* Filter by Member */}
+            {/* Filter by Member - Cascade */}
             <select
-              value={filtroMiembro}
-              onChange={(e) => setFiltroMiembro(e.target.value)}
+              value={cascadeFilters.colaborador}
+              onChange={(e) => setCascadeFilter('colaborador', e.target.value)}
               className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Todos los miembros</option>
-              {miembros.map(m => (
-                <option key={m.user_id} value={m.user_id}>{m.nombre}</option>
+              {cascadeOptions.colaboradores.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
-            {/* Filter by Status */}
+            {/* Filter by Status - Cascade (shows only states present in filtered data) */}
             <select
-              value={filtroEstado}
-              onChange={(e) => setFiltroEstado(e.target.value)}
+              value={cascadeFilters.estado}
+              onChange={(e) => setCascadeFilter('estado', e.target.value)}
               className="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Todos los estados</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="en_curso">En Curso</option>
-              <option value="en_validacion">En Validacion</option>
-              <option value="bloqueado_cliente">Bloqueado</option>
-              <option value="presentado">Presentado</option>
+              {cascadeOptions.estados.map(e => (
+                <option key={e.value} value={e.value}>{e.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -640,7 +654,7 @@ export default function EquipoPage() {
               </p>
               <div className="mt-3 flex gap-2">
                 <button
-                  onClick={() => setFiltroEstado('bloqueado_cliente')}
+                  onClick={() => setCascadeFilter('estado', 'bloqueado_cliente')}
                   className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-1"
                 >
                   Ver bloqueadas
