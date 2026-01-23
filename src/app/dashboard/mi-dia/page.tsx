@@ -186,8 +186,9 @@ export default function MiDiaPage() {
     })
 
     // Separar tareas por periodo
+    // BUG-001 FIX: Tareas vencidas van SIEMPRE a conclusión (URGENTE), no a corriente
     const tareasConclusion = categorizadas
-      .filter(t => t.periodoTipo === 'conclusion')
+      .filter(t => t.periodoTipo === 'conclusion' || t.categoria === 'vencidas')
       .sort((a, b) => {
         if (a.ordenPrioridad !== b.ordenPrioridad) {
           return a.ordenPrioridad - b.ordenPrioridad
@@ -196,7 +197,7 @@ export default function MiDiaPage() {
       })
 
     const tareasCorriente = categorizadas
-      .filter(t => t.periodoTipo === 'corriente')
+      .filter(t => t.periodoTipo === 'corriente' && t.categoria !== 'vencidas')
       .sort((a, b) => {
         if (a.ordenPrioridad !== b.ordenPrioridad) {
           return a.ordenPrioridad - b.ordenPrioridad

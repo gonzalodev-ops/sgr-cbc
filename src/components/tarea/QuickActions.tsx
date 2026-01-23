@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
-  Upload,
+  Link2,
   Eye,
   Play,
   FileCheck,
@@ -10,7 +10,8 @@ import {
   MoreHorizontal,
   X,
   AlertCircle,
-  Loader2
+  Loader2,
+  Check
 } from 'lucide-react'
 import { createBrowserClient } from '@supabase/ssr'
 
@@ -37,10 +38,12 @@ export default function QuickActions({
   onViewDetail,
   isLoading = false
 }: QuickActionsProps) {
-  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [showUrlModal, setShowUrlModal] = useState(false)
+  const [urlInput, setUrlInput] = useState('')
+  const [urlError, setUrlError] = useState<string | null>(null)
+  const [urlSuccess, setUrlSuccess] = useState(false)
 
   // Configuracion de acciones por estado
   const getActionConfig = () => {
@@ -105,39 +108,42 @@ export default function QuickActions({
 
   const actionConfig = getActionConfig()
 
-  // Manejar click en subir evidencia
-  const handleUploadClick = () => {
-    setUploadError(null)
-    fileInputRef.current?.click()
+  // Validar que sea una URL valida (http:// o https://)
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url)
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:'
+    } catch {
+      return false
+    }
   }
 
-  // Manejar seleccion de archivo
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  // Abrir modal para agregar URL de evidencia
+  const handleAddEvidenceClick = () => {
+    setUrlError(null)
+    setUrlSuccess(false)
+    setUrlInput('')
+    setShowUrlModal(true)
+  }
 
-    // Validar tipo de archivo
-    const allowedTypes = [
-      'application/pdf',
-      'image/jpeg',
-      'image/png',
-      'application/xml',
-      'text/xml'
-    ]
+  // Guardar URL de evidencia
+  const handleSaveUrl = async () => {
+    const trimmedUrl = urlInput.trim()
 
-    if (!allowedTypes.includes(file.type)) {
-      setUploadError('Tipo de archivo no permitido. Solo PDF, imagenes o XML.')
+    // Validar que no este vacia
+    if (!trimmedUrl) {
+      setUrlError('Por favor ingresa una URL.')
       return
     }
 
-    // Validar tamano (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('El archivo excede el tamano maximo de 10MB.')
+    // Validar formato de URL
+    if (!isValidUrl(trimmedUrl)) {
+      setUrlError('URL invalida. Debe comenzar con http:// o https://')
       return
     }
 
-    setUploading(true)
-    setUploadError(null)
+    setSaving(true)
+    setUrlError(null)
 
     try {
       const supabase = createBrowserClient(
@@ -148,40 +154,27 @@ export default function QuickActions({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuario no autenticado')
 
-      // Generar nombre unico para el archivo
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${tareaId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+      // Extraer nombre del archivo de la URL (o usar un nombre generico)
+      const urlObj = new URL(trimmedUrl)
+      const pathParts = urlObj.pathname.split('/')
+      const nombreArchivo = pathParts[pathParts.length - 1] || 'Evidencia SharePoint/OneDrive'
 
-      // Subir archivo al bucket de evidencias
-      const { error: uploadError } = await supabase.storage
-        .from('evidencias')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-
-      if (uploadError) throw uploadError
-
-      // Obtener URL publica
-      const { data: urlData } = supabase.storage
-        .from('evidencias')
-        .getPublicUrl(fileName)
-
-      // Registrar documento en la base de datos
+      // Registrar documento en la base de datos (solo URL, sin subida de archivo)
       const { error: docError } = await supabase
         .from('tarea_documento')
         .insert({
           tarea_id: tareaId,
           tipo_documento: 'EVIDENCIA',
-          nombre_archivo: file.name,
-          url_archivo: urlData.publicUrl,
-          tamano_bytes: file.size,
-          mime_type: file.type,
+          nombre_archivo: nombreArchivo,
+          url_archivo: trimmedUrl,
+          tamano_bytes: 0,
+          mime_type: 'application/link',
           subido_por: user.id
         })
 
       if (docError) {
-        console.warn('Error registrando documento:', docError)
+        console.error('Error registrando documento:', docError)
+        throw new Error('Error al guardar la URL')
       }
 
       // Registrar evento
@@ -192,25 +185,28 @@ export default function QuickActions({
           tipo_evento: 'documento_subido',
           actor_usuario_id: user.id,
           metadata_json: {
-            nombre_archivo: file.name,
-            tipo: file.type,
-            tamano: file.size
+            nombre_archivo: nombreArchivo,
+            tipo: 'link',
+            url: trimmedUrl
           },
           occurred_at: new Date().toISOString()
         })
 
-      // Notificar al componente padre
-      onUploadEvidence?.(tareaId)
+      // Mostrar exito y cerrar modal
+      setUrlSuccess(true)
+      setTimeout(() => {
+        setShowUrlModal(false)
+        setUrlInput('')
+        setUrlSuccess(false)
+        // Notificar al componente padre
+        onUploadEvidence?.(tareaId)
+      }, 1500)
 
     } catch (error) {
-      console.error('Error subiendo archivo:', error)
-      setUploadError('Error al subir el archivo. Intente de nuevo.')
+      console.error('Error guardando URL:', error)
+      setUrlError('Error al guardar la URL. Intente de nuevo.')
     } finally {
-      setUploading(false)
-      // Limpiar input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      setSaving(false)
     }
   }
 
@@ -225,20 +221,100 @@ export default function QuickActions({
 
   return (
     <div className="relative flex items-center gap-2">
-      {/* Input oculto para archivos */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        accept=".pdf,.jpg,.jpeg,.png,.xml"
-        onChange={handleFileChange}
-      />
+      {/* Modal para agregar URL de evidencia */}
+      {showUrlModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => !saving && setShowUrlModal(false)}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-6 z-50 w-full max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Agregar Evidencia</h3>
+              <button
+                onClick={() => !saving && setShowUrlModal(false)}
+                className="p-1 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={saving}
+              >
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+
+            {urlSuccess ? (
+              <div className="flex flex-col items-center py-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-green-600" />
+                </div>
+                <p className="text-green-600 font-medium">URL guardada correctamente</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    URL de SharePoint/OneDrive
+                  </label>
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={(e) => {
+                      setUrlInput(e.target.value)
+                      setUrlError(null)
+                    }}
+                    placeholder="Pega aqui la URL de SharePoint/OneDrive"
+                    className={`w-full px-4 py-3 border rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      urlError ? 'border-red-300 bg-red-50' : 'border-slate-300'
+                    }`}
+                    disabled={saving}
+                    autoFocus
+                  />
+                  {urlError && (
+                    <div className="flex items-center gap-2 mt-2 text-red-600">
+                      <AlertCircle size={14} />
+                      <p className="text-sm">{urlError}</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-500 mt-2">
+                    Copia y pega el enlace del archivo desde SharePoint o OneDrive
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowUrlModal(false)}
+                    disabled={saving}
+                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSaveUrl}
+                    disabled={saving || !urlInput.trim()}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} />
+                        Guardar URL
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Boton de accion primaria */}
       {actionConfig.primaryAction && (
         <button
           onClick={actionConfig.primaryAction.action}
-          disabled={isLoading || uploading}
+          disabled={isLoading || saving}
           className={`flex items-center gap-1.5 px-3 py-1.5 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${actionConfig.primaryAction.color}`}
           title={actionConfig.primaryAction.label}
         >
@@ -247,20 +323,16 @@ export default function QuickActions({
         </button>
       )}
 
-      {/* Boton de subir evidencia */}
+      {/* Boton de agregar evidencia (URL) */}
       {actionConfig.showUpload && (
         <button
-          onClick={handleUploadClick}
-          disabled={isLoading || uploading}
+          onClick={handleAddEvidenceClick}
+          disabled={isLoading || saving}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Subir evidencia"
+          title="Agregar URL de evidencia"
         >
-          {uploading ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <Upload size={14} />
-          )}
-          <span className="hidden sm:inline">{uploading ? 'Subiendo...' : 'Evidencia'}</span>
+          <Link2 size={14} />
+          <span className="hidden sm:inline">Evidencia</span>
         </button>
       )}
 
@@ -306,13 +378,13 @@ export default function QuickActions({
               {actionConfig.showUpload && (
                 <button
                   onClick={() => {
-                    handleUploadClick()
+                    handleAddEvidenceClick()
                     setShowMenu(false)
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                 >
-                  <Upload size={14} />
-                  Subir evidencia
+                  <Link2 size={14} />
+                  Agregar URL evidencia
                 </button>
               )}
             </div>
@@ -320,19 +392,6 @@ export default function QuickActions({
         )}
       </div>
 
-      {/* Error de upload */}
-      {uploadError && (
-        <div className="absolute top-full left-0 right-0 mt-2 p-2 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 z-30">
-          <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-red-600 flex-1">{uploadError}</p>
-          <button
-            onClick={() => setUploadError(null)}
-            className="text-red-400 hover:text-red-600"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
     </div>
   )
 }
