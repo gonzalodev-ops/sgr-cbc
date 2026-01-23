@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useCascadeFilters, CascadeFilterConfig } from '@/lib/hooks/useCascadeFilters'
 import { createBrowserClient } from '@supabase/ssr'
 import { useUserRole } from '@/lib/hooks/useUserRole'
 import { usePeriodo } from '@/lib/context/PeriodoContext'
@@ -144,11 +145,28 @@ export default function TMR2Page() {
     const [viewMode, setViewMode] = useState<ViewMode>('resumen')
     const [alertFilter, setAlertFilter] = useState<AlertFilter>('all')
 
-    // Filtros para Modo Detalle
-    const [filtroEquipo, setFiltroEquipo] = useState('all')
-    const [filtroEstado, setFiltroEstado] = useState('all')
-    const [filtroResponsable, setFiltroResponsable] = useState('all')
+    // Filtros para Modo Detalle - Usando hook de filtros cascada
     const [filtroPeriodo, setFiltroPeriodo] = useState('all')
+
+    // Configuración para filtros cascada
+    const cascadeConfig: CascadeFilterConfig<TareaCompleta> = useMemo(() => ({
+        getEquipo: (t) => t.team_id,
+        getEquipoLabel: (t) => t.equipo_nombre,
+        getColaborador: (t) => t.responsable_usuario_id,
+        getColaboradorLabel: (t) => t.responsable_nombre,
+        getCliente: (t) => t.cliente_id,
+        getClienteLabel: (t) => t.cliente_nombre,
+        getEstado: (t) => t.estado,
+        getEstadoLabel: (t) => ESTADO_TAREA_CONFIG[t.estado as EstadoTarea]?.label || t.estado
+    }), [])
+
+    const {
+        filters: cascadeFilters,
+        setFilter: setCascadeFilter,
+        resetFilters: resetCascadeFilters,
+        options: cascadeOptions,
+        filteredData: dataFiltradaPorCascada
+    } = useCascadeFilters(tareas, cascadeConfig)
     const [sortField, setSortField] = useState<SortField>('fecha')
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
 
@@ -263,26 +281,15 @@ export default function TMR2Page() {
         return { vencidas, enRiesgo, seguimiento, estaSemana }
     }, [tareas])
 
-    // Filter unique values for selects
-    const equipos = useMemo(() =>
-        [...new Set(tareas.map(t => t.equipo_nombre).filter(Boolean))].sort() as string[]
-    , [tareas])
-
-    const estados = useMemo(() =>
-        [...new Set(tareas.map(t => t.estado))].sort()
-    , [tareas])
-
-    const responsables = useMemo(() =>
-        [...new Set(tareas.map(t => t.responsable_nombre).filter(Boolean))].sort() as string[]
-    , [tareas])
-
+    // Filter unique values for selects (periodos no es cascada)
     const periodos = useMemo(() =>
         [...new Set(tareas.map(t => t.periodo_fiscal).filter(Boolean))].sort().reverse() as string[]
     , [tareas])
 
-    // Filtered Tareas based on alert filter
+    // Filtered Tareas based on alert filter and cascade filters
     const tareasFiltradas = useMemo(() => {
-        let filtered = tareas
+        // Usar datos pre-filtrados por cascada
+        let filtered = dataFiltradaPorCascada
 
         // Alert filter (applies to all modes)
         switch (alertFilter) {
@@ -300,17 +307,8 @@ export default function TMR2Page() {
                 break
         }
 
-        // Detalle filters
+        // Detalle filters - solo periodo (los demás ya están en cascada)
         if (viewMode === 'detalle') {
-            if (filtroEquipo !== 'all') {
-                filtered = filtered.filter(t => t.equipo_nombre === filtroEquipo)
-            }
-            if (filtroEstado !== 'all') {
-                filtered = filtered.filter(t => t.estado === filtroEstado)
-            }
-            if (filtroResponsable !== 'all') {
-                filtered = filtered.filter(t => t.responsable_nombre === filtroResponsable)
-            }
             if (filtroPeriodo !== 'all') {
                 filtered = filtered.filter(t => t.periodo_fiscal === filtroPeriodo)
             }
@@ -343,7 +341,7 @@ export default function TMR2Page() {
         }
 
         return filtered
-    }, [tareas, alertFilter, viewMode, filtroEquipo, filtroEstado, filtroResponsable, filtroPeriodo, sortField, sortDirection])
+    }, [dataFiltradaPorCascada, alertFilter, viewMode, filtroPeriodo, sortField, sortDirection])
 
     // KPIs for Resumen mode
     const kpis = useMemo(() => {
@@ -482,9 +480,7 @@ export default function TMR2Page() {
 
     // Reset filters
     const resetFiltros = () => {
-        setFiltroEquipo('all')
-        setFiltroEstado('all')
-        setFiltroResponsable('all')
+        resetCascadeFilters()
         setFiltroPeriodo('all')
         setAlertFilter('all')
     }
@@ -846,34 +842,34 @@ export default function TMR2Page() {
                                         </span>
 
                                         <select
-                                            value={filtroEquipo}
-                                            onChange={(e) => setFiltroEquipo(e.target.value)}
+                                            value={cascadeFilters.equipo}
+                                            onChange={(e) => setCascadeFilter('equipo', e.target.value)}
                                             className="bg-white border border-slate-300 text-slate-700 py-1.5 px-3 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="all">Todos Equipos</option>
-                                            {equipos.map(e => <option key={e} value={e}>{e}</option>)}
+                                            {cascadeOptions.equipos.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
                                         </select>
 
                                         <select
-                                            value={filtroEstado}
-                                            onChange={(e) => setFiltroEstado(e.target.value)}
+                                            value={cascadeFilters.estado}
+                                            onChange={(e) => setCascadeFilter('estado', e.target.value)}
                                             className="bg-white border border-slate-300 text-slate-700 py-1.5 px-3 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="all">Todos Estados</option>
-                                            {estados.map(e => (
-                                                <option key={e} value={e}>
-                                                    {ESTADO_TAREA_CONFIG[e as EstadoTarea]?.label || e}
+                                            {cascadeOptions.estados.map(e => (
+                                                <option key={e.value} value={e.value}>
+                                                    {e.label}
                                                 </option>
                                             ))}
                                         </select>
 
                                         <select
-                                            value={filtroResponsable}
-                                            onChange={(e) => setFiltroResponsable(e.target.value)}
+                                            value={cascadeFilters.colaborador}
+                                            onChange={(e) => setCascadeFilter('colaborador', e.target.value)}
                                             className="bg-white border border-slate-300 text-slate-700 py-1.5 px-3 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="all">Todos Responsables</option>
-                                            {responsables.map(r => <option key={r} value={r}>{r}</option>)}
+                                            {cascadeOptions.colaboradores.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                                         </select>
 
                                         <select
