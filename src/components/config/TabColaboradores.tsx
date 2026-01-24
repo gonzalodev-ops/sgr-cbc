@@ -35,6 +35,9 @@ export default function TabColaboradores() {
     const [userForm, setUserForm] = useState({ nombre: '', email: '', rol_global: 'COLABORADOR', equipo_id: '', rol_en_equipo: '' })
     const [teamForm, setTeamForm] = useState({ nombre: '' })
 
+    // Confirmation modal state (replaces blocking confirm())
+    const [confirmModal, setConfirmModal] = useState<{ type: 'user' | 'team'; id: string; nombre: string } | null>(null)
+
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -133,9 +136,17 @@ export default function TabColaboradores() {
         setTimeout(() => loadData(), 500)
     }
 
-    async function deleteUser(id: string) {
-        if (!confirm('¿Desactivar usuario?')) return
-        await supabase.from('users').update({ activo: false }).eq('user_id', id)
+    function requestDeleteUser(id: string, nombre: string) {
+        setConfirmModal({ type: 'user', id, nombre })
+    }
+
+    async function confirmDeleteUser(id: string) {
+        const { error } = await supabase.from('users').update({ activo: false }).eq('user_id', id)
+        if (error) {
+            console.error('Error desactivando usuario:', error)
+            alert('Error al desactivar: ' + error.message)
+        }
+        setConfirmModal(null)
         loadData()
     }
 
@@ -150,9 +161,17 @@ export default function TabColaboradores() {
         loadData()
     }
 
-    async function deleteTeam(id: string) {
-        if (!confirm('¿Eliminar equipo?')) return
-        await supabase.from('teams').update({ activo: false }).eq('team_id', id)
+    function requestDeleteTeam(id: string, nombre: string) {
+        setConfirmModal({ type: 'team', id, nombre })
+    }
+
+    async function confirmDeleteTeam(id: string) {
+        const { error } = await supabase.from('teams').update({ activo: false }).eq('team_id', id)
+        if (error) {
+            console.error('Error eliminando equipo:', error)
+            alert('Error al eliminar: ' + error.message)
+        }
+        setConfirmModal(null)
         loadData()
     }
 
@@ -204,7 +223,7 @@ export default function TabColaboradores() {
                             <Users size={16} className="text-purple-600" />
                             <span className="font-medium text-slate-800">{t.nombre}</span>
                             <button onClick={() => { setTeamForm({ nombre: t.nombre }); setEditingTeam(t); setShowTeamForm(true) }} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={14} /></button>
-                            <button onClick={() => deleteTeam(t.team_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={14} /></button>
+                            <button onClick={() => requestDeleteTeam(t.team_id, t.nombre)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={14} /></button>
                         </div>
                     ))}
                     {equipos.length === 0 && <p className="text-slate-700 text-sm">No hay equipos. Crea uno.</p>}
@@ -271,13 +290,49 @@ export default function TabColaboradores() {
                                 <td className="p-3">{u.rol_en_equipo || '-'}</td>
                                 <td className="p-3 text-right">
                                     <button onClick={() => editUser(u)} className="p-1 text-slate-500 hover:text-blue-600"><Pencil size={16} /></button>
-                                    <button onClick={() => deleteUser(u.user_id)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={16} /></button>
+                                    <button onClick={() => requestDeleteUser(u.user_id, u.nombre)} className="p-1 text-slate-500 hover:text-red-600"><Trash2 size={16} /></button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* Confirmation Modal - No blocking confirm() */}
+            {confirmModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">
+                            {confirmModal.type === 'user' ? '¿Desactivar usuario?' : '¿Eliminar equipo?'}
+                        </h3>
+                        <p className="text-slate-600 mb-4">
+                            {confirmModal.type === 'user'
+                                ? `El usuario "${confirmModal.nombre}" será desactivado y no podrá acceder al sistema.`
+                                : `El equipo "${confirmModal.nombre}" será eliminado.`}
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setConfirmModal(null)}
+                                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirmModal.type === 'user') {
+                                        confirmDeleteUser(confirmModal.id)
+                                    } else {
+                                        confirmDeleteTeam(confirmModal.id)
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                {confirmModal.type === 'user' ? 'Desactivar' : 'Eliminar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
